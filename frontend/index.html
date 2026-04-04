@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Livestream Dashboard</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Smart Livestream Management Platform</p>
+        <h1>Dashboard AI quản lý livestream đa tài khoản</h1>
+        <p class="subtitle">
+          Demo đăng nhập, quản lý nhiều tài khoản trên mỗi nền tảng, phân tích comment, chấm lead và cân bằng viewer để giảm lag.
+        </p>
+      </div>
+      <div class="hero-card">
+        <div class="hero-stat">
+          <span>Gateway</span>
+          <strong id="gateway-status">Đang kiểm tra...</strong>
+        </div>
+        <div class="hero-stat">
+          <span>AI / Auth / Account</span>
+          <strong id="ai-status">Đang kiểm tra...</strong>
+        </div>
+        <div class="hero-stat">
+          <span>Trạng thái user</span>
+          <strong id="user-status">Chưa đăng nhập</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="grid-layout wide">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Đăng nhập demo</h2>
+          <p>Dùng tài khoản demo để mô phỏng quy trình staff quản lý livestream.</p>
+        </div>
+        <form id="login-form" class="stack">
+          <label>Email<input id="login-email" value="admin@smartlive.vn" /></label>
+          <label>Mật khẩu<input id="login-password" type="password" value="123456" /></label>
+          <button type="submit">Đăng nhập</button>
+        </form>
+        <div id="login-result" class="result-card muted">Thông tin đăng nhập sẽ xuất hiện ở đây.</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Tổng quan nền tảng</h2>
+          <p>Mỗi nền tảng có thể gồm nhiều tài khoản livestream độc lập.</p>
+        </div>
+        <div id="platform-summary" class="stats-grid muted">Đang tải thống kê platform...</div>
+      </section>
+
+      <section class="panel panel-span-2">
+        <div class="panel-header">
+          <h2>Quản lý tài khoản livestream</h2>
+          <p>Danh sách được nhóm theo từng nền tảng, cho phép bổ sung nhiều tài khoản trên cùng một platform.</p>
+        </div>
+        <form id="account-form" class="stack compact-form">
+          <div class="form-grid three-cols">
+            <label>Tên tài khoản<input id="account-name" placeholder="TikTok Flash Sale 3" /></label>
+            <label>Nền tảng
+              <select id="account-platform">
+                <option value="tiktok">TikTok</option>
+                <option value="facebook">Facebook</option>
+                <option value="youtube">YouTube</option>
+              </select>
+            </label>
+            <label>Chủ tài khoản<input id="account-owner" placeholder="Ngọc" /></label>
+            <label>Current viewers<input id="account-viewers" type="number" min="0" value="120" /></label>
+            <label>Max capacity<input id="account-capacity" type="number" min="1" value="800" /></label>
+            <label>Engagement rate<input id="account-engagement" type="number" min="0" max="1" step="0.01" value="0.45" /></label>
+            <label>Lag signal<input id="account-lag" type="number" min="0" max="1" step="0.01" value="0.15" /></label>
+            <label>Trạng thái
+              <select id="account-status">
+                <option value="active">active</option>
+                <option value="stable">stable</option>
+                <option value="warning">warning</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit">Thêm tài khoản mới</button>
+        </form>
+        <div id="account-form-result" class="result-card muted">Bạn có thể thêm nhiều tài khoản trên cùng một nền tảng.</div>
+        <div id="accounts-result" class="result-card muted">Đang tải danh sách tài khoản...</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>AI đánh giá comment</h2>
+          <p>Nhập comment trong livestream để xác định sentiment, intent và lead score.</p>
+        </div>
+        <form id="comment-form" class="stack">
+          <label>
+            Nội dung comment
+            <textarea id="comment-input" rows="5" placeholder="Ví dụ: Shop ơi ib mình để mình đặt 2 sản phẩm"></textarea>
+          </label>
+          <button type="submit">Phân tích comment</button>
+        </form>
+        <div id="comment-result" class="result-card muted">Kết quả phân tích sẽ xuất hiện ở đây.</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>AI cân bằng viewer chống lag</h2>
+          <p>Chọn 2 tài khoản bất kỳ trong hệ thống, kể cả khi chúng thuộc cùng một nền tảng.</p>
+        </div>
+        <form id="viewer-form" class="stack">
+          <label>
+            Viewer mới dự kiến
+            <input id="incoming-viewers" type="number" min="0" value="300" />
+          </label>
+          <div class="account-grid selectors">
+            <label>Tài khoản 1<select id="account-a-select"></select></label>
+            <label>Tài khoản 2<select id="account-b-select"></select></label>
+          </div>
+          <button type="submit">Tính cân bằng viewer</button>
+        </form>
+        <div id="viewer-result" class="result-card muted">Đề xuất cân bằng viewer sẽ xuất hiện ở đây.</div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

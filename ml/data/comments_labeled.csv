@@ -1,0 +1,1001 @@
+comment,intent,sentiment,lead_score
+"bo nay phoi don gian ma xinh, xinh hon anh",other,positive,51
+ad oi minh nhan set do ma form ngoai nho hon mo ta :),complaint,negative,28
+tr oi pass acc gia re ai lay ko,spam,negative,7
+"giu cho minh mau nay size xl, toi minh chot",buying_intent,neutral,96
+da mau nay len live nhin dep hon hinh,other,neutral,44
+e shop oi ao so mi mau hong gia bao nhieu,ask_price,neutral,55
+tr oi minh dang tham khao them,other,neutral,39
+e chan vay mau do size l con gia nao vay,ask_price,neutral,57
+troi oi ket ban zalo nhan qua ne :(,spam,negative,6
+da gia tui nay nhiu the shop oi,ask_price,neutral,55
+"de cuoi tuan minh quay lai chot, dung mau minh can",other,positive,53
+"e san pham thuc te duong may bi lech, minh muon doi tra",complaint,negative,12
+tu van giup minh giua mau be voi nau nha <3,consult_request,neutral,68
+da pass acc gia re ai lay khong,spam,negative,9
+e ai can tang follow ib mk nha,spam,negative,7
+ui nay con hang ko de minh chuyen khoan luon,buying_intent,positive,92
+minh chot dep mau do size l nha,buying_intent,positive,87
+"da chan vay lan nay duong may bi lech, shop ho tro giup minh",complaint,negative,14
+e cho minh xin anh that cua vay voi :),consult_request,neutral,49
+tr oi minh doi kha lau ma cuoi cung lai jao sai mau kkk,complaint,negative,23
+cho minh hoi mau nay hop nguoi gay hong,consult_request,neutral,70
+hoodie nay chat vai co nong ko shop,consult_request,neutral,64
+e nen lay mau nao de phoi do hon vay,consult_request,neutral,72
+troi oi shop rep tin nhan kha nhanh,other,neutral,44
+ui tuyen ctv online lam tai nha :),spam,negative,3
+minh da nhan hang roi ma nhan hang xong hoi that vong,complaint,negative,26
+ui moi khui hang ra da thay vai mong hon minh nghi,complaint,negative,30
+troi oi mau nay sale con nhieu hong a,ask_price,neutral,75
+"troi oi giu cho minh mau nay size xl, toi minh chot",buying_intent,positive,91
+"e minh ung mau nay r, shop chot don giup, mac len ton dang",buying_intent,positive,79
+"de cuoi tuan minh quay lai chot, mac len ton dang",other,positive,18
+e tu van giup minh giua mau kem vs nau nha,consult_request,neutral,70
+da ad oi 62kg 1m58 mac size j vua a,consult_request,neutral,56
+minh cao 1m70 nang 60kg thi size s vua chua,consult_request,neutral,48
+ui anh chup de nhin do,other,neutral,49
+troi oi gia dam nay nhiu the sh oi,ask_price,neutral,55
+"ui nay con hang hong de minh chuyen khoan luon, dong goi ky :)",buying_intent,neutral,88
+"ui san pham thuc te san pham bi ban, minh muon doi tra",complaint,negative,24
+ai can tang follow ib minh nha,spam,negative,4
+"da cho minh dat giao ve ha noi nha, chat vai on ap kkk",buying_intent,positive,87
+tr oi mk doi kha lau ma cuoi cung lai vai mong hon minh nghi,complaint,negative,29
+troi oi shop oi ao so mi mau kem ja bao nhieu,ask_price,neutral,71
+hoodie nay form rong hay om vay,consult_request,neutral,56
+da shop oi 54kg 1m58 mac size gi vua a,consult_request,neutral,56
+ui minh da 1m6 52kg thi nen lay size nao <3,consult_request,neutral,47
+ui moi khui hang ra da thay ship sai mau,complaint,negative,23
+tr oi de lai sdt nhan uu dai soc,spam,negative,6
+troi oi dang canh sale nha <3,other,neutral,53
+set do nay chat vai co nong khong shop,consult_request,neutral,61
+ui vao kenh tiktok ben mk ung ho voi,spam,negative,8
+troi oi mk da nhan hang roi ma giao sai mau,complaint,negative,18
+de cuoi tuan minh quay lai chot,other,neutral,35
+combo nay bao nhieu tien vay shop,ask_price,neutral,69
+"e ib mk de dat quan jean voi, form dep that",buying_intent,positive,84
+"tr oi bo nay phoi don gian ma xinh, chat vai on ap",other,neutral,29
+"da doc comment thay vui ghe, dong goi ky",other,neutral,57
+e ad oi dep mau xam gia bao nhieu,ask_price,neutral,60
+"e ib minh de dat ao so mi voi, dung mau minh can",buying_intent,positive,87
+e vao kenh tiktok ben mk ung ho voi,spam,negative,3
+"da anh chup de nhin do, chat vai on ap",other,neutral,51
+troi oi con hang thi len don jup minh luon nha,buying_intent,neutral,82
+troi oi set do mau trang size m con ja nao vay,ask_price,neutral,73
+can keo tuong tac ib gap kkk,spam,negative,3
+"ui mau nay len live nhin dep hon hinh, form dep that",other,neutral,53
+ui set do mau xanh size s con gia nao vay,ask_price,neutral,66
+troi oi gia hoodie nay nhiu the shop oi,ask_price,neutral,61
+troi oi xin gia dam chat len vs,ask_price,neutral,76
+"e minh mua luon hom nay, thanh toan chuyen khoan dc chu",buying_intent,positive,92
+"dep lan nay san pham bi ban, shop ho tro jup minh",complaint,negative,14
+ib minh vs dam mau hong gia bn,ask_price,neutral,72
+con hang thi len don giup mk luon nha,buying_intent,positive,80
+ui can keo tuong tac ib gap,spam,negative,7
+pass acc gia re ai lay khong kkk,spam,negative,4
+don nay san pham bi ban nen mk khong ung,complaint,negative,10
+"san pham thuc te san pham bi ban, mk muon doi tra",complaint,negative,16
+"len don jup mk 1 cai vay mau kem, xinh hon anh",buying_intent,positive,84
+"e san pham thuc te nhan hang xong hoi that vong, minh muon doi tra",complaint,negative,24
+tr oi ai can tang follow ib mk nha,spam,negative,10
+minh cao 1m60 nang 45kg thi size m vua chua,consult_request,neutral,56
+troi oi hoodie nay tam bao nhieu vay moi nguoi,ask_price,neutral,69
+minh doi kha lau ma cuoi cung lai form ngoai nho hon mo ta,complaint,negative,29
+troi oi gia dep nay nhiu the shop oi <3,ask_price,neutral,69
+troi oi shop oi minh nhan ao khoac ma nhan hang xong hoi that vong,complaint,negative,30
+ui combo nay bn tien vay shop,ask_price,neutral,56
+"ui san pham thuc te duong may bi lech, minh muon doi tra",complaint,negative,21
+da shop rep tin nhan kha nhanh,other,neutral,34
+len don giup minh 1 cai ao thun mau be,buying_intent,positive,97
+ui doc comment thay vui ghe :),other,neutral,30
+troi oi can keo tuong tac ib gap,spam,negative,6
+tu van jup mk giua mau den voi xanh nha,consult_request,neutral,63
+follow cheo khong moi nguoi <3,spam,negative,6
+da that su hoi buc vi jao sai mau,complaint,negative,29
+e cho minh dat jao ve can tho nha <3,buying_intent,positive,89
+"troi oi mk mua luon hom nay, thanh toan ck duoc chu haha",buying_intent,positive,92
+troi oi follow cheo ko moi nguoi haha,spam,negative,4
+da ai can tang follow ib minh nha,spam,negative,3
+"e minh mua luon hom nay, thanh toan chuyen khoan duoc chu",buying_intent,positive,88
+troi oi minh cao 1m52 nang 68kg thi size m vua chua,consult_request,neutral,47
+ui minh doi kha lau ma cuoi cung lai nhan hang xong hoi that vong,complaint,negative,6
+"chan vay lan nay dong goi so sai, shop ho tro giup minh :(",complaint,negative,12
+troi oi len don giup minh 1 cai tui mau do,buying_intent,positive,90
+tr oi mac di lam thi chon mau nay on khong,consult_request,neutral,46
+troi oi shop oi 50kg 1m60 mac size gi vua a,consult_request,neutral,46
+ui nhin feedback thay cung on,other,neutral,24
+"len don giup minh 1 cai hoodie mau hong, ung qua troi",buying_intent,neutral,79
+da nhin feedback thay cung on kkk,other,positive,20
+e tui mau do size xl con gia nao vay,ask_price,neutral,61
+troi oi cho mk xin anh that cua dam voi,consult_request,neutral,66
+troi oi ib minh de dat hoodie voi,buying_intent,positive,91
+vao kenh tiktok ben minh ung ho vs,spam,negative,6
+ui can keo tuong tac ib gap :),spam,negative,4
+mau nay len live nhin dep hon hinh :(,other,neutral,21
+ui vao kenh tiktok ben minh ung ho vs :(,spam,negative,0
+mau nay len live nhin dep hon hinh,other,negative,41
+"da san pham thuc te san pham bi ban, minh muon doi tra",complaint,negative,21
+follow cheo hong moi nguoi <3,spam,negative,1
+dang canh sale nha,other,neutral,38
+doc comment thay vui ghe,other,positive,28
+"da giu cho mk mau nay size s, toi minh chot :(",buying_intent,positive,87
+cho minh hoi mau nay hop nguoi gay ko,consult_request,neutral,47
+minh doi kha lau ma cuoi cung lai duong may bi lech,complaint,negative,9
+ao so mi nay form rong hay om vay,consult_request,neutral,71
+troi oi minh doi kha lau ma cuoi cung lai dong goi so sai,complaint,negative,12
+mk da 1m6 52kg thi nen lay size nao kkk,consult_request,neutral,61
+"troi oi doc comment thay vui ghe, dong goi ky",other,neutral,37
+that su hoi buc vi mac len khong giong anh,complaint,negative,30
+"chan vay lan nay giao nham size, shop ho tro giup minh",complaint,negative,16
+"minh dang tham khao them, dong goi ky",other,negative,56
+cho minh xin anh that cua set do voi,consult_request,neutral,61
+e cho minh hoi mau nay hop nguoi gay khong,consult_request,neutral,62
+cho minh dat ship ve ha noi nha,buying_intent,positive,92
+ui ket ban zalo nhan qua ne <3,spam,negative,2
+"ui dang canh sale nha, chat vai on ap",other,neutral,34
+troi oi minh luu bai nay roi,other,negative,43
+"giu cho mk mau nay size s, toi minh chot haha",buying_intent,positive,81
+"ui giu cho minh mau nay size m, toi minh chot, chat vai on ap",buying_intent,positive,79
+e mk dang tham khao them,other,neutral,34
+e cho minh hoi mau nay hop nguoi gay hong,consult_request,neutral,67
+troi oi vao kenh tiktok ben minh ung ho voi <3,spam,negative,9
+e shop rep tin nhan kha nhanh,other,positive,43
+e don nay nhan hang xong hoi that vong nen minh khong ung,complaint,negative,12
+troi oi len don giup minh 1 cai giay sneaker mau trang,buying_intent,neutral,88
+ad oi ao thun mau be gia bao nhieu voi,ask_price,neutral,67
+troi oi de lai sdt nhan uu dai soc kkk,spam,negative,3
+"troi oi sh rep tin nhan kha nhanh, ung qua troi",other,positive,44
+e minh doi kha lau ma cuoi cung lai ship qua lau,complaint,negative,27
+mk da nhan hang roi ma form ngoai nho hon mo ta,complaint,negative,25
+e don nay vai mong hon minh nghi nen minh khong ung,complaint,negative,20
+troi oi minh chot ao thun mau nau size s nha,buying_intent,positive,83
+da de lai sdt nhan uu dai soc,spam,negative,9
+e len don jup minh 1 cai hoodie mau den,buying_intent,positive,82
+da anh chup de nhin do,other,neutral,42
+da cho minh hoi 52kg 1m60 mac size gi vua a,consult_request,neutral,65
+e can keo tuong tac ib gap,spam,negative,0
+e nay con hang khong de minh chuyen khoan luon,buying_intent,positive,82
+dam nay chat vai co nong hong shop,consult_request,neutral,45
+e admin oi minh nhan dep ma jao sai mau,complaint,negative,5
+troi oi ai can tang follow ib minh nha,spam,negative,5
+vay mau nay bao nhieu de minh can nhac chot,ask_price,neutral,68
+mac di lam thi chon mau nay on hong :),consult_request,neutral,55
+troi oi ket ban zalo nhan qua ne,spam,negative,10
+tr oi tui nay chat vai co nong hong shop,consult_request,neutral,55
+vao kenh tiktok ben mk ung ho voi,spam,negative,0
+"e ju cho mk mau nay size l, toi minh chot, dong goi ky",buying_intent,positive,86
+tr oi mau nay len live nhin dep hon hinh <3,other,positive,55
+ui chan vay nay tam bn vay moi nguoi :(,ask_price,neutral,73
+"da nay con hang khong de mk chuyen khoan luon, chat vai on ap",buying_intent,positive,85
+e tuyen ctv online lam tai nha,spam,negative,1
+da tui mau den size s con ja nao vay,ask_price,neutral,60
+da minh da 1m6 52kg thi nen lay size nao,consult_request,neutral,62
+da mk da 1m6 52kg thi nen lay size nao,consult_request,neutral,64
+"da san pham thuc te giao nham size, minh muon doi tra",complaint,negative,16
+that su hoi buc vi giao sai mau,complaint,negative,21
+troi oi ad oi 43kg 1m62 mac size gi vua a,consult_request,neutral,60
+troi oi cho minh hoi mau nay hop nguoi gay ko,consult_request,neutral,62
+ib minh vs 66kg 1m60 mac size gi vua a,consult_request,neutral,55
+"ao thun lan nay duong may bi lech, shop ho tro giup minh",complaint,negative,8
+xin gia vay chat cotton voi,ask_price,neutral,60
+"troi oi ib minh de dat ao thun voi, xinh hon anh",buying_intent,positive,89
+"e shop rep tin nhan kha nhanh, dong goi ky",other,neutral,18
+"ui nhin feedback thay cung on, ung qua tr",other,neutral,28
+de lai sdt nhan uu dai soc haha,spam,negative,6
+"ui lan nay mua chua on lam, nhan hang xong hoi that vong",complaint,negative,24
+ui follow cheo khong moi nguoi,spam,negative,8
+mac di lam thi chon mau nay on khong,consult_request,neutral,57
+"minh mua luon hom nay, thanh toan ck dc chu",buying_intent,positive,89
+e tu van giup minh giua mau hong voi be nha,consult_request,neutral,59
+da xin gia set do chat len voi,ask_price,neutral,64
+ui set do nay tam bn vay moi nguoi <3,ask_price,neutral,61
+"ui minh dang tham khao them, ship nhanh ghe",other,positive,54
+troi oi nhin feedback thay cung on kkk,other,neutral,32
+da minh luu bai nay r,other,negative,38
+shop oi minh nhan chan vay ma form ngoai nho hon mo ta,complaint,negative,6
+moi khui hang ra da thay dong goi so sai,complaint,negative,19
+moi khui hang ra da thay form ngoai nho hon mo ta,complaint,negative,14
+ket ban zalo nhan qua ne :),spam,negative,3
+troi oi vao kenh tiktok ben minh ung ho voi haha,spam,negative,10
+da ao so mi nay chat vai co nong ko shop,consult_request,neutral,48
+da cho minh xin gia va phi ship luon nha,ask_price,neutral,56
+da de cuoi tuan mk quay lai chot,other,positive,51
+da moi khui hang ra da thay vai mong hon mk nghi,complaint,negative,24
+troi oi minh lay 2 cai duoc khong shop,buying_intent,positive,88
+da quan jean nay form rong hay om vay,consult_request,neutral,72
+troi oi anh chup de nhin do,other,neutral,21
+"e lan nay mua chua on lam, san pham bi ban",complaint,negative,20
+ui cho mk xin anh that cua chan vay voi,consult_request,neutral,72
+da tu van giup minh giua mau trang vs xanh nha,consult_request,neutral,51
+da vao kenh tiktok ben mk ung ho voi,spam,negative,10
+da ket ban zalo nhan qua ne :(,spam,negative,5
+da sh oi 66kg 1m65 mac size gi vua a,consult_request,neutral,65
+dang canh sale nha haha,other,positive,56
+pass acc ja re ai lay khong,spam,negative,9
+da that su hoi buc vi san pham bi ban,complaint,negative,23
+da pass acc ja re ai lay ko,spam,negative,9
+ja vay nay nhiu the shop oi <3,ask_price,neutral,71
+troi oi combo nay bao nhieu tien vay shop,ask_price,neutral,62
+mk doi kha lau ma cuoi cung lai vai mong hon minh nghi,complaint,negative,28
+troi oi cho minh dat giao ve ha noi nha,buying_intent,positive,94
+tui nay tam bao nhieu vay moi nguoi,ask_price,neutral,66
+"hoodie lan nay duong may bi lech, shop ho tro giup minh",complaint,negative,10
+troi oi minh doi kha lau ma cuoi cung lai ship qua lau,complaint,negative,26
+"e len don giup minh 1 cai quan jean mau do, form dep that kkk",buying_intent,positive,94
+da ao khoac mau nay bao nhieu de minh can nhac chot,ask_price,neutral,71
+minh doi kha lau ma cuoi cung lai ship qua lau,complaint,negative,18
+minh da 1m6 52kg thi nen lay size nao,consult_request,neutral,72
+"troi oi dang canh sale nha, mac len ton dang",other,neutral,48
+troi oi minh lay 2 cai dc hong sh,buying_intent,positive,89
+e nhin feedback thay cung on,other,neutral,19
+e cho mk xin gia va phi ship luon nha,ask_price,neutral,58
+da mk cao 1m68 nang 59kg thi size l vua chua kkk,consult_request,neutral,65
+minh da 1m6 52kg thi nen lay size nao kkk,consult_request,neutral,58
+jay sneaker nay tam bao nhieu vay moi nguoi <3,ask_price,neutral,62
+troi oi chan vay mau kem size xl con gia nao vay,ask_price,neutral,55
+pass acc gia re ai lay khong,spam,negative,1
+troi oi quan jean nay chat vai co nong khong sh,consult_request,neutral,53
+ao so mi nay chat vai co nong khong shop haha,consult_request,neutral,72
+"ui giu cho minh mau nay size xl, toi minh chot, ung qua troi",buying_intent,positive,82
+tr oi cho minh hoi mau nay hop nguoi gay khong,consult_request,neutral,53
+minh cao 1m68 nang 66kg thi size m vua chua,consult_request,neutral,65
+ui ib minh de dat ao so mi voi <3,buying_intent,positive,81
+da don nay form ngoai nho hon mo ta nen minh khong ung,complaint,negative,29
+pass acc gia re ai lay hong,spam,negative,1
+da doc comment thay vui ghe,other,neutral,56
+admin oi 62kg 1m70 mac size j vua a kkk,consult_request,neutral,52
+tu van giup minh giua mau kem voi do nha,consult_request,neutral,64
+hoodie nay chat vai co nong hong shop,consult_request,neutral,70
+da ao so mi nay chat vai co nong khong shop,consult_request,neutral,51
+ui minh lay 2 cai duoc hong sh,buying_intent,positive,87
+follow cheo hong moi nguoi,spam,negative,4
+"e bo nay phoi don gian ma xinh, chat vai on ap",other,negative,29
+"da minh lay 2 cai dc khong shop, chat vai on ap",buying_intent,neutral,86
+"e bo nay phoi don gian ma xinh, ung qua tr",other,neutral,27
+da gia ao thun nay nhiu the shop oi,ask_price,neutral,71
+"hoodie lan nay giao nham size, shop ho tro giup minh",complaint,negative,21
+"e cho minh dat giao ve can tho nha, form dep that",buying_intent,positive,92
+da pass acc gia re ai lay ko,spam,negative,3
+dep mau nay bn de minh can nhac chot haha,ask_price,neutral,58
+"minh luu bai nay roi, dung mau minh can",other,positive,39
+"troi oi minh mua luon hom nay, thanh toan ck dc chu",buying_intent,positive,87
+e dang canh sale nha,other,neutral,57
+vao kenh tiktok ben minh ung ho voi,spam,negative,9
+e mac di lam thi chon mau nay on khong,consult_request,neutral,56
+hoodie nay tam bao nhieu vay moi nguoi,ask_price,neutral,62
+"e doc comment thay vui ghe, ung qua troi",other,neutral,35
+da len don giup minh 1 cai tui mau trang :(,buying_intent,neutral,95
+"e mau nay len live nhin dep hon hinh, ship nhanh ghe",other,positive,42
+"bo nay phoi don jan ma xinh, form dep that",other,neutral,42
+troi oi follow cheo ko moi nguoi,spam,negative,5
+"e giu cho minh mau nay size xl, toi minh chot, ship nhanh ghe",buying_intent,positive,96
+mk cao 1m60 nang 62kg thi size xl vua chua :(,consult_request,neutral,58
+nhin feedback thay cung on <3,other,positive,21
+e moi khui hang ra da thay jao nham size :),complaint,negative,22
+e bo nay phoi don gian ma xinh,other,negative,34
+da can keo tuong tac ib gap,spam,negative,8
+e quan jean mau nay bao nhieu de mk can nhac chot,ask_price,neutral,58
+"dam lan nay form ngoai nho hon mo ta, sh ho tro giup minh",complaint,negative,21
+ui vao kenh tiktok ben mk ung ho vs <3,spam,negative,6
+e nen lay mau nao de phoi do hon vay kkk,consult_request,neutral,53
+troi oi mau nay sale con nhieu ko a <3,ask_price,neutral,73
+"ui giu cho minh mau nay size m, toi minh chot, ship nhanh ghe",buying_intent,positive,83
+"ui minh ung mau nay r, shop chot don giup",buying_intent,neutral,87
+ui ai can tang follow ib minh nha :),spam,negative,6
+da con hang thi len don giup minh luon nha,buying_intent,positive,86
+nen lay mau nao de phoi do hon vay,consult_request,neutral,66
+minh chot jay sneaker mau xanh size m nha kkk,buying_intent,positive,91
+ui ai can tang follow ib mk nha kkk,spam,negative,6
+da cho minh xin anh that cua dep voi,consult_request,neutral,46
+e minh doi kha lau ma cuoi cung lai vai mong hon minh nghi,complaint,negative,24
+"troi oi dam lan nay dong goi so sai, shop ho tro giup minh",complaint,negative,11
+"ui lan nay mua chua on lam, san pham bi ban",complaint,negative,11
+"e ib minh de dat giay sneaker voi, dung mau minh can",buying_intent,neutral,93
+ui nen lay mau nao de phoi do hon vay,consult_request,neutral,47
+"ui mk chot dep mau hong size l nha, ship nhanh ghe <3",buying_intent,positive,96
+tu van jup minh giua mau trang voi xam nha kkk,consult_request,neutral,57
+ja set do nay nhiu the shop oi,ask_price,neutral,62
+troi oi shop rep giup minh 59kg 1m68 mac size gi vua a,consult_request,neutral,66
+"san pham thuc te jao nham size, minh muon doi tra :(",complaint,negative,17
+troi oi follow cheo khong moi nguoi :(,spam,negative,4
+"troi oi lan nay mua chua on lam, nhan hang xong hoi that vong <3",complaint,negative,18
+"troi oi ib minh de dat dam voi, dung mau minh can",buying_intent,positive,96
+inbox mk nha 66kg 1m58 mac size j vua a,consult_request,neutral,72
+"mk mua luon hom nay, thanh toan ck duoc chu",buying_intent,positive,84
+mk da nhan hang r ma nhan hang xong hoi that vong,complaint,negative,20
+ui nen lay mau nao de phoi do hon vay kkk,consult_request,neutral,59
+tuyen ctv online lam tai nha kkk,spam,negative,0
+tr oi cho minh xin gia va phi ship luon nha,ask_price,neutral,55
+da pass acc gia re ai lay ko <3,spam,negative,7
+da minh doi kha lau ma cuoi cung lai giao sai mau,complaint,negative,13
+da nen lay mau nao de phoi do hon vay <3,consult_request,neutral,62
+"da dep lan nay ship sai mau, shop ho tro giup mk haha",complaint,negative,23
+minh luu bai nay roi haha,other,neutral,31
+mau nay sale con nhieu ko a :),ask_price,neutral,72
+"e doc comment thay vui ghe, dong goi ky",other,positive,21
+len don giup mk 1 cai ao so mi mau do,buying_intent,positive,90
+"minh mua luon hom nay, thanh toan cod duoc chu, dung mau minh can",buying_intent,positive,82
+combo nay bao nhieu tien vay sh,ask_price,neutral,67
+e cho minh dat ship ve tphcm nha :),buying_intent,positive,93
+"doc comment thay vui ghe, form dep that",other,neutral,43
+troi oi mau nay sale con nhieu khong a,ask_price,neutral,61
+"ui minh mua luon hom nay, thanh toan cod duoc chu <3",buying_intent,positive,84
+e con hang thi len don jup minh luon nha,buying_intent,positive,96
+ui mau nay sale con nhieu ko a,ask_price,neutral,64
+da minh chot hoodie mau xam size m nha,buying_intent,positive,80
+tr oi can keo tuong tac ib gap,spam,negative,5
+e xin gia ao khoac chat jean voi,ask_price,neutral,60
+da that su hoi buc vi vai mong hon minh nghi,complaint,negative,7
+xin gia ao so mi chat jean voi,ask_price,neutral,61
+de cuoi tuan minh quay lai chot <3,other,neutral,47
+da mau nay sale con nhieu khong a,ask_price,neutral,67
+ib minh voi vay mau hong gia bao nhieu duoc khong haha,ask_price,neutral,74
+len don giup minh 1 cai ao so mi mau hong,buying_intent,positive,87
+minh da nhan hang roi ma dong goi so sai,complaint,negative,25
+moi khui hang ra da thay giao sai mau,complaint,negative,17
+ib minh de dat set do voi :),buying_intent,positive,81
+mk luu bai nay roi :),other,neutral,36
+can keo tuong tac ib gap <3,spam,negative,8
+vao kenh tiktok ben mk ung ho voi :(,spam,negative,7
+pass acc ja re ai lay hong,spam,negative,0
+ui cho mk hoi mau nay hop nguoi gay ko,consult_request,neutral,53
+e follow cheo ko moi nguoi kkk,spam,negative,4
+troi oi vao kenh tiktok ben minh ung ho voi :),spam,negative,9
+e shop oi 59kg 1m60 mac size gi vua a :),consult_request,neutral,62
+e tu van jup minh giua mau hong voi nau nha :),consult_request,neutral,69
+troi oi jay sneaker nay form rong hay om vay,consult_request,neutral,63
+e mac di lam thi chon mau nay on ko,consult_request,neutral,59
+mac di lam thi chon mau nay on hong,consult_request,neutral,45
+e ao so mi nay tam bao nhieu vay moi nguoi,ask_price,neutral,57
+sh rep tin nhan kha nhanh kkk,other,neutral,49
+set do nay form rong hay om vay,consult_request,neutral,66
+e cho minh xin gia va phi ship luon nha,ask_price,neutral,71
+e mk da 1m6 52kg thi nen lay size nao haha,consult_request,neutral,59
+da ib minh de dat dam voi,buying_intent,positive,91
+troi oi ao so mi mau nay bn de minh can nhac chot :),ask_price,neutral,70
+quan jean mau xam size xl con gia nao vay,ask_price,neutral,63
+"bo nay phoi don gian ma xinh, dong goi ky",other,neutral,51
+"anh chup de nhin do, mac len ton dang",other,negative,28
+cho minh xin gia va phi ship luon nha,ask_price,neutral,62
+troi oi ib minh voi chan vay mau kem gia bao nhieu voi,ask_price,neutral,72
+e de lai sdt nhan uu dai soc,spam,negative,5
+e chan vay nay tam bn vay moi nguoi,ask_price,neutral,55
+tuyen ctv online lam tai nha,spam,negative,0
+"e dang canh sale nha, dong goi ky",other,neutral,38
+troi oi minh da nhan hang roi ma duong may bi lech :(,complaint,negative,30
+tr oi moi khui hang ra da thay jao sai mau,complaint,negative,18
+"e san pham thuc te ship sai mau, minh muon doi tra",complaint,negative,10
+con hang thi len don giup minh luon nha,buying_intent,positive,95
+minh chot giay sneaker mau den size s nha,buying_intent,positive,92
+e de cuoi tuan minh quay lai chot,other,neutral,54
+da cho mk xin ja va phi ship luon nha,ask_price,neutral,61
+ui ao thun mau nay bao nhieu de minh can nhac chot,ask_price,neutral,70
+da minh luu bai nay roi,other,neutral,23
+"chan vay lan nay san pham bi ban, shop ho tro jup minh",complaint,negative,16
+da mau nay sale con nhieu ko a,ask_price,neutral,56
+tu van giup mk giua mau nau voi den nha,consult_request,neutral,67
+ui minh dang tham khao them :),other,neutral,46
+ui moi khui hang ra da thay duong may bi lech,complaint,negative,9
+ui len don giup minh 1 cai ao so mi mau xanh,buying_intent,positive,86
+"troi oi giu cho mk mau nay size xl, toi minh chot",buying_intent,neutral,80
+e combo nay bao nhieu tien vay shop,ask_price,neutral,56
+ui minh cao 1m68 nang 64kg thi size s vua chua,consult_request,neutral,51
+da ib minh de dat quan jean voi,buying_intent,positive,91
+"minh chot chan vay mau xam size l nha, ship nhanh ghe",buying_intent,positive,79
+da inbox minh nha dam mau nau ja bao nhieu giup minh nha :),ask_price,neutral,68
+troi oi tu van giup minh giua mau trang voi nau nha,consult_request,neutral,51
+gia hoodie nay nhiu the shop oi,ask_price,neutral,74
+cho mk xin ja va phi ship luon nha :),ask_price,neutral,69
+e follow cheo khong moi nguoi,spam,negative,4
+ui mau nay len live nhin dep hon hinh kkk,other,negative,20
+troi oi len don jup minh 1 cai chan vay mau xam,buying_intent,positive,98
+mk da nhan hang roi ma jao sai mau,complaint,negative,20
+"minh lay 2 cai duoc hong shop, mac len ton dang kkk",buying_intent,positive,97
+tr oi vao kenh tiktok ben minh ung ho voi,spam,negative,9
+"da bo nay phoi don gian ma xinh, form dep that",other,positive,39
+"e minh mua luon hom nay, thanh toan ck duoc chu",buying_intent,positive,85
+ui tuyen ctv online lam tai nha,spam,negative,5
+e minh da nhan hang roi ma ship sai mau,complaint,negative,20
+"da dang canh sale nha, mac len ton dang",other,neutral,32
+"da lan nay mua chua on lam, ship qua lau",complaint,negative,18
+ui set do nay form rong hay om vay,consult_request,neutral,64
+troi oi vay nay tam bao nhieu vay moi nguoi,ask_price,neutral,55
+troi oi ja vay nay nhiu the shop oi,ask_price,neutral,75
+da pass acc gia re ai lay khong <3,spam,negative,9
+ui con hang thi len don jup minh luon nha,buying_intent,positive,97
+"da de cuoi tuan mk quay lai chot, ship nhanh ghe :)",other,negative,21
+e cho mk dat ship ve hai phong nha,buying_intent,positive,86
+da cho mk xin anh that cua ao thun voi :(,consult_request,neutral,45
+mk lay 2 cai duoc ko shop,buying_intent,positive,81
+e cho mk xin anh that cua ao thun voi <3,consult_request,neutral,70
+da cho minh xin anh that cua ao so mi voi,consult_request,neutral,61
+tu van giup minh giua mau hong voi trang nha,consult_request,neutral,51
+e shop rep tin nhan kha nhanh kkk,other,negative,51
+ui len don giup minh 1 cai giay sneaker mau kem,buying_intent,neutral,92
+ui doc comment thay vui ghe,other,positive,31
+"da san pham thuc te ship sai mau, mk muon doi tra",complaint,negative,10
+e nay con hang hong de mk chuyen khoan luon,buying_intent,positive,86
+tu van giup minh giua mau be voi kem nha,consult_request,neutral,50
+ui ib minh de dat set do vs,buying_intent,positive,85
+tr oi xin gia chan vay chat thun vs,ask_price,neutral,70
+troi oi mk doi kha lau ma cuoi cung lai duong may bi lech,complaint,negative,6
+"ui minh mua luon hom nay, thanh toan ck duoc chu, chat vai on ap haha",buying_intent,positive,84
+da set do mau kem size m con gia nao vay,ask_price,neutral,61
+"lan nay mua chua on lam, nhan hang xong hoi that vong",complaint,negative,13
+"troi oi giu cho minh mau nay size xl, toi minh chot, form dep that",buying_intent,positive,88
+da ao khoac mau nau size s con gia nao vay,ask_price,neutral,59
+ui minh da nhan hang roi ma vai mong hon minh nghi,complaint,negative,15
+ui mau nay len live nhin dep hon hinh,other,negative,58
+"tr oi doc comment thay vui ghe, xinh hon anh",other,neutral,30
+tu van giup mk giua mau den voi be nha,consult_request,neutral,46
+da minh lay 2 cai dc hong shop :),buying_intent,positive,89
+troi oi cho mk xin anh that cua giay sneaker voi,consult_request,neutral,52
+tr oi nhin feedback thay cung on,other,neutral,58
+da tu van giup minh giua mau hong voi xanh nha,consult_request,neutral,67
+troi oi de cuoi tuan minh quay lai chot kkk,other,neutral,53
+minh cao 1m58 nang 54kg thi size s vua chua kkk,consult_request,neutral,61
+xin gia quan jean chat len voi,ask_price,neutral,71
+"ui cho mk dat giao ve tphcm nha, ung qua troi",buying_intent,neutral,86
+ao so mi mau nay bao nhieu de mk can nhac chot,ask_price,neutral,64
+ui ib minh voi minh nhan dep ma vai mong hon minh nghi,complaint,negative,20
+vao kenh tiktok ben minh ung ho voi <3,spam,negative,7
+troi oi nhin feedback thay cung on,other,positive,32
+"e lan nay mua chua on lam, dong goi so sai",complaint,negative,29
+da cho minh hoi mau nay hop nguoi gay ko haha,consult_request,neutral,50
+troi oi mau nay len live nhin dep hon hinh,other,negative,26
+don nay duong may bi lech nen minh khong ung <3,complaint,negative,30
+"mk mua luon hom nay, thanh toan ck dc chu, ung qua troi",buying_intent,positive,93
+e minh da 1m6 52kg thi nen lay size nao :),consult_request,neutral,50
+troi oi follow cheo khong moi nguoi,spam,negative,7
+"lan nay mua chua on lam, dong goi so sai",complaint,negative,7
+don nay giao sai mau nen minh khong ung,complaint,negative,17
+follow cheo khong moi nguoi,spam,negative,7
+troi oi mac di lam thi chon mau nay on khong,consult_request,neutral,53
+e that su hoi buc vi mac len hong giong anh :),complaint,negative,27
+ui minh luu bai nay roi,other,positive,39
+tr oi con hang thi len don giup minh luon nha :(,buying_intent,positive,97
+ui shop rep jup minh minh nhan quan jean ma form ngoai nho hon mo ta,complaint,negative,17
+e xin gia dep chat thun voi,ask_price,neutral,69
+tr oi follow cheo ko moi nguoi,spam,negative,6
+tu van giup minh giua mau xam vs be nha,consult_request,neutral,68
+cho minh xin anh that cua vay vs,consult_request,neutral,55
+troi oi minh doi kha lau ma cuoi cung lai duong may bi lech haha,complaint,negative,20
+"troi oi san pham thuc te giao nham size, minh muon doi tra",complaint,negative,10
+"con hang thi len don giup minh luon nha, dong goi ky",buying_intent,positive,92
+troi oi vao kenh tiktok ben minh ung ho vs,spam,negative,2
+da minh da nhan hang roi ma ship qua lau,complaint,negative,18
+"ui de cuoi tuan minh quay lai chot, mac len ton dang",other,neutral,35
+len don giup minh 1 cai vay mau nau,buying_intent,positive,83
+minh cao 1m55 nang 55kg thi size s vua chua,consult_request,neutral,56
+"e con hang thi len don giup mk luon nha, form dep that",buying_intent,positive,85
+da cho minh xin gia va phi ship luon nha :),ask_price,neutral,66
+inbox minh nha 60kg 1m65 mac size gi vua a,consult_request,neutral,57
+"ui shop rep tin nhan kha nhanh, xinh hon anh",other,positive,47
+tu van giup minh giua mau be voi hong nha,consult_request,neutral,50
+mk da nhan hang roi ma giao sai mau,complaint,negative,25
+mau nay sale con nhieu khong a haha,ask_price,neutral,63
+"da giu cho mk mau nay size xl, toi minh chot",buying_intent,positive,89
+chan vay nay tam bn vay moi nguoi,ask_price,neutral,65
+"mk mua luon hom nay, thanh toan cod duoc chu",buying_intent,neutral,97
+"troi oi doc comment thay vui ghe, xinh hon anh",other,neutral,49
+ui giay sneaker nay chat vai co nong hong shop,consult_request,neutral,59
+troi oi cho minh xin anh that cua chan vay vs kkk,consult_request,neutral,50
+troi oi shop rep giup minh minh nhan set do ma nhan hang xong hoi that vong,complaint,negative,20
+vao kenh tiktok ben mk ung ho vs,spam,negative,2
+e mau nay len live nhin dep hon hinh :(,other,neutral,43
+ui ket ban zalo nhan qua ne :(,spam,negative,4
+mk cao 1m60 nang 60kg thi size m vua chua,consult_request,neutral,51
+ui that su hoi buc vi ship sai mau,complaint,negative,29
+troi oi pass acc gia re ai lay khong,spam,negative,4
+troi oi gia dep nay nhiu the shop oi,ask_price,neutral,59
+minh da nhan hang roi ma giao nham size,complaint,negative,4
+ui cho mk hoi mau nay hop nguoi gay khong,consult_request,neutral,55
+mau nay sale con nhieu ko a,ask_price,neutral,59
+ui mk dang tham khao them,other,positive,31
+"tr oi minh ung mau nay roi, shop chot don giup",buying_intent,positive,87
+tuyen ctv online lam tai nha haha,spam,negative,4
+"troi oi minh mua luon hom nay, thanh toan ck duoc chu, ung qua troi",buying_intent,positive,92
+ui nay con hang khong de minh chuyen khoan luon,buying_intent,positive,85
+"ui san pham thuc te nhan hang xong hoi that vong, minh muon doi tra :)",complaint,negative,26
+ui set do nay chat vai co nong khong shop,consult_request,neutral,47
+tu van giup mk giua mau hong vs kem nha haha,consult_request,neutral,46
+de lai sdt nhan uu dai soc,spam,negative,1
+e don nay duong may bi lech nen minh hong ung,complaint,negative,14
+"ui giu cho minh mau nay size l, toi minh chot",buying_intent,positive,94
+ui cho minh dat giao ve bien hoa nha,buying_intent,positive,84
+combo nay bao nhieu tien vay shop <3,ask_price,neutral,63
+combo nay bao nhieu tien vay shop :(,ask_price,neutral,70
+da minh doi kha lau ma cuoi cung lai san pham bi ban,complaint,negative,11
+"da cho minh dat jao ve can tho nha, dong goi ky",buying_intent,positive,83
+e ai can tang follow ib minh nha,spam,negative,10
+tr oi combo nay bn tien vay shop,ask_price,neutral,59
+ui don nay form ngoai nho hon mo ta nen mk ko ung,complaint,negative,6
+tui mau nau size xl con ja nao vay :),ask_price,neutral,73
+"ui bo nay phoi don jan ma xinh, ship nhanh ghe",other,negative,55
+tuyen ctv online lam tai nha :(,spam,negative,5
+e mau nay len live nhin dep hon hinh,other,neutral,44
+can keo tuong tac ib gap,spam,negative,6
+ui xin gia vay chat thun voi,ask_price,neutral,75
+"ui mk mua luon hom nay, thanh toan cod duoc chu",buying_intent,positive,83
+e inbox minh nha 55kg 1m70 mac size gi vua a,consult_request,neutral,52
+tr oi ai can tang follow ib minh nha,spam,negative,3
+"da nay con hang ko de minh chuyen khoan luon, ung qua troi",buying_intent,positive,81
+ui minh luu bai nay roi :(,other,negative,57
+chan vay mau hong size xl con gia nao vay,ask_price,neutral,66
+ui ai can tang follow ib minh nha,spam,negative,4
+troi oi mau nay sale con nhieu khong a haha,ask_price,neutral,59
+xin gia giay sneaker chat jean voi,ask_price,neutral,68
+da cho mk xin gia va phi ship luon nha kkk,ask_price,neutral,58
+"len don giup minh 1 cai giay sneaker mau kem, form dep that",buying_intent,neutral,86
+"lan nay mua chua on lam, ship qua lau",complaint,negative,16
+troi oi pass acc ja re ai lay ko,spam,negative,4
+ui ad oi hoodie mau nau gia bao nhieu giup mk nha kkk,ask_price,neutral,63
+ui follow cheo hong moi nguoi,spam,negative,6
+e pass acc gia re ai lay hong :(,spam,negative,2
+da pass acc gia re ai lay hong,spam,negative,10
+e ja vay nay nhiu the shop oi haha,ask_price,neutral,73
+troi oi ib minh voi 57kg 1m52 mac size gi vua a,consult_request,neutral,50
+troi oi admin oi 45kg 1m65 mac size gi vua a,consult_request,neutral,69
+troi oi bo nay phoi don gian ma xinh <3,other,negative,35
+inbox mk nha 45kg 1m55 mac size gi vua a,consult_request,neutral,45
+troi oi mau nay sale con nhieu khong a :(,ask_price,neutral,76
+e dep nay chat vai co nong khong shop,consult_request,neutral,57
+"e doc comment thay vui ghe, ship nhanh ghe",other,positive,26
+da moi khui hang ra da thay form ngoai nho hon mo ta,complaint,negative,5
+da ai can tang follow ib mk nha,spam,negative,0
+da minh dang tham khao them,other,neutral,34
+ui cho minh xin anh that cua dam voi,consult_request,neutral,46
+troi oi ib minh de dat dam voi,buying_intent,positive,90
+da de lai sdt nhan uu dai soc <3,spam,negative,5
+"troi oi nhin feedback thay cung on, dong goi ky :(",other,neutral,56
+da nay con hang khong de mk chuyen khoan luon,buying_intent,positive,93
+troi oi cho minh dat giao ve can tho nha,buying_intent,neutral,96
+moi khui hang ra da thay duong may bi lech,complaint,negative,14
+e quan jean nay tam bn vay moi nguoi,ask_price,neutral,72
+mau nay sale con nhieu khong a,ask_price,neutral,59
+"minh chot quan jean mau xam size xl nha, ung qua tr",buying_intent,positive,94
+ui dam nay tam bn vay moi nguoi,ask_price,neutral,65
+"ui giu cho minh mau nay size s, toi minh chot, form dep that",buying_intent,positive,93
+vay nay chat vai co nong khong shop,consult_request,neutral,65
+troi oi len don giup minh 1 cai dep mau den,buying_intent,positive,95
+"e bo nay phoi don gian ma xinh, ung qua troi",other,neutral,52
+e quan jean mau nau size l con gia nao vay,ask_price,neutral,71
+dam nay chat vai co nong ko shop,consult_request,neutral,63
+tr oi minh cao 1m55 nang 52kg thi size s vua chua,consult_request,neutral,62
+e minh da nhan hang roi ma vai mong hon minh nghi,complaint,negative,9
+follow cheo khong moi nguoi :(,spam,negative,4
+nay con hang khong de minh chuyen khoan luon,buying_intent,neutral,92
+ui admin oi 60kg 1m65 mac size j vua a,consult_request,neutral,68
+e combo nay bao nhieu tien vay sh,ask_price,neutral,60
+mac di lam thi chon mau nay on ko kkk,consult_request,neutral,51
+da vao kenh tiktok ben minh ung ho voi,spam,negative,10
+ui ad oi hoodie mau xam gia bao nhieu nha,ask_price,neutral,70
+troi oi hoodie nay form rong hay om vay haha,consult_request,neutral,53
+"ju cho minh mau nay size m, toi minh chot",buying_intent,neutral,87
+ui minh da nhan hang roi ma mac len ko giong anh,complaint,negative,18
+e pass acc gia re ai lay ko,spam,negative,5
+hoodie mau xanh size l con gia nao vay,ask_price,neutral,69
+mk dang tham khao them,other,positive,21
+"troi oi lan nay mua chua on lam, nhan hang xong hoi that vong",complaint,negative,22
+"ui nhin feedback thay cung on, chat vai on ap <3",other,positive,56
+ui tu van giup minh giua mau xam voi hong nha,consult_request,neutral,47
+tu van giup mk giua mau kem voi nau nha,consult_request,neutral,52
+da quan jean mau nay bao nhieu de minh can nhac chot <3,ask_price,neutral,64
+don nay san pham bi ban nen minh khong ung,complaint,negative,28
+that su hoi buc vi giao nham size :),complaint,negative,19
+tr oi mk luu bai nay roi,other,neutral,46
+cho minh xin anh that cua ao khoac voi,consult_request,neutral,68
+da nen lay mau nao de phoi do hon vay,consult_request,neutral,46
+da cho mk xin gia va phi ship luon nha,ask_price,neutral,62
+e cho minh hoi chan vay mau den gia bao nhieu,ask_price,neutral,73
+e can keo tuong tac ib gap kkk,spam,negative,10
+cho mk xin gia va phi ship luon nha,ask_price,neutral,63
+troi oi nen lay mau nao de phoi do hon vay :),consult_request,neutral,59
+e shop oi 52kg 1m65 mac size gi vua a,consult_request,neutral,59
+troi oi de cuoi tuan minh quay lai chot,other,negative,26
+"troi oi san pham thuc te giao nham size, minh muon doi tra :)",complaint,negative,19
+troi oi tu van giup minh giua mau be voi hong nha,consult_request,neutral,61
+ui mac di lam thi chon mau nay on hong,consult_request,neutral,63
+troi oi admin oi 57kg 1m60 mac size gi vua a,consult_request,neutral,64
+troi oi quan jean mau do size xl con ja nao vay,ask_price,neutral,75
+troi oi pass acc gia re ai lay hong,spam,negative,5
+don nay duong may bi lech nen minh hong ung,complaint,negative,23
+mk chot dep mau den size l nha,buying_intent,positive,97
+troi oi vao kenh tiktok ben mk ung ho vs,spam,negative,1
+e mau nay sale con nhieu khong a,ask_price,neutral,75
+"da lan nay mua chua on lam, vai mong hon minh nghi",complaint,negative,9
+e set do nay chat vai co nong hong shop,consult_request,neutral,67
+e ib minh voi minh nhan dep ma mac len ko giong anh,complaint,negative,25
+tr oi nen lay mau nao de phoi do hon vay,consult_request,neutral,52
+moi khui hang ra da thay mac len ko giong anh,complaint,negative,29
+ui cho minh xin anh that cua ao so mi voi,consult_request,neutral,47
+mk cao 1m52 nang 57kg thi size s vua chua,consult_request,neutral,56
+e ib minh de dat vay voi,buying_intent,positive,92
+cho minh dat giao ve can tho nha,buying_intent,positive,96
+dam mau nau size xl con gia nao vay :),ask_price,neutral,71
+"minh ung mau nay r, shop chot don jup",buying_intent,positive,93
+cho minh dat jao ve can tho nha,buying_intent,positive,92
+"e ib minh de dat vay voi, dung mau minh can",buying_intent,positive,83
+chan vay nay chat vai co nong khong shop,consult_request,neutral,51
+troi oi that su hoi buc vi san pham bi ban,complaint,negative,11
+"da de cuoi tuan minh quay lai chot, mac len ton dang",other,neutral,54
+ui minh da nhan hang roi ma mac len khong giong anh,complaint,negative,22
+e ai can tang follow ib mk nha <3,spam,negative,4
+"troi oi jay sneaker lan nay duong may bi lech, shop ho tro giup minh :(",complaint,negative,11
+"e san pham thuc te dong goi so sai, mk muon doi tra kkk",complaint,negative,27
+e shop rep jup minh 49kg 1m52 mac size gi vua a,consult_request,neutral,59
+admin oi 45kg 1m55 mac size gi vua a,consult_request,neutral,57
+troi oi minh chot vay mau xam size xl nha,buying_intent,positive,84
+"minh lay 2 cai duoc khong shop, dung mau minh can",buying_intent,positive,82
+ui admin oi ao so mi mau be gia bao nhieu nha,ask_price,neutral,66
+e len don giup mk 1 cai quan jean mau do :),buying_intent,positive,96
+quan jean nay form rong hay om vay,consult_request,neutral,48
+ui cho minh dat giao ve nha trang nha,buying_intent,neutral,98
+da minh doi kha lau ma cuoi cung lai vai mong hon minh nghi :),complaint,negative,18
+"anh chup de nhin do, ship nhanh ghe :)",other,neutral,55
+"e minh ung mau nay roi, shop chot don giup",buying_intent,positive,83
+ui sh rep tin nhan kha nhanh,other,neutral,38
+"e nhin feedback thay cung on, dung mau minh can",other,neutral,35
+"san pham thuc te dong goi so sai, mk muon doi tra",complaint,negative,23
+de lai sdt nhan uu dai soc <3,spam,negative,2
+"e ao so mi lan nay dong goi so sai, sh ho tro giup minh :(",complaint,negative,6
+ui ket ban zalo nhan qua ne,spam,negative,1
+"e lan nay mua chua on lam, form ngoai nho hon mo ta :(",complaint,negative,7
+e pass acc ja re ai lay ko,spam,negative,3
+"ui sh rep tin nhan kha nhanh, mac len ton dang",other,positive,38
+"ui mk mua luon hom nay, thanh toan chuyen khoan dc chu, ship nhanh ghe",buying_intent,positive,87
+"da minh luu bai nay roi, mac len ton dang",other,neutral,49
+ui ai can tang follow ib mk nha,spam,negative,5
+xin gia set do chat jean voi,ask_price,neutral,63
+e dang canh sale nha kkk,other,negative,42
+cho mk hoi mau nay hop nguoi gay khong,consult_request,neutral,53
+ui de cuoi tuan minh quay lai chot,other,neutral,46
+da follow cheo hong moi nguoi,spam,negative,10
+pass acc gia re ai lay ko kkk,spam,negative,5
+"ui minh mua luon hom nay, thanh toan chuyen khoan duoc chu :(",buying_intent,positive,80
+da dep nay form rong hay om vay,consult_request,neutral,58
+troi oi len don giup minh 1 cai hoodie mau trang,buying_intent,positive,93
+"ui anh chup de nhin do, dung mau minh can",other,neutral,27
+that su hoi buc vi form ngoai nho hon mo ta,complaint,negative,29
+"mk mua luon hom nay, thanh toan ck duoc chu, form dep that",buying_intent,neutral,93
+ui vao kenh tiktok ben mk ung ho voi <3,spam,negative,0
+troi oi minh doi kha lau ma cuoi cung lai jao nham size,complaint,negative,29
+ui bo nay phoi don gian ma xinh,other,negative,53
+"minh mua luon hom nay, thanh toan ck duoc chu, dung mau minh can",buying_intent,neutral,90
+"e minh ung mau nay r, shop chot don giup",buying_intent,positive,92
+ui shop rep tin nhan kha nhanh,other,negative,52
+follow cheo ko moi nguoi,spam,negative,8
+e minh dang tham khao them :(,other,neutral,21
+"lan nay mua chua on lam, ship qua lau <3",complaint,negative,17
+e minh lay 2 cai duoc khong shop,buying_intent,positive,86
+da gia chan vay nay nhiu the sh oi,ask_price,neutral,62
+"nay con hang khong de minh chuyen khoan luon, ung qua troi",buying_intent,positive,84
+cho minh hoi mau nay hop nguoi gay khong,consult_request,neutral,66
+"doc comment thay vui ghe, chat vai on ap",other,positive,51
+da ib minh de dat giay sneaker voi,buying_intent,positive,83
+ui gia giay sneaker nay nhiu the shop oi,ask_price,neutral,68
+ib mk de dat ao khoac voi,buying_intent,positive,81
+"troi oi san pham thuc te dong goi so sai, minh muon doi tra",complaint,negative,11
+gia ao khoac nay nhiu the sh oi,ask_price,neutral,73
+"con hang thi len don giup minh luon nha, chat vai on ap",buying_intent,positive,92
+ui pass acc gia re ai lay khong,spam,negative,1
+da cho minh hoi mau nay hop nguoi gay khong,consult_request,neutral,66
+ui can keo tuong tac ib gap <3,spam,negative,0
+ui don nay duong may bi lech nen mk khong ung,complaint,negative,4
+troi oi ai can tang follow ib mk nha <3,spam,negative,8
+"troi oi con hang thi len don giup minh luon nha, ung qua troi",buying_intent,neutral,91
+da follow cheo ko moi nguoi,spam,negative,3
+ja ao so mi nay nhiu the shop oi,ask_price,neutral,63
+shop rep tin nhan kha nhanh,other,neutral,45
+e cho minh xin anh that cua quan jean voi kkk,consult_request,neutral,67
+troi oi hoodie mau be size s con gia nao vay,ask_price,neutral,62
+ui minh da nhan hang roi ma mac len hong giong anh,complaint,negative,20
+"tr oi shop rep tin nhan kha nhanh, xinh hon anh",other,neutral,58
+bo nay phoi don jan ma xinh,other,neutral,22
+ui follow cheo ko moi nguoi,spam,negative,3
+troi oi dang canh sale nha,other,negative,18
+troi oi cho minh xin gia va phi ship luon nha :),ask_price,neutral,62
+da admin oi 49kg 1m62 mac size gi vua a,consult_request,neutral,54
+minh da nhan hang roi ma duong may bi lech,complaint,negative,17
+tu van jup minh giua mau nau voi kem nha,consult_request,neutral,51
+troi oi don nay mac len khong giong anh nen mk khong ung,complaint,negative,25
+ui that su hoi buc vi mac len khong giong anh,complaint,negative,19
+tr oi combo nay bao nhieu tien vay shop kkk,ask_price,neutral,71
+"minh ung mau nay r, sh chot don giup",buying_intent,neutral,89
+"e con hang thi len don giup minh luon nha, mac len ton dang",buying_intent,positive,80
+"da dang canh sale nha, form dep that",other,positive,49
+"san pham thuc te duong may bi lech, mk muon doi tra",complaint,negative,27
+"e anh chup de nhin do, ung qua troi",other,neutral,50
+shop rep giup minh minh nhan ao so mi ma mac len khong giong anh kkk,complaint,negative,18
+troi oi doc comment thay vui ghe,other,neutral,55
+ui dam nay chat vai co nong khong shop,consult_request,neutral,60
+"troi oi mk mua luon hom nay, thanh toan ck dc chu",buying_intent,positive,82
+ui hoodie mau nay bao nhieu de minh can nhac chot,ask_price,neutral,71
+"con hang thi len don giup mk luon nha, dong goi ky <3",buying_intent,positive,94
+e tui mau xam size l con gia nao vay,ask_price,neutral,55
+troi oi vay nay tam bn vay moi nguoi :),ask_price,neutral,76
+can keo tuong tac ib gap :(,spam,negative,4
+ui mk da 1m6 52kg thi nen lay size nao,consult_request,neutral,56
+ui pass acc ja re ai lay khong haha,spam,negative,1
+"tr oi mk luu bai nay roi, ship nhanh ghe",other,neutral,58
+da tu van giup minh giua mau trang voi kem nha,consult_request,neutral,46
+da anh chup de nhin do haha,other,neutral,31
+gia ao thun nay nhiu the shop oi,ask_price,neutral,65
+admin oi hoodie mau kem gia bao nhieu,ask_price,neutral,67
+e minh chot dep mau den size s nha,buying_intent,neutral,86
+ui admin oi minh nhan ao khoac ma san pham bi ban,complaint,negative,22
+xin gia ao khoac chat cotton vs,ask_price,neutral,68
+"minh ung mau nay r, shop chot don giup",buying_intent,positive,79
+e ket ban zalo nhan qua ne,spam,negative,2
+"da mk luu bai nay r, mac len ton dang",other,positive,41
+da cho minh hoi mau nay hop nguoi gay khong <3,consult_request,neutral,47
+troi oi tui nay tam bao nhieu vay moi nguoi,ask_price,neutral,68
+troi oi ao so mi mau nay bao nhieu de mk can nhac chot,ask_price,neutral,58
+"troi oi mk dang tham khao them, chat vai on ap",other,neutral,20
+da tuyen ctv online lam tai nha kkk,spam,negative,6
+dep nay chat vai co nong khong shop,consult_request,neutral,51
+ui set do nay tam bao nhieu vay moi nguoi,ask_price,neutral,69
+vay nay form rong hay om vay,consult_request,neutral,64
+e shop rep giup minh 57kg 1m65 mac size gi vua a :),consult_request,neutral,52
+tr oi pass acc gia re ai lay khong <3,spam,negative,4
+troi oi don nay mac len khong giong anh nen minh khong ung,complaint,negative,8
+tr oi bo nay phoi don gian ma xinh,other,positive,48
+"giu cho minh mau nay size m, toi minh chot",buying_intent,positive,94
+e vao kenh tiktok ben minh ung ho voi,spam,negative,1
+e tui mau nau size m con gia nao vay,ask_price,neutral,57
+da minh da 1m6 52kg thi nen lay size nao haha,consult_request,neutral,63
+e vay mau nay bn de minh can nhac chot,ask_price,neutral,72
+"san pham thuc te dong goi so sai, minh muon doi tra",complaint,negative,13
+"tr oi minh ung mau nay roi, sh chot don jup",buying_intent,positive,88
+"ui cho minh dat giao ve bien hoa nha, xinh hon anh",buying_intent,neutral,85
+troi oi vao kenh tiktok ben minh ung ho voi,spam,negative,8
+ui de lai sdt nhan uu dai soc :),spam,negative,0
+cho minh xin anh that cua vay voi,consult_request,neutral,54
+e cho minh dat jao ve da nang nha,buying_intent,positive,89
+ui cho minh hoi mau nay hop nguoi gay khong,consult_request,neutral,53
+ui shop rep giup minh 62kg 1m58 mac size gi vua a,consult_request,neutral,54
+ui minh chot ao thun mau nau size s nha :),buying_intent,positive,90
+ui shop oi 49kg 1m65 mac size gi vua a,consult_request,neutral,71
+follow cheo hong moi nguoi :(,spam,negative,3
+ai can tang follow ib mk nha,spam,negative,7
+"mk mua luon hom nay, thanh toan chuyen khoan duoc chu, xinh hon anh",buying_intent,positive,97
+"minh mua luon hom nay, thanh toan ck duoc chu kkk",buying_intent,positive,89
+ui shop rep jup minh minh nhan ao khoac ma mac len khong giong anh,complaint,negative,26
+"troi oi shop rep tin nhan kha nhanh, ship nhanh ghe",other,neutral,53
+da cho minh hoi mau nay hop nguoi gay hong,consult_request,neutral,54
+troi oi tuyen ctv online lam tai nha <3,spam,negative,0
+da vao kenh tiktok ben minh ung ho voi <3,spam,negative,9
+e ib minh vs 62kg 1m60 mac size gi vua a :(,consult_request,neutral,49
+"e minh ung mau nay roi, shop chot don giup, form dep that",buying_intent,neutral,80
+"troi oi ao so mi lan nay ship qua lau, sh ho tro giup minh",complaint,negative,4
+"ui minh chot quan jean mau kem size l nha, ship nhanh ghe",buying_intent,positive,86
+da vao kenh tiktok ben minh ung ho vs,spam,negative,9
+pass acc gia re ai lay khong :(,spam,negative,8
+da sh rep tin nhan kha nhanh,other,positive,25
+ui mac di lam thi chon mau nay on khong,consult_request,neutral,54
+"troi oi minh ung mau nay roi, shop chot don giup, dong goi ky",buying_intent,positive,78
+bo nay phoi don gian ma xinh,other,neutral,26
+e doc comment thay vui ghe,other,neutral,44
+da mac di lam thi chon mau nay on khong :(,consult_request,neutral,50
+ui combo nay bao nhieu tien vay sh,ask_price,neutral,59
+e shop rep jup minh minh nhan tui ma giao sai mau <3,complaint,negative,11
+troi oi ao thun mau xanh size s con gia nao vay,ask_price,neutral,73
+"de cuoi tuan minh quay lai chot, dong goi ky",other,negative,36
+"da san pham thuc te ship qua lau, mk muon doi tra",complaint,negative,26
+dam nay tam bao nhieu vay moi nguoi,ask_price,neutral,71
+"san pham thuc te nhan hang xong hoi that vong, minh muon doi tra",complaint,negative,25
+tr oi ket ban zalo nhan qua ne,spam,negative,2
+minh dang tham khao them,other,neutral,41
+ui gia tui nay nhiu the shop oi,ask_price,neutral,60
+"ui ib minh de dat chan vay voi, form dep that",buying_intent,positive,86
+e de lai sdt nhan uu dai soc haha,spam,negative,3
+"minh dang tham khao them, dung mau minh can",other,neutral,38
+"e giu cho minh mau nay size xl, toi minh chot haha",buying_intent,positive,95
+troi oi de cuoi tuan mk quay lai chot,other,neutral,32
+troi oi vao kenh tiktok ben mk ung ho voi,spam,negative,1
+e xin gia quan jean chat vai mem voi :),ask_price,neutral,74
+da chan vay nay tam bao nhieu vay moi nguoi,ask_price,neutral,61
+cho mk xin anh that cua ao khoac voi,consult_request,neutral,55
+ui pass acc gia re ai lay khong :),spam,negative,6
+e cho minh hoi minh nhan dam ma giao nham size :),complaint,negative,17
+"lan nay mua chua on lam, mac len khong jong anh haha",complaint,negative,17
+da don nay duong may bi lech nen minh khong ung,complaint,negative,30
+"da minh mua luon hom nay, thanh toan chuyen khoan duoc chu",buying_intent,positive,80
+ui mau nay len live nhin dep hon hinh :),other,neutral,51
+da minh da 1m6 52kg thi nen lay size nao <3,consult_request,neutral,68
+ui vao kenh tiktok ben minh ung ho voi,spam,negative,8
+"nay con hang ko de minh chuyen khoan luon, form dep that",buying_intent,positive,84
+troi oi xin gia chan vay chat len vs,ask_price,neutral,56
+e ib minh de dat dam voi,buying_intent,positive,85
+troi oi chan vay mau do size m con gia nao vay,ask_price,neutral,68
+troi oi dam nay chat vai co nong khong shop :),consult_request,neutral,72
+da combo nay bao nhieu tien vay shop,ask_price,neutral,57
+e hoodie mau nay bao nhieu de mk can nhac chot,ask_price,neutral,76
+"ui minh lay 2 cai duoc khong sh, dung mau minh can",buying_intent,positive,89
+minh doi kha lau ma cuoi cung lai nhan hang xong hoi that vong,complaint,negative,22
+e xin gia dam chat lua vs :),ask_price,neutral,72
+"de cuoi tuan minh quay lai chot, form dep that",other,positive,53
+da follow cheo ko moi nguoi kkk,spam,negative,5
+e de cuoi tuan minh quay lai chot :(,other,neutral,54
+cho minh xin anh that cua dep vs,consult_request,neutral,62
+ib minh de dat hoodie vs,buying_intent,positive,78
+e tuyen ctv online lam tai nha :(,spam,negative,6
+ui tu van giup minh giua mau xam voi be nha,consult_request,neutral,51
+troi oi len don giup minh 1 cai hoodie mau kem haha,buying_intent,positive,85
+da ket ban zalo nhan qua ne,spam,negative,7
+da minh lay 2 cai dc hong shop,buying_intent,positive,98
+e ib mk voi 47kg 1m55 mac size gi vua a,consult_request,neutral,67
+ui minh luu bai nay r,other,positive,52
+"ui san pham thuc te ship qua lau, minh muon doi tra",complaint,negative,26
+"mk ung mau nay roi, sh chot don giup, dung mau minh can",buying_intent,neutral,88
+"minh chot tui mau xanh size s nha, ung qua troi",buying_intent,positive,86
+troi oi moi khui hang ra da thay nhan hang xong hoi that vong,complaint,negative,19
+mac di lam thi chon mau nay on khong :(,consult_request,neutral,64
+e mau nay sale con nhieu ko a,ask_price,neutral,69
+da mac di lam thi chon mau nay on ko,consult_request,neutral,55
+dam nay tam bn vay moi nguoi,ask_price,neutral,76
+ui minh da nhan hang roi ma form ngoai nho hon mo ta,complaint,negative,6
+tr oi tuyen ctv online lam tai nha haha,spam,negative,2
+ui minh lay 2 cai duoc khong shop,buying_intent,positive,97
+ui pass acc gia re ai lay ko,spam,negative,10
+e that su hoi buc vi san pham bi ban,complaint,negative,11
+ib minh de dat dep voi,buying_intent,positive,84
+ui dam mau nay bao nhieu de mk can nhac chot,ask_price,neutral,56
+da nhin feedback thay cung on,other,neutral,24
+"tr oi giu cho mk mau nay size m, toi minh chot kkk",buying_intent,neutral,86
+ai can tang follow ib minh nha :),spam,negative,10
+de lai sdt nhan uu dai soc :(,spam,negative,1
+e anh chup de nhin do,other,neutral,36
+troi oi shop rep giup minh minh nhan vay ma dong goi so sai,complaint,negative,19
+da cho minh xin anh that cua giay sneaker voi :(,consult_request,neutral,61
+da set do mau nay bao nhieu de minh can nhac chot,ask_price,neutral,63
+ui pass acc ja re ai lay khong,spam,negative,2
+e dam mau be size l con gia nao vay,ask_price,neutral,55
+ui moi khui hang ra da thay mac len ko giong anh,complaint,negative,4
+nhin feedback thay cung on,other,neutral,20
+"e minh mua luon hom nay, thanh toan chuyen khoan duoc chu, xinh hon anh",buying_intent,positive,97
+"da giu cho mk mau nay size s, toi minh chot",buying_intent,positive,98
+e mk doi kha lau ma cuoi cung lai ship qua lau,complaint,negative,15
+"e mk ung mau nay roi, sh chot don giup",buying_intent,neutral,87
+"hoodie lan nay dong goi so sai, shop ho tro giup minh",complaint,negative,13
+da tuyen ctv online lam tai nha,spam,negative,2
+ui mk cao 1m65 nang 59kg thi size m vua chua haha,consult_request,neutral,50
+"troi oi minh chot dep mau xanh size m nha, xinh hon anh haha",buying_intent,positive,98
+e minh lay 2 cai duoc hong shop,buying_intent,positive,85
+troi oi ib minh de dat giay sneaker voi,buying_intent,positive,79
+troi oi minh da nhan hang roi ma san pham bi ban,complaint,negative,30
+troi oi vao kenh tiktok ben minh ung ho vs kkk,spam,negative,8
+troi oi that su hoi buc vi jao nham size,complaint,negative,19
+"da minh dang tham khao them, dung mau minh can",other,neutral,34
+that su hoi buc vi ship qua lau,complaint,negative,9
+da ao khoac nay tam bao nhieu vay moi nguoi,ask_price,neutral,64
+troi oi minh cao 1m60 nang 43kg thi size s vua chua,consult_request,neutral,55
+e ib minh voi 50kg 1m60 mac size gi vua a,consult_request,neutral,46
+troi oi de lai sdt nhan uu dai soc,spam,negative,0
+"troi oi lan nay mua chua on lam, ship qua lau",complaint,negative,28
+"tr oi shop rep tin nhan kha nhanh, mac len ton dang",other,neutral,32
+troi oi con hang thi len don giup minh luon nha,buying_intent,positive,81
+tr oi len don jup minh 1 cai ao so mi mau kem,buying_intent,positive,95
+"troi oi minh luu bai nay roi, chat vai on ap",other,neutral,44
+da minh cao 1m65 nang 54kg thi size s vua chua,consult_request,neutral,61
+ib mk de dat ao so mi voi,buying_intent,positive,83
+"nhin feedback thay cung on, dung mau minh can",other,positive,33
+"minh dang tham khao them, xinh hon anh",other,negative,44
+ui minh dang tham khao them,other,neutral,38
+shop rep giup minh 62kg 1m52 mac size gi vua a,consult_request,neutral,53
+da minh chot vay mau xanh size s nha,buying_intent,positive,89
+ui vao kenh tiktok ben minh ung ho voi <3,spam,negative,5
+"dang canh sale nha, ship nhanh ghe",other,neutral,57
+troi oi inbox minh nha chan vay mau nau gia bao nhieu,ask_price,neutral,60
+e cho minh hoi minh nhan vay ma duong may bi lech,complaint,negative,15
+"ui giu cho mk mau nay size m, toi minh chot, ung qua tr",buying_intent,neutral,84
+troi oi combo nay bn tien vay shop,ask_price,neutral,66
+"da minh ung mau nay roi, shop chot don jup, dong goi ky",buying_intent,positive,79
+"minh mua luon hom nay, thanh toan chuyen khoan duoc chu, dong goi ky",buying_intent,positive,97
+ui minh da 1m6 52kg thi nen lay size nao,consult_request,neutral,59
+"troi oi minh mua luon hom nay, thanh toan chuyen khoan duoc chu",buying_intent,positive,97
+ui chan vay nay form rong hay om vay,consult_request,neutral,45
+da mk dang tham khao them,other,neutral,50
+"troi oi dang canh sale nha, xinh hon anh :(",other,negative,18
+"minh ung mau nay roi, sh chot don giup, dung mau minh can",buying_intent,positive,95
+tr oi mau nay sale con nhieu hong a,ask_price,neutral,70
+troi oi moi khui hang ra da thay vai mong hon minh nghi,complaint,negative,28
+"troi oi shop rep tin nhan kha nhanh, mac len ton dang",other,neutral,21
+chan vay mau nay bao nhieu de minh can nhac chot,ask_price,neutral,76
+minh luu bai nay roi,other,positive,24
+troi oi dep nay form rong hay om vay kkk,consult_request,neutral,61
+"troi oi dang canh sale nha, xinh hon anh",other,neutral,40
+e tuyen ctv online lam tai nha kkk,spam,negative,8
+"con hang thi len don giup minh luon nha, dung mau minh can",buying_intent,positive,98
+e minh dang tham khao them,other,neutral,22
+"da con hang thi len don jup minh luon nha, dong goi ky <3",buying_intent,positive,85
+ket ban zalo nhan qua ne <3,spam,negative,0
+troi oi minh lay 2 cai dc khong shop :),buying_intent,positive,82
+troi oi cho minh xin gia va phi ship luon nha,ask_price,neutral,70
+troi oi mau nay sale con nhieu ko a,ask_price,neutral,69
+troi oi tuyen ctv online lam tai nha,spam,negative,8
+tui nay form rong hay om vay,consult_request,neutral,64
+ui len don giup minh 1 cai chan vay mau hong,buying_intent,positive,96
+ket ban zalo nhan qua ne,spam,negative,6
+"ui shop rep tin nhan kha nhanh, ship nhanh ghe",other,positive,55
+ui tui nay tam bao nhieu vay moi nguoi,ask_price,neutral,73
+troi oi cho minh hoi 43kg 1m60 mac size gi vua a,consult_request,neutral,69
+vay nay tam bao nhieu vay moi nguoi,ask_price,neutral,63
+jay sneaker nay form rong hay om vay <3,consult_request,neutral,47
+ui that su hoi buc vi form ngoai nho hon mo ta,complaint,negative,11
+e set do mau nay bao nhieu de minh can nhac chot,ask_price,neutral,73
+tuyen ctv online lam tai nha :),spam,negative,1
+troi oi minh dang tham khao them,other,neutral,29
+dam nay form rong hay om vay,consult_request,neutral,45
+minh da nhan hang r ma mac len khong giong anh,complaint,negative,20
+shop oi giay sneaker mau trang gia bao nhieu voi,ask_price,neutral,57
+"con hang thi len don giup minh luon nha, ung qua troi",buying_intent,positive,97
+da that su hoi buc vi form ngoai nho hon mo ta,complaint,negative,6
+"e con hang thi len don giup minh luon nha, ship nhanh ghe :)",buying_intent,positive,92
+ui ket ban zalo nhan qua ne kkk,spam,negative,4
+"e nhin feedback thay cung on, chat vai on ap",other,negative,29
+moi khui hang ra da thay jao sai mau,complaint,negative,16
+"da bo nay phoi don gian ma xinh, mac len ton dang :(",other,positive,51
+e minh cao 1m60 nang 43kg thi size m vua chua,consult_request,neutral,53
+da nay con hang hong de minh chuyen khoan luon,buying_intent,positive,88
+da cho mk dat giao ve tphcm nha,buying_intent,positive,96
+da cho minh xin anh that cua vay voi,consult_request,neutral,70
+"e dang canh sale nha, xinh hon anh",other,neutral,56
+ui cho minh xin anh that cua quan jean voi,consult_request,neutral,48
+"ui lan nay mua chua on lam, vai mong hon mk nghi <3",complaint,negative,16
+e xin gia ao khoac chat jean voi <3,ask_price,neutral,66
+cho minh xin gia va phi ship luon nha <3,ask_price,neutral,61
+gia quan jean nay nhiu the shop oi kkk,ask_price,neutral,61
+e pass acc gia re ai lay khong,spam,negative,0
+da follow cheo khong moi nguoi :),spam,negative,8
+da moi khui hang ra da thay nhan hang xong hoi that vong,complaint,negative,5
+cho mk hoi ao so mi mau kem gia bao nhieu voi,ask_price,neutral,67
+follow cheo hong moi nguoi kkk,spam,negative,4
+troi oi cho mk hoi mau nay hop nguoi gay khong kkk,consult_request,neutral,56
+ui mau nay sale con nhieu khong a,ask_price,neutral,71
+tr oi anh chup de nhin do,other,neutral,47
+ui de lai sdt nhan uu dai soc,spam,negative,2
+da dang canh sale nha,other,positive,32
+troi oi ib minh de dat set do voi,buying_intent,positive,83
+ib mk voi 50kg 1m68 mac size j vua a,consult_request,neutral,67
+troi oi nen lay mau nao de phoi do hon vay,consult_request,neutral,47
+da minh doi kha lau ma cuoi cung lai nhan hang xong hoi that vong :(,complaint,negative,24
+troi oi de lai sdt nhan uu dai soc <3,spam,negative,8
+ui ja vay nay nhiu the shop oi haha,ask_price,neutral,63
+ui mau nay sale con nhieu khong a kkk,ask_price,neutral,76
+da follow cheo khong moi nguoi,spam,negative,6
+that su hoi buc vi ship sai mau,complaint,negative,11
+"da nhin feedback thay cung on, chat vai on ap",other,negative,48
+ui vay mau nay bao nhieu de minh can nhac chot,ask_price,neutral,62
+"da lan nay mua chua on lam, giao nham size",complaint,negative,30
+ui con hang thi len don giup minh luon nha,buying_intent,positive,85
+troi oi con hang thi len don jup mk luon nha,buying_intent,positive,96
+"e minh ung mau nay roi, shop chot don giup, xinh hon anh",buying_intent,positive,90
+cho mk hoi ao khoac mau do gia bao nhieu,ask_price,neutral,75
+da anh chup de nhin do :(,other,positive,38
+da bo nay phoi don jan ma xinh,other,positive,40
+len don giup minh 1 cai vay mau trang,buying_intent,positive,90
+cho minh dat ship ve hai phong nha kkk,buying_intent,positive,84
+"bo nay phoi don gian ma xinh, chat vai on ap",other,neutral,31
+ui cho minh xin anh that cua ao khoac voi,consult_request,neutral,72
+"ui lan nay mua chua on lam, ship sai mau",complaint,negative,24
+"da shop rep tin nhan kha nhanh, dong goi ky",other,neutral,19
+ui dang canh sale nha,other,neutral,24
+hoodie mau nay bn de minh can nhac chot,ask_price,neutral,69
+cho minh xin ja va phi ship luon nha,ask_price,neutral,56
+"ui dang canh sale nha, ship nhanh ghe",other,negative,42
+e ai can tang follow ib minh nha kkk,spam,negative,3
+e mk da 1m6 52kg thi nen lay size nao,consult_request,neutral,67
+e pass acc gia re ai lay hong,spam,negative,6
+troi oi shop oi mk nhan ao so mi ma ship qua lau,complaint,negative,21
+cho minh hoi 70kg 1m70 mac size gi vua a,consult_request,neutral,58
+ui minh chot tui mau trang size s nha,buying_intent,positive,92
+troi oi ib minh voi dam mau kem gia bao nhieu nha :(,ask_price,neutral,70
+"e cho minh dat giao ve can tho nha, dung mau minh can",buying_intent,positive,80
+follow cheo khong moi nguoi :),spam,negative,4
+anh chup de nhin do,other,positive,37
+da ib minh de dat dep voi,buying_intent,positive,97
+minh da nhan hang roi ma jao sai mau,complaint,negative,19
+"lan nay mua chua on lam, ship sai mau",complaint,negative,7
+ao thun mau be size m con gia nao vay,ask_price,neutral,62
+"minh chot dam mau nau size xl nha, dung mau minh can",buying_intent,positive,97
+e giay sneaker nay form rong hay om vay haha,consult_request,neutral,64

@@ -1,0 +1,45 @@
+services:
+  ai-service:
+    build:
+      context: ../../services/ai-service
+    container_name: ai-service
+    ports:
+      - "8001:8001"
+
+  auth-service:
+    build:
+      context: ../../services/auth-service
+    container_name: auth-service
+    ports:
+      - "8002:8002"
+
+  account-service:
+    build:
+      context: ../../services/account-service
+    container_name: account-service
+    ports:
+      - "8003:8003"
+
+  api-gateway:
+    build:
+      context: ../../services/api-gateway
+    container_name: api-gateway
+    environment:
+      AI_SERVICE_URL: http://ai-service:8001
+      AUTH_SERVICE_URL: http://auth-service:8002
+      ACCOUNT_SERVICE_URL: http://account-service:8003
+    depends_on:
+      - ai-service
+      - auth-service
+      - account-service
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ../../frontend
+    container_name: livestream-frontend
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:3000"
