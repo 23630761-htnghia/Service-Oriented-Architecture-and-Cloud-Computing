@@ -1,0 +1,14 @@
+{
+  "product_id": "product-10",
+  "sku": "TEC-PWB-10K",
+  "name": "Pin s?c d? ph?ng TechGo 10000mAh",
+  "category": "Ph? ki?n c?ng ngh?",
+  "brand": "TechGo",
+  "cost_price": 225000,
+  "retail_price": 389000,
+  "stock_quantity": 90,
+  "reorder_level": 20,
+  "unit": "c?c",
+  "description": "Ph? ki?n c?ng ngh? bi?n l?i nhu?n cao cho phi?n live c?ng ngh?.",
+  "is_active": 1
+}

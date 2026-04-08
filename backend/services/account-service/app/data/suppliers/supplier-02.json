@@ -1,0 +1,12 @@
+{
+  "supplier_id": "supplier-02",
+  "supplier_code": "SUP-UF",
+  "name": "X??ng th?i trang UrbanFlex",
+  "contact_name": "Tr?n ??c Long",
+  "phone": "0908 001 002",
+  "email": "long.tran@urbanflex.vn",
+  "address": "Qu?n 12, TP. H? Ch? Minh",
+  "rating": 4.6,
+  "lead_time_days": 5,
+  "status": "active"
+}

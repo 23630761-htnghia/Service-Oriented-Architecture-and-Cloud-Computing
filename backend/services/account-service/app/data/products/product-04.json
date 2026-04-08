@@ -1,0 +1,14 @@
+{
+  "product_id": "product-04",
+  "sku": "FAS-JEA-WIDE",
+  "name": "Qu?n jeans ?ng su?ng UrbanFlex",
+  "category": "Th?i trang n?",
+  "brand": "UrbanFlex",
+  "cost_price": 168000,
+  "retail_price": 319000,
+  "stock_quantity": 120,
+  "reorder_level": 35,
+  "unit": "qu?n",
+  "description": "Qu?n jeans form r?ng, ph? h?p livestream mix outfit.",
+  "is_active": 1
+}

@@ -1,0 +1,14 @@
+{
+  "offer_id": "offer-01",
+  "offer_code": "OFF-LS-Q2-01",
+  "supplier_id": "supplier-01",
+  "product_id": "product-01",
+  "offer_title": "Deal qu? 2 cho room skincare bu?i t?i",
+  "min_order_quantity": 48,
+  "unit_price": 81000,
+  "discount_percent": 9,
+  "start_date": "2026-04-01",
+  "end_date": "2026-04-30",
+  "status": "active",
+  "notes": "T?ng 1 tester 5ml cho m?i 12 chai, h? tr? KOL script."
+}

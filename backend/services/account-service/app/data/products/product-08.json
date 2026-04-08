@@ -1,0 +1,14 @@
+{
+  "product_id": "product-08",
+  "sku": "BAB-DIA-M",
+  "name": "T? qu?n BabyNest size M 48 mi?ng",
+  "category": "M? v? b?",
+  "brand": "BabyNest",
+  "cost_price": 172000,
+  "retail_price": 269000,
+  "stock_quantity": 130,
+  "reorder_level": 30,
+  "unit": "b?ch",
+  "description": "SKU ch? l?c c?a room m? v? b?, t? l? quay l?i cao.",
+  "is_active": 1
+}

@@ -1,0 +1,19 @@
+{
+  "account_id": "ls-facebook-09",
+  "account_code": "FB09",
+  "name": "Facebook M? V? B? Store",
+  "platform_code": "facebook",
+  "username": "smartlive_fb_room_09",
+  "owner_user_id": "user-admin",
+  "owner_name": "M? Duy?n",
+  "backup_contact": "0909 881 009",
+  "current_viewers": 455,
+  "max_capacity": 920,
+  "engagement_rate": 0.52,
+  "lag_signal": 0.12,
+  "status": "stable",
+  "stream_url": "https://facebook.com/smartlive_fb_room_09/live",
+  "warehouse_location": "Kho B?nh D??ng",
+  "shift_label": "Ca chi?u",
+  "created_at": "2026-03-21T09:00:00"
+}

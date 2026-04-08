@@ -1,0 +1,14 @@
+{
+  "product_id": "product-05",
+  "sku": "HOM-LUN-3L",
+  "name": "H?p c?m gi? nhi?t HomeSet 3 t?ng",
+  "category": "Gia d?ng",
+  "brand": "HomeSet",
+  "cost_price": 52000,
+  "retail_price": 109000,
+  "stock_quantity": 260,
+  "reorder_level": 70,
+  "unit": "h?p",
+  "description": "S?n ph?m gia d?ng gi? t?t, ch?t ??n t?t ? khung gi? tr?a.",
+  "is_active": 1
+}

@@ -1,0 +1,19 @@
+{
+  "account_id": "ls-tiktok-08",
+  "account_code": "TT08",
+  "name": "TikTok KOL Flash Hub",
+  "platform_code": "tiktok",
+  "username": "smartlive_tt_room_08",
+  "owner_user_id": "user-admin",
+  "owner_name": "Thanh Tr?c",
+  "backup_contact": "0909 771 008",
+  "current_viewers": 810,
+  "max_capacity": 1400,
+  "engagement_rate": 0.67,
+  "lag_signal": 0.16,
+  "status": "active",
+  "stream_url": "https://tiktok.com/@smartlive_tt_room_08/live",
+  "warehouse_location": "Kho Qu?n 12",
+  "shift_label": "Ca chi?u",
+  "created_at": "2026-03-10T08:30:00"
+}

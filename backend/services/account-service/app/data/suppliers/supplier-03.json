@@ -1,0 +1,12 @@
+{
+  "supplier_id": "supplier-03",
+  "supplier_code": "SUP-HS",
+  "name": "HomeSet Wholesale JSC",
+  "contact_name": "L? Th?nh ??t",
+  "phone": "0908 001 003",
+  "email": "b2b@homeset.vn",
+  "address": "KCN H?a Kh?nh, ?? N?ng",
+  "rating": 4.5,
+  "lead_time_days": 4,
+  "status": "active"
+}

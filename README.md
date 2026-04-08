@@ -93,25 +93,26 @@ Hệ thống triển khai trên nền tảng Databricks theo định hướng cl
 ## 9. Hướng phát triển khả thi trong repo
 
 - `frontend/`: dashboard demo gọi API và hiển thị kết quả AI.
-- `services/api-gateway/`: đầu vào thống nhất cho frontend.
-- `services/auth-service/`: đăng nhập demo và thông tin người dùng.
-- `services/account-service/`: quản lý nhiều tài khoản livestream theo từng nền tảng.
-- `services/sync-service/`: đồng bộ comment và sự kiện livestream.
-- `services/ai-service/`: phân tích comment và cân bằng viewer để chống lag.
+- `backend/services/api-gateway/`: đầu vào thống nhất cho frontend.
+- `backend/services/auth-service/`: đăng nhập demo và thông tin người dùng.
+- `backend/services/account-service/`: quản lý nhiều tài khoản livestream, sản phẩm, nhà cung cấp và offer bằng SQLite.
+- `backend/services/sync-service/`: đồng bộ comment và sự kiện livestream.
+- `backend/services/ai-service/`: phân tích comment và cân bằng viewer để chống lag.
 - `ml/`: dữ liệu gán nhãn, script train và model đã train.
-- `services/report-service/`: dashboard và tổng hợp KPI.
+- `backend/services/report-service/`: dashboard và tổng hợp KPI.
 - `infra/`: Docker Compose, Kubernetes manifest, Terraform.
 - `docs/`: tài liệu kiến trúc, use case, sequence, roadmap, deployment.
 
 ## 10. Mã nguồn đã có trong repo
 
 - `frontend/`: static dashboard cho demo trên trình duyệt.
-- `services/ai-service/`: FastAPI service cho phân tích comment và viewer balancing.
-- `services/auth-service/`: FastAPI service cho đăng nhập demo.
-- `services/account-service/`: FastAPI service cho dữ liệu tài khoản livestream, nhóm theo nền tảng và thống kê platform.
-- `services/api-gateway/`: FastAPI gateway gom API cho frontend.
+- `backend/services/ai-service/`: FastAPI service cho phân tích comment và viewer balancing.
+- `backend/services/auth-service/`: FastAPI service cho đăng nhập demo.
+- `backend/services/account-service/`: FastAPI service dùng SQLite để quản lý người dùng, tài khoản livestream, mặt hàng, nhà cung cấp và offer.
+- `backend/services/api-gateway/`: FastAPI gateway gom API cho frontend.
 - `ml/`: pipeline train `intent` và `sentiment` bằng scikit-learn.
 - `infra/docker/docker-compose.yml`: chạy nhanh toàn bộ stack bằng Docker Compose.
+- `backend/docker-compose.yml`: chạy nhanh riêng phần backend.
 
 ## 11. Hướng dẫn chạy dự án
 
@@ -151,12 +152,37 @@ cd infra/docker
 docker compose down
 ```
 
+### Cách 2 - Chạy riêng backend
+
+```bash
+cd backend
+docker compose up --build
+```
+
+Sau khi chạy xong, các service backend sẽ mở trên:
+
+- API Gateway: `http://localhost:8000`
+- AI Service: `http://localhost:8001`
+- Auth Service: `http://localhost:8002`
+- Account Service: `http://localhost:8003`
+
 ### Tài khoản demo
 
 Bạn có thể đăng nhập bằng tài khoản mẫu:
 
 - Email: `admin@smartlive.vn` - Mật khẩu: `123456`
 - Email: `staff@smartlive.vn` - Mật khẩu: `123456`
+
+### Database seed cho account-service
+
+`account-service` sẽ tự tạo SQLite database khi khởi động tại `backend/services/account-service/app/data/account_management.db` với dữ liệu mẫu:
+
+- 1 tài khoản admin.
+- 10 tài khoản livestream TikTok.
+- 10 tài khoản livestream Facebook.
+- 10 mặt hàng.
+- 5 nhà cung cấp.
+- 12 offer từ nhà cung cấp.
 
 ### Kiểm tra nhanh hệ thống
 
@@ -168,10 +194,36 @@ curl http://localhost:8000/health
 
 Nếu hệ thống chạy đúng, gateway sẽ trả về trạng thái của `ai-service`, `auth-service` và `account-service`.
 
-## 12. Train AI comment
+Có thể gọi nhanh các API mới:
 
 ```bash
-pip install -r services/ai-service/requirements.txt
+curl http://localhost:8000/api/v1/users
+curl http://localhost:8000/api/v1/livestream-accounts
+curl http://localhost:8000/api/v1/products
+curl http://localhost:8000/api/v1/suppliers
+curl http://localhost:8000/api/v1/supplier-offers
+curl http://localhost:8000/api/v1/database-overview
+```
+
+## 12. API dữ liệu quản lý mới
+
+Các endpoint mới của `account-service` đã được expose qua gateway:
+
+- `GET /api/v1/users`: danh sách người dùng quản trị.
+- `GET /api/v1/livestream-accounts`: danh sách toàn bộ tài khoản livestream.
+- `GET /api/v1/livestream-accounts/grouped`: nhóm tài khoản theo nền tảng.
+- `GET /api/v1/platform-summaries`: thống kê nhanh theo nền tảng.
+- `GET /api/v1/platforms/{platform}/accounts`: lọc tài khoản theo `tiktok` hoặc `facebook`.
+- `POST /api/v1/livestream-accounts`: thêm mới một tài khoản livestream.
+- `GET /api/v1/products`: danh sách mặt hàng.
+- `GET /api/v1/suppliers`: danh sách nhà cung cấp.
+- `GET /api/v1/supplier-offers`: danh sách offer của nhà cung cấp.
+- `GET /api/v1/database-overview`: lấy toàn bộ dữ liệu seed trong một response.
+
+## 13. Train AI comment
+
+```bash
+pip install -r backend/services/ai-service/requirements.txt
 python ml/training/train_comment_models.py
 ```
 

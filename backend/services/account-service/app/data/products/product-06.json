@@ -1,0 +1,14 @@
+{
+  "product_id": "product-06",
+  "sku": "HOM-PAN-26G",
+  "name": "Ch?o ch?ng d?nh granite HomeSet 26cm",
+  "category": "Gia d?ng",
+  "brand": "HomeSet",
+  "cost_price": 192000,
+  "retail_price": 349000,
+  "stock_quantity": 95,
+  "reorder_level": 25,
+  "unit": "c?i",
+  "description": "M?t h?ng gia d?ng ch? l?c trong c?c live cu?i tu?n.",
+  "is_active": 1
+}

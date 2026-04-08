@@ -1,0 +1,12 @@
+{
+  "supplier_id": "supplier-05",
+  "supplier_code": "SUP-TG",
+  "name": "TechGo Import & Trading",
+  "contact_name": "V? Minh Khoa",
+  "phone": "0908 001 005",
+  "email": "sales@techgo.vn",
+  "address": "TP. Th? ??c, TP. H? Ch? Minh",
+  "rating": 4.4,
+  "lead_time_days": 6,
+  "status": "active"
+}

@@ -11,13 +11,14 @@ project_CK/
 |-- README.md
 |-- docs/
 |-- frontend/
-|-- services/
-|   |-- api-gateway/
-|   |-- auth-service/
-|   |-- account-service/
-|   |-- sync-service/
-|   |-- ai-service/
-|   |-- report-service/
+|-- backend/
+|   |-- services/
+|   |   |-- api-gateway/
+|   |   |-- auth-service/
+|   |   |-- account-service/
+|   |   |-- sync-service/
+|   |   |-- ai-service/
+|   |   |-- report-service/
 |-- infra/
 |   |-- docker/
 |   |-- k8s/

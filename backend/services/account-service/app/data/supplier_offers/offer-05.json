@@ -1,0 +1,14 @@
+{
+  "offer_id": "offer-05",
+  "offer_code": "OFF-HS-LUNCH-01",
+  "supplier_id": "supplier-03",
+  "product_id": "product-05",
+  "offer_title": "Deal h?p c?m cho campaign gi? tr?a",
+  "min_order_quantity": 60,
+  "unit_price": 46800,
+  "discount_percent": 6,
+  "start_date": "2026-04-01",
+  "end_date": "2026-04-30",
+  "status": "active",
+  "notes": "C? th? in logo shop khi ??t t? 300 s?n ph?m."
+}

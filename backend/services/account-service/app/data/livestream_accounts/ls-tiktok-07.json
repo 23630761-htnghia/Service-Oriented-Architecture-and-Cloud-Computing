@@ -1,0 +1,19 @@
+{
+  "account_id": "ls-tiktok-07",
+  "account_code": "TT07",
+  "name": "TikTok Deal 20h",
+  "platform_code": "tiktok",
+  "username": "smartlive_tt_room_07",
+  "owner_user_id": "user-admin",
+  "owner_name": "Ho?ng Mai",
+  "backup_contact": "0909 771 007",
+  "current_viewers": 1040,
+  "max_capacity": 1700,
+  "engagement_rate": 0.75,
+  "lag_signal": 0.24,
+  "status": "warning",
+  "stream_url": "https://tiktok.com/@smartlive_tt_room_07/live",
+  "warehouse_location": "Kho T?n Ph?",
+  "shift_label": "Ca t?i",
+  "created_at": "2026-03-09T08:30:00"
+}

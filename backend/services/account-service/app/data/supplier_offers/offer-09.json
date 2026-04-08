@@ -1,0 +1,14 @@
+{
+  "offer_id": "offer-09",
+  "offer_code": "OFF-TG-AUDIO-01",
+  "supplier_id": "supplier-05",
+  "product_id": "product-09",
+  "offer_title": "Deal tai nghe cho phi?n c?ng ngh? 21h",
+  "min_order_quantity": 40,
+  "unit_price": 123000,
+  "discount_percent": 5,
+  "start_date": "2026-04-01",
+  "end_date": "2026-04-22",
+  "status": "active",
+  "notes": "??ng g?i chu?n qu? t?ng, c? th? d?n nh?n shop."
+}

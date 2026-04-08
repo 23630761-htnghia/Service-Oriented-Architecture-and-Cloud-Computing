@@ -1,0 +1,14 @@
+{
+  "offer_id": "offer-10",
+  "offer_code": "OFF-TG-POWER-02",
+  "supplier_id": "supplier-05",
+  "product_id": "product-10",
+  "offer_title": "Combo pin s?c cho livestream c?ng ngh?",
+  "min_order_quantity": 24,
+  "unit_price": 214000,
+  "discount_percent": 4,
+  "start_date": "2026-04-06",
+  "end_date": "2026-05-06",
+  "status": "active",
+  "notes": "H? tr? kh?c laser khi ??n t? 120 s?n ph?m."
+}

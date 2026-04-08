@@ -1,0 +1,14 @@
+{
+  "product_id": "product-02",
+  "sku": "BEA-SUN-SPF50",
+  "name": "Kem ch?ng n?ng LumiSkin SPF50+ PA++++",
+  "category": "Ch?m s?c da",
+  "brand": "LumiSkin",
+  "cost_price": 98000,
+  "retail_price": 189000,
+  "stock_quantity": 180,
+  "reorder_level": 50,
+  "unit": "tu?p",
+  "description": "Kem ch?ng n?ng m?ng nh?, ph? h?p livestream combo skincare.",
+  "is_active": 1
+}
