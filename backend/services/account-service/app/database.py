@@ -23,7 +23,7 @@ TABLE_INSERT_COLUMNS = {
     "platforms": ["platform_id", "code", "display_name", "category", "region", "is_active"],
     "products": ["product_id", "sku", "name", "category", "brand", "cost_price", "retail_price", "stock_quantity", "reorder_level", "unit", "description", "is_active"],
     "suppliers": ["supplier_id", "supplier_code", "name", "contact_name", "phone", "email", "address", "rating", "lead_time_days", "status"],
-    "livestream_accounts": ["account_id", "account_code", "name", "platform_code", "username", "owner_user_id", "owner_name", "backup_contact", "current_viewers", "max_capacity", "engagement_rate", "lag_signal", "status", "stream_url", "warehouse_location", "shift_label", "created_at"],
+    "livestream_accounts": ["account_id", "account_code", "name", "platform_code", "username", "password", "owner_user_id", "owner_name", "backup_contact", "current_viewers", "max_capacity", "engagement_rate", "lag_signal", "status", "stream_url", "warehouse_location", "shift_label", "created_at"],
     "supplier_offers": ["offer_id", "offer_code", "supplier_id", "product_id", "offer_title", "min_order_quantity", "unit_price", "discount_percent", "start_date", "end_date", "status", "notes"],
 }
 
@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS livestream_accounts (
     name TEXT NOT NULL,
     platform_code TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
     owner_user_id TEXT,
     owner_name TEXT NOT NULL,
     backup_contact TEXT NOT NULL,
@@ -185,9 +186,21 @@ def insert_records(connection: sqlite3.Connection, table: str, records: list[dic
     connection.executemany(query, values)
 
 
+def ensure_schema_migrations(connection: sqlite3.Connection) -> None:
+    livestream_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(livestream_accounts)").fetchall()
+    }
+    if "password" not in livestream_columns:
+        connection.execute(
+            "ALTER TABLE livestream_accounts ADD COLUMN password TEXT NOT NULL DEFAULT 'live123'"
+        )
+
+
 def initialize_database() -> None:
     with get_connection() as connection:
         connection.executescript(SCHEMA_SQL)
+        ensure_schema_migrations(connection)
         clear_existing_data(connection)
         for table in TABLE_LOAD_ORDER:
             insert_records(connection, table, load_json_records(table))

@@ -11,8 +11,18 @@ const sidebarUserName = document.getElementById("sidebar-user-name");
 const sidebarUserRole = document.getElementById("sidebar-user-role");
 const topbarSubtitle = document.getElementById("topbar-subtitle");
 const loginForm = document.getElementById("login-form");
+const loginEmail = document.getElementById("login-email");
+const loginPassword = document.getElementById("login-password");
 const loginResult = document.getElementById("login-result");
+const captchaImage = document.getElementById("captcha-image");
+const captchaExpiry = document.getElementById("captcha-expiry");
+const captchaAnswer = document.getElementById("captcha-answer");
+const refreshCaptchaBtn = document.getElementById("refresh-captcha");
+const demoAccountButtons = document.querySelectorAll(".demo-account-btn");
 const logoutBtn = document.getElementById("logout-btn");
+const menuScreen = document.getElementById("menu-screen");
+const detailScreen = document.getElementById("detail-screen");
+const backToMenuBtn = document.getElementById("back-to-menu-btn");
 const sessionCard = document.getElementById("session-card");
 const platformSummary = document.getElementById("platform-summary");
 const kpiGrid = document.getElementById("kpi-grid");
@@ -20,6 +30,7 @@ const overviewHighlight = document.getElementById("overview-highlight");
 const accountForm = document.getElementById("account-form");
 const accountFormResult = document.getElementById("account-form-result");
 const accountsResult = document.getElementById("accounts-result");
+const staffCredentialsResult = document.getElementById("staff-credentials-result");
 const productsResult = document.getElementById("products-result");
 const suppliersResult = document.getElementById("suppliers-result");
 const offersResult = document.getElementById("offers-result");
@@ -30,11 +41,21 @@ const viewerForm = document.getElementById("viewer-form");
 const viewerResult = document.getElementById("viewer-result");
 const accountASelect = document.getElementById("account-a-select");
 const accountBSelect = document.getElementById("account-b-select");
-const navLinks = document.querySelectorAll(".nav-link");
+const menuCards = document.querySelectorAll(".menu-card");
 const tabPanels = document.querySelectorAll(".tab-panel");
+const topbarStatus = document.querySelector(".topbar-status");
+const platformSummaryPanel = platformSummary.closest(".panel");
+const accountFormPanel = accountForm.closest(".panel");
+const staffCredentialsPanel = document.getElementById("staff-credentials-panel");
+const suppliersMenuCard = document.querySelector('.menu-card[data-tab="suppliers"]');
+const aiToolsMenuCard = document.querySelector('.menu-card[data-tab="ai-tools"]');
+
+let activeTab = null;
 
 let currentSession = null;
 let livestreamAccounts = [];
+let currentCaptcha = null;
+let captchaCountdownTimer = null;
 
 function formatRole(role) {
   if (role === "admin") return "Quản trị vận hành";
@@ -53,6 +74,117 @@ function formatStatus(status) {
   return status;
 }
 
+function formatHealthStatus(status) {
+  if (status === "ok") return "Đang hoạt động";
+  if (status === "unreachable") return "Mất kết nối";
+  if (status === "unknown") return "Chưa xác định";
+  return status;
+}
+
+function normalizeSearchText(value) {
+  return (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function isAdminSession() {
+  return currentSession?.user?.role === "admin";
+}
+
+function isStaffSession() {
+  return currentSession?.user?.role === "staff";
+}
+
+function getOwnedAccounts(accounts = livestreamAccounts) {
+  if (!isStaffSession()) return accounts;
+  return accounts.filter((account) => account.owner_user_id === currentSession.user.id);
+}
+
+function inferRelevantCategoryKeys(accounts) {
+  const rules = [
+    { category: "Chăm sóc da", keywords: ["beauty", "cham soc da", "skincare", "lumiskin"] },
+    { category: "Mẹ và bé", keywords: ["me bim", "me va be", "mom", "babynest"] },
+    { category: "Gia dụng", keywords: ["gia dung", "nha cua", "homeset"] },
+    { category: "Phụ kiện công nghệ", keywords: ["cong nghe", "techgo"] },
+    { category: "Thời trang nữ", keywords: ["thoi trang", "urbanflex", "fashion", "outfit"] },
+  ];
+  const categoryKeys = new Set();
+  for (const account of accounts) {
+    const haystack = normalizeSearchText(`${account.name} ${account.platform_display_name} ${account.username}`);
+    for (const rule of rules) {
+      if (rule.keywords.some((keyword) => haystack.includes(keyword))) {
+        categoryKeys.add(normalizeSearchText(rule.category));
+      }
+    }
+  }
+  return categoryKeys;
+}
+
+function getVisibleProducts(products) {
+  if (!isStaffSession()) return products;
+  const categoryKeys = inferRelevantCategoryKeys(getOwnedAccounts());
+  if (!categoryKeys.size) return [];
+  return products.filter((product) => categoryKeys.has(normalizeSearchText(product.category)));
+}
+
+function getVisibleOffers(offers, visibleProducts) {
+  if (!isStaffSession()) return offers;
+  const productIds = new Set(visibleProducts.map((product) => product.product_id));
+  return offers.filter((offer) => productIds.has(offer.product_id));
+}
+
+function buildGroupedAccounts(accounts) {
+  const grouped = new Map();
+  accounts.forEach((account) => {
+    if (!grouped.has(account.platform)) {
+      grouped.set(account.platform, []);
+    }
+    grouped.get(account.platform).push(account);
+  });
+  return [...grouped.entries()].map(([platform, platformAccounts]) => {
+    const totalViewers = platformAccounts.reduce((total, account) => total + account.current_viewers, 0);
+    const totalCapacity = platformAccounts.reduce((total, account) => total + account.max_capacity, 0);
+    const averageLag = platformAccounts.length
+      ? (platformAccounts.reduce((total, account) => total + account.lag_signal, 0) / platformAccounts.length).toFixed(2)
+      : "0.00";
+    return {
+      platform,
+      display_name: platformAccounts[0].platform_display_name,
+      accounts: platformAccounts,
+      summary: {
+        total_accounts: platformAccounts.length,
+        total_viewers: totalViewers,
+        total_capacity: totalCapacity,
+        average_lag_signal: averageLag,
+      },
+    };
+  });
+}
+
+function applyRoleBasedNavigation() {
+  const adminMode = isAdminSession();
+  suppliersMenuCard.classList.toggle("hidden", !adminMode);
+  aiToolsMenuCard.classList.toggle("hidden", !adminMode);
+  platformSummaryPanel.classList.toggle("hidden", !adminMode);
+  accountFormPanel.classList.toggle("hidden", !adminMode);
+  staffCredentialsPanel.classList.toggle("hidden", !adminMode);
+  topbarStatus.classList.toggle("hidden", !adminMode);
+}
+
+function showMenuScreen() {
+  activeTab = null;
+  detailScreen.classList.add("hidden");
+  menuScreen.classList.remove("hidden");
+  tabPanels.forEach((panel) => panel.classList.add("hidden"));
+}
+
+function openTab(tabName) {
+  activeTab = tabName;
+  menuScreen.classList.add("hidden");
+  detailScreen.classList.remove("hidden");
+  tabPanels.forEach((panel) => panel.classList.add("hidden"));
+  document.getElementById(`tab-${tabName}`).classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function lockToAuthScreen() {
   document.body.classList.add(AUTH_LOCK_CLASS);
   authScreen.classList.remove("hidden");
@@ -67,8 +199,8 @@ function unlockDashboard() {
 
 function resetDashboardState() {
   livestreamAccounts = [];
-  gatewayStatus.textContent = "Chờ đăng nhập";
-  aiStatus.textContent = "Chờ đăng nhập";
+  gatewayStatus.textContent = "Chưa đăng nhập";
+  aiStatus.textContent = "Chưa đăng nhập";
   userStatus.textContent = "Chưa đăng nhập";
   sidebarUserName.textContent = "Chưa đăng nhập";
   sidebarUserRole.textContent = "Khách";
@@ -80,6 +212,8 @@ function resetDashboardState() {
   overviewHighlight.textContent = "Đăng nhập để xem dữ liệu vận hành theo thời gian thực.";
   accountsResult.classList.add("muted");
   accountsResult.textContent = "Đăng nhập để xem danh sách tài khoản livestream.";
+  staffCredentialsResult.classList.add("muted");
+  staffCredentialsResult.textContent = "Đăng nhập bằng admin để xem tài khoản nhân viên.";
   productsResult.classList.add("muted");
   productsResult.textContent = "Đăng nhập để xem danh mục sản phẩm.";
   offersResult.classList.add("muted");
@@ -96,6 +230,13 @@ function resetDashboardState() {
   sessionCard.textContent = "Phiên làm việc chưa được khởi tạo.";
   accountASelect.innerHTML = "";
   accountBSelect.innerHTML = "";
+  platformSummaryPanel.classList.remove("hidden");
+  accountFormPanel.classList.remove("hidden");
+  staffCredentialsPanel.classList.remove("hidden");
+  topbarStatus.classList.remove("hidden");
+  suppliersMenuCard.classList.remove("hidden");
+  aiToolsMenuCard.classList.remove("hidden");
+  showMenuScreen();
 }
 
 function setSession(session) {
@@ -116,12 +257,24 @@ function syncSessionUI() {
   }
 
   unlockDashboard();
+  applyRoleBasedNavigation();
+  showMenuScreen();
   userStatus.textContent = `${currentSession.user.name} (${currentSession.user.role})`;
   sidebarUserName.textContent = currentSession.user.name;
   sidebarUserRole.textContent = formatRole(currentSession.user.role);
-  topbarSubtitle.textContent = `${currentSession.user.name} đang theo dõi hiệu suất hệ thống, hàng hóa và nhà cung cấp trong ca trực hiện tại.`;
+  topbarSubtitle.textContent = isAdminSession()
+    ? `${currentSession.user.name} đang theo dõi hiệu suất hệ thống, hàng hóa và nhà cung cấp trong ca trực hiện tại.`
+    : `${currentSession.user.name} đang theo dõi room được phân công, ca làm hiện tại và danh mục hàng hóa cần bán.`;
   sessionCard.classList.remove("muted");
-  sessionCard.innerHTML = `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>${formatRole(currentSession.user.role)}</span><br /><span>Phiên đã được xác thực thành công.</span>`;
+  sessionCard.innerHTML = `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>${formatRole(currentSession.user.role)}</span><br /><span>${currentSession.user.department}</span>`;
+}
+
+function applyDemoCredentials(email, password) {
+  loginEmail.value = email;
+  loginPassword.value = password;
+  captchaAnswer.focus();
+  loginResult.classList.remove("muted");
+  loginResult.innerHTML = `<strong>Đã chọn tài khoản</strong><br />${email}<br />Nhập CAPTCHA để đăng nhập.`;
 }
 
 async function fetchJson(path, options = {}) {
@@ -135,23 +288,55 @@ async function fetchJson(path, options = {}) {
 
 async function fetchGatewayHealth() {
   if (!currentSession) {
-    gatewayStatus.textContent = "Chờ đăng nhập";
-    aiStatus.textContent = "Chờ đăng nhập";
+    gatewayStatus.textContent = "Chưa đăng nhập";
+    aiStatus.textContent = "Chưa đăng nhập";
     return;
   }
 
   try {
     const data = await fetchJson("/health");
-    gatewayStatus.textContent = data.status;
-    aiStatus.textContent = [
-      data.dependencies?.ai_service?.status || "unknown",
-      data.dependencies?.auth_service?.status || "unknown",
-      data.dependencies?.account_service?.status || "unknown",
-    ].join(" / ");
+    gatewayStatus.textContent = formatHealthStatus(data.status);
+    aiStatus.innerHTML = [
+      `AI: ${formatHealthStatus(data.dependencies?.ai_service?.status || "unknown")}`,
+      `Đăng nhập: ${formatHealthStatus(data.dependencies?.auth_service?.status || "unknown")}`,
+      `Dữ liệu: ${formatHealthStatus(data.dependencies?.account_service?.status || "unknown")}`,
+    ].join("<br />");
   } catch (error) {
-    gatewayStatus.textContent = "unreachable";
-    aiStatus.textContent = "unreachable";
+    gatewayStatus.textContent = "Mất kết nối";
+    aiStatus.innerHTML = "AI: Mất kết nối<br />Đăng nhập: Mất kết nối<br />Dữ liệu: Mất kết nối";
   }
+}
+
+async function loadCaptcha() {
+  if (captchaCountdownTimer) {
+    clearInterval(captchaCountdownTimer);
+    captchaCountdownTimer = null;
+  }
+  captchaImage.removeAttribute("src");
+  captchaImage.alt = "Đang tải CAPTCHA";
+  captchaExpiry.textContent = "Đang đồng bộ mã xác thực";
+  currentCaptcha = await fetchJson("/api/v1/auth/captcha");
+  captchaImage.src = `data:image/svg+xml;base64,${currentCaptcha.image_svg_base64}`;
+  captchaImage.alt = "CAPTCHA đăng nhập";
+  captchaAnswer.value = "";
+  startCaptchaCountdown(currentCaptcha.expires_in_seconds);
+}
+
+function startCaptchaCountdown(secondsRemaining) {
+  let remaining = secondsRemaining;
+  captchaExpiry.textContent = `Còn ${remaining} giây`;
+
+  captchaCountdownTimer = setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      clearInterval(captchaCountdownTimer);
+      captchaCountdownTimer = null;
+      currentCaptcha = null;
+      captchaExpiry.textContent = "CAPTCHA đã hết hạn";
+      return;
+    }
+    captchaExpiry.textContent = `Còn ${remaining} giây`;
+  }, 1000);
 }
 
 function renderKpis(summary, overview) {
@@ -175,18 +360,65 @@ function renderPlatformSummary(items) {
   platformSummary.innerHTML = items.map((item) => `<article class="kpi-card"><span>${item.display_name}</span><strong>${item.total_accounts}</strong><p>${item.total_viewers.toLocaleString("vi-VN")} / ${item.total_capacity.toLocaleString("vi-VN")} viewer | lag TB ${item.average_lag_signal}</p></article>`).join("");
 }
 
+function renderStaffOverview(accounts, products, offers) {
+  const shiftLabels = [...new Set(accounts.map((account) => account.shift_label))];
+  const warehouses = [...new Set(accounts.map((account) => account.warehouse_location))];
+  const totalViewers = accounts.reduce((total, account) => total + account.current_viewers, 0);
+  const totalCapacity = accounts.reduce((total, account) => total + account.max_capacity, 0);
+  const focusCategories = [...new Set(products.map((product) => product.category))];
+
+  kpiGrid.classList.remove("muted");
+  kpiGrid.innerHTML = [
+    { label: "Ca làm", value: shiftLabels.join(", ") || "Chưa phân ca", note: "Khung giờ bạn đang được phân công" },
+    { label: "Room phụ trách", value: String(accounts.length), note: "Số phòng livestream đang theo dõi" },
+    { label: "Viewer hiện tại", value: totalViewers.toLocaleString("vi-VN"), note: `Tổng sức chứa ${totalCapacity.toLocaleString("vi-VN")} viewer` },
+    { label: "Nhóm hàng", value: String(focusCategories.length), note: focusCategories.join(", ") || "Chưa có danh mục" },
+  ].map((item) => `<article class="kpi-card"><span>${item.label}</span><strong>${item.value}</strong><p>${item.note}</p></article>`).join("");
+
+  overviewHighlight.textContent = accounts.length
+    ? `Bạn đang phụ trách ${accounts.map((account) => account.name).join(", ")} tại ${warehouses.join(", ")}. Danh mục trong ca hiện có ${products.length} sản phẩm và ${offers.length} offer liên quan.`
+    : "Bạn chưa được phân công room livestream nào trong hệ thống.";
+
+  sessionCard.classList.remove("muted");
+  sessionCard.innerHTML = accounts.length
+    ? `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>${shiftLabels.join(", ")}</span><br /><span>${warehouses.join(", ")}</span><br /><span>Room phụ trách: ${accounts.map((account) => account.account_code).join(", ")}</span>`
+    : `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>Chưa có room được phân công.</span>`;
+}
+
 function renderAccounts(groups) {
   accountsResult.classList.remove("muted");
-  accountsResult.innerHTML = groups.map((group) => `<section class="account-table-card"><h3>${group.display_name}</h3><p class="table-subline">${group.summary.total_accounts} phòng live | ${group.summary.total_viewers.toLocaleString("vi-VN")} viewer realtime</p><div class="account-cards">${group.accounts.map((account) => `<article class="account-table-card"><h3>${account.name}</h3><p>${account.owner_name} - ${account.shift_label}</p><div class="table-meta"><span><strong>${account.current_viewers}</strong> / ${account.max_capacity} viewer</span><span>${account.username}</span><span>${account.warehouse_location}</span><span class="tag ${account.status}">${formatStatus(account.status)}</span></div></article>`).join("")}</div></section>`).join("");
+  if (!groups.length) {
+    accountsResult.innerHTML = "Bạn chưa được phân công phòng livestream nào.";
+    return;
+  }
+  accountsResult.innerHTML = groups.map((group) => `<section class="account-table-card"><h3>${group.display_name}</h3><p class="table-subline">${group.summary.total_accounts} phòng live | ${group.summary.total_viewers.toLocaleString("vi-VN")} viewer realtime</p><div class="account-cards">${group.accounts.map((account) => `<article class="account-table-card"><h3>${account.name}</h3><p>${account.owner_name} - ${account.shift_label}</p><div class="table-meta"><span><strong>${account.current_viewers}</strong> / ${account.max_capacity} viewer</span><span>${account.username}</span><span>${account.warehouse_location}</span><span class="tag ${account.status}">${formatStatus(account.status)}</span></div>${isAdminSession() ? `<div class="credential-grid"><div class="credential-card"><span>Tài khoản live</span><strong>${account.username}</strong><small>Mật khẩu: ${account.password}</small></div><div class="credential-card"><span>Tài khoản nhân viên</span><strong>${account.owner_email || "Chưa gán"}</strong><small>Mật khẩu: ${account.owner_password || "Chưa gán"}</small></div></div>` : ""}</article>`).join("")}</div></section>`).join("");
+}
+
+function renderStaffCredentials(users) {
+  const staffUsers = users.filter((user) => user.role === "staff");
+  staffCredentialsResult.classList.remove("muted");
+  if (!staffUsers.length) {
+    staffCredentialsResult.innerHTML = "Chưa có tài khoản nhân viên nào trong hệ thống.";
+    return;
+  }
+  staffCredentialsResult.innerHTML = `<div class="credential-grid">${staffUsers.map((user) => `<article class="credential-card"><span>${user.full_name}</span><strong>${user.email}</strong><small>Mật khẩu: ${user.password}</small><small>Bộ phận: ${user.department}</small></article>`).join("")}</div>`;
 }
 
 function renderProducts(products) {
   productsResult.classList.remove("muted");
+  if (!products.length) {
+    productsResult.innerHTML = "Chưa có sản phẩm nào được phân cho ca làm hiện tại.";
+    return;
+  }
   productsResult.innerHTML = `<div class="product-grid">${products.map((item) => `<article class="product-card"><h3>${item.name}</h3><p>${item.brand} - ${item.category}</p><div class="product-meta"><span>SKU: ${item.sku}</span><span>Giá bán: ${item.retail_price.toLocaleString("vi-VN")} đ</span><span>Giá vốn: ${item.cost_price.toLocaleString("vi-VN")} đ</span><span>Tồn kho: ${item.stock_quantity} ${item.unit}</span></div></article>`).join("")}</div>`;
 }
 
 function renderOffers(offers) {
   offersResult.classList.remove("muted");
+  if (!offers.length) {
+    offersResult.innerHTML = "Không có offer nào áp dụng cho room và ca làm hiện tại.";
+    return;
+  }
   offersResult.innerHTML = `<div class="offer-grid">${offers.map((item) => `<article class="offer-card"><h3>${item.offer_title}</h3><p>${item.supplier_name}</p><div class="offer-meta"><span>Sản phẩm: ${item.product_name}</span><span>MOQ: ${item.min_order_quantity}</span><span>Giá nhập: ${item.unit_price.toLocaleString("vi-VN")} đ</span><span>Chiết khấu: ${item.discount_percent}%</span><span class="tag ${item.status}">${formatStatus(item.status)}</span></div></article>`).join("")}</div>`;
 }
 
@@ -229,24 +461,43 @@ async function loadDashboardData() {
     fetchJson("/api/v1/suppliers"),
     fetchJson("/api/v1/supplier-offers"),
   ]);
-  livestreamAccounts = overview.livestream_accounts;
-  renderPlatformSummary(summary);
-  renderKpis(summary, overview);
-  renderAccounts(groups);
-  renderProducts(products);
-  renderOffers(offers);
-  renderSuppliers(suppliers);
-  fillAccountSelectors(livestreamAccounts);
+  livestreamAccounts = isStaffSession() ? getOwnedAccounts(overview.livestream_accounts) : overview.livestream_accounts;
+  const visibleProducts = getVisibleProducts(products);
+  const visibleOffers = getVisibleOffers(offers, visibleProducts);
+
+  if (isAdminSession()) {
+    renderPlatformSummary(summary);
+    renderKpis(summary, overview);
+    renderAccounts(groups);
+    renderStaffCredentials(overview.users);
+    renderSuppliers(suppliers);
+    fillAccountSelectors(livestreamAccounts);
+  } else {
+    renderStaffOverview(livestreamAccounts, visibleProducts, visibleOffers);
+    renderAccounts(buildGroupedAccounts(livestreamAccounts));
+  }
+
+  renderProducts(visibleProducts);
+  renderOffers(visibleOffers);
 }
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (!currentCaptcha?.captcha_id) {
+    loginResult.textContent = "CAPTCHA chưa sẵn sàng. Vui lòng làm mới và thử lại.";
+    return;
+  }
   loginResult.textContent = "Đang xác thực tài khoản...";
   try {
     const data = await fetchJson("/api/v1/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: document.getElementById("login-email").value.trim(), password: document.getElementById("login-password").value }),
+      body: JSON.stringify({
+        email: loginEmail.value.trim(),
+        password: loginPassword.value,
+        captcha_id: currentCaptcha.captcha_id,
+        captcha_answer: captchaAnswer.value.trim().toUpperCase(),
+      }),
     });
     setSession(data);
     loginResult.classList.remove("muted");
@@ -254,7 +505,34 @@ loginForm.addEventListener("submit", async (event) => {
     await Promise.all([fetchGatewayHealth(), loadDashboardData()]);
   } catch (error) {
     lockToAuthScreen();
-    loginResult.textContent = "Đăng nhập thất bại. Vui lòng kiểm tra email hoặc mật khẩu.";
+    loginResult.textContent = "Đăng nhập thất bại. Vui lòng kiểm tra email, mật khẩu và CAPTCHA.";
+    await loadCaptcha();
+  }
+});
+
+demoAccountButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    applyDemoCredentials(button.dataset.demoEmail, button.dataset.demoPassword);
+  });
+});
+
+menuCards.forEach((button) => {
+  button.addEventListener("click", () => {
+    openTab(button.dataset.tab);
+  });
+});
+
+backToMenuBtn.addEventListener("click", () => {
+  showMenuScreen();
+});
+
+refreshCaptchaBtn.addEventListener("click", async () => {
+  loginResult.textContent = "Đang làm mới CAPTCHA...";
+  try {
+    await loadCaptcha();
+    loginResult.textContent = "Đã tạo CAPTCHA mới.";
+  } catch (error) {
+    loginResult.textContent = "Không thể tải CAPTCHA mới.";
   }
 });
 
@@ -270,6 +548,7 @@ accountForm.addEventListener("submit", async (event) => {
     name: document.getElementById("account-name").value.trim(),
     platform: document.getElementById("account-platform").value,
     username: document.getElementById("account-username").value.trim(),
+    password: document.getElementById("account-password").value.trim(),
     owner_name: document.getElementById("account-owner").value.trim(),
     owner_user_id: "user-admin",
     backup_contact: document.getElementById("account-backup").value.trim(),
@@ -291,6 +570,7 @@ accountForm.addEventListener("submit", async (event) => {
     document.getElementById("account-capacity").value = 1400;
     document.getElementById("account-engagement").value = 0.62;
     document.getElementById("account-lag").value = 0.14;
+    document.getElementById("account-password").value = "live123";
     await loadDashboardData();
   } catch (error) {
     accountFormResult.textContent = "Không thể tạo phòng livestream. Hãy kiểm tra lại thông tin nhập.";
@@ -328,15 +608,10 @@ viewerForm.addEventListener("submit", async (event) => {
   }
 });
 
-navLinks.forEach((button) => {
-  button.addEventListener("click", () => {
-    navLinks.forEach((item) => item.classList.remove("active"));
-    tabPanels.forEach((panel) => panel.classList.add("hidden"));
-    button.classList.add("active");
-    document.getElementById(`tab-${button.dataset.tab}`).classList.remove("hidden");
-  });
-});
-
 localStorage.removeItem(SESSION_KEY);
 lockToAuthScreen();
 resetDashboardState();
+loadCaptcha().catch(() => {
+  captchaImage.alt = "Không thể tải CAPTCHA";
+  captchaExpiry.textContent = "Hãy kiểm tra auth-service rồi làm mới lại";
+});

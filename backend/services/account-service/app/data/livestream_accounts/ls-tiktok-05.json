@@ -1,11 +1,11 @@
 {
   "account_id": "ls-tiktok-05",
   "account_code": "TT05",
-  "name": "TikTok C?ng Ngh? Gi? T?t",
+  "name": "TikTok Công Nghệ Giá Tốt",
   "platform_code": "tiktok",
   "username": "smartlive_tt_room_05",
-  "owner_user_id": "user-admin",
-  "owner_name": "Gia H?n",
+  "owner_user_id": "user-staff-04",
+  "owner_name": "Vo Gia Han",
   "backup_contact": "0909 771 005",
   "current_viewers": 590,
   "max_capacity": 1100,
@@ -13,7 +13,8 @@
   "lag_signal": 0.12,
   "status": "stable",
   "stream_url": "https://tiktok.com/@smartlive_tt_room_05/live",
-  "warehouse_location": "Kho Th? ??c",
-  "shift_label": "Ca t?i",
-  "created_at": "2026-03-07T08:30:00"
+  "warehouse_location": "Kho Thủ Đức",
+  "shift_label": "Ca tối",
+  "created_at": "2026-03-07T08:30:00",
+  "password": "live15"
 }

@@ -1,11 +1,11 @@
 {
   "supplier_id": "supplier-01",
   "supplier_code": "SUP-LS",
-  "name": "C?ng ty TNHH Ph?n ph?i LumiSkin Vi?t Nam",
-  "contact_name": "Ph?m Thu H?",
+  "name": "Công ty TNHH Phân phối LumiSkin Việt Nam",
+  "contact_name": "Phạm Thu Hà",
   "phone": "0908 001 001",
   "email": "thuha@lumiskin.vn",
-  "address": "KCN T?n B?nh, TP. H? Ch? Minh",
+  "address": "KCN Tân Bình, TP. Hồ Chí Minh",
   "rating": 4.8,
   "lead_time_days": 3,
   "status": "active"

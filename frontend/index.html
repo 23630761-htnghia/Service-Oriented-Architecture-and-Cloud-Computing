@@ -12,15 +12,10 @@
   <section id="auth-screen" class="auth-screen">
     <div class="auth-brand-panel">
       <p class="eyebrow">SmartLive Commerce Suite</p>
-      <h1>Điều hành livestream đa nền tảng trong một màn hình duy nhất</h1>
+      <h1>Phần mềm điều hành livestream đa nền tảng</h1>
       <p class="auth-copy">
         Theo dõi tài khoản live, nhà cung cấp, hàng hóa, hiệu suất viewer và chất lượng comment bằng một trung tâm vận hành thống nhất.
       </p>
-      <div class="auth-metrics">
-        <article><strong>20</strong><span>phòng live đang hoạt động</span></article>
-        <article><strong>10</strong><span>sản phẩm chủ lực đang chạy</span></article>
-        <article><strong>12</strong><span>offer nhà cung cấp còn hiệu lực</span></article>
-      </div>
     </div>
 
     <div class="auth-form-panel">
@@ -28,156 +23,213 @@
         <div class="auth-header">
           <p class="auth-kicker">Đăng nhập hệ thống</p>
           <h2>SmartLive Control Center</h2>
-          <p>Dùng tài khoản quản trị để truy cập dashboard vận hành nội bộ.</p>
+          <p>Dùng tài khoản quản trị hoặc tài khoản nhân viên để truy cập khu vực phù hợp.</p>
         </div>
         <form id="login-form" class="stack">
           <label>Email công việc<input id="login-email" type="email" value="admin@smartlive.vn" autocomplete="username" /></label>
           <label>Mật khẩu<input id="login-password" type="password" value="123456" autocomplete="current-password" /></label>
+          <div class="captcha-block">
+            <div class="captcha-head">
+              <label for="captcha-answer">Mã xác thực</label>
+              <button id="refresh-captcha" type="button" class="text-btn">Làm mới</button>
+            </div>
+            <div class="captcha-challenge">
+              <img id="captcha-image" alt="CAPTCHA đăng nhập" />
+              <span id="captcha-expiry" class="muted">Còn 30 giây</span>
+            </div>
+            <input id="captcha-answer" type="text" autocomplete="off" placeholder="Nhập mã trong ảnh" maxlength="5" />
+          </div>
           <button type="submit" class="primary-btn">Đăng nhập</button>
         </form>
         <div id="login-result" class="inline-note muted">Thông tin phiên đăng nhập sẽ hiển thị tại đây.</div>
         <div class="demo-credentials">
-          <span>Tài khoản demo</span>
-          <strong>admin@smartlive.vn</strong>
-          <small>Mật khẩu: 123456</small>
+          <span>Tài khoản hệ thống</span>
+          <div class="demo-account-grid">
+            <button
+              type="button"
+              class="demo-account-btn"
+              data-demo-email="admin@smartlive.vn"
+              data-demo-password="123456"
+            >
+              <strong>Admin</strong>
+              <small>admin@smartlive.vn</small>
+              <small>Mật khẩu: 123456</small>
+            </button>
+            <button
+              type="button"
+              class="demo-account-btn"
+              data-demo-email="staff@smartlive.vn"
+              data-demo-password="staff01"
+            >
+              <strong>Nhân viên</strong>
+              <small>staff@smartlive.vn</small>
+              <small>Mật khẩu: staff01</small>
+            </button>
+          </div>
+          <small>Thông tin tài khoản nhân viên còn lại chỉ hiển thị trong khu vực quản trị của admin.</small>
         </div>
       </div>
     </div>
   </section>
 
   <section id="dashboard-screen" class="dashboard-screen hidden">
-    <aside class="sidebar">
-      <div>
-        <p class="eyebrow">SmartLive</p>
-        <h2>Control Center</h2>
-      </div>
-      <nav class="sidebar-nav">
-        <button class="nav-link active" data-tab="overview">Tổng quan</button>
-        <button class="nav-link" data-tab="accounts">Phòng live</button>
-        <button class="nav-link" data-tab="catalog">Hàng hóa</button>
-        <button class="nav-link" data-tab="suppliers">Nhà cung cấp</button>
-        <button class="nav-link" data-tab="ai-tools">Công cụ AI</button>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="profile-chip">
-          <strong id="sidebar-user-name">Chưa đăng nhập</strong>
-          <span id="sidebar-user-role">Khách</span>
-        </div>
-        <button id="logout-btn" class="ghost-btn">Đăng xuất</button>
-      </div>
-    </aside>
-
-    <main class="workspace">
-      <header class="topbar">
+    <main class="dashboard-shell">
+      <header class="topbar dashboard-topbar">
         <div>
           <p class="eyebrow">Bảng điều khiển vận hành</p>
           <h1>Dashboard nội bộ SmartLive</h1>
           <p id="topbar-subtitle" class="topbar-subtitle">Đăng nhập để bắt đầu phiên làm việc.</p>
         </div>
-        <div class="topbar-status">
-          <div class="status-pill"><span>Gateway</span><strong id="gateway-status">Chờ đăng nhập</strong></div>
-          <div class="status-pill"><span>Dịch vụ lõi</span><strong id="ai-status">Chờ đăng nhập</strong></div>
-          <div class="status-pill"><span>Phiên hiện tại</span><strong id="user-status">Chưa đăng nhập</strong></div>
+        <div class="topbar-actions">
+          <div class="profile-chip topbar-profile">
+            <strong id="sidebar-user-name">Chưa đăng nhập</strong>
+            <span id="sidebar-user-role">Khách</span>
+          </div>
+          <button id="logout-btn" class="ghost-btn topbar-logout">Đăng xuất</button>
         </div>
       </header>
 
-      <section id="tab-overview" class="tab-panel active">
-        <div class="hero-overview">
-          <div class="hero-copy-card">
-            <h3>Hiệu suất vận hành hôm nay</h3>
-            <p id="overview-highlight">Đăng nhập để xem dữ liệu vận hành theo thời gian thực.</p>
+      <section id="menu-screen" class="menu-screen">
+        <div class="menu-grid">
+          <button class="menu-card" data-tab="overview">
+            <span>Tổng quan</span>
+            <strong>Hiệu suất hệ thống</strong>
+            <p>Xem KPI vận hành, trạng thái dịch vụ và phiên hiện tại.</p>
+          </button>
+          <button class="menu-card" data-tab="accounts">
+            <span>Phòng live</span>
+            <strong>Tài khoản và phân công</strong>
+            <p>Xem room livestream, tài khoản live, nhân viên phụ trách và thông tin quản trị.</p>
+          </button>
+          <button class="menu-card" data-tab="catalog">
+            <span>Hàng hóa</span>
+            <strong>Sản phẩm và offer</strong>
+            <p>Theo dõi danh mục bán hàng, giá bán, tồn kho và ưu đãi đang chạy.</p>
+          </button>
+          <button class="menu-card" data-tab="suppliers">
+            <span>Nhà cung cấp</span>
+            <strong>Đối tác nhập hàng</strong>
+            <p>Xem đầu mối liên hệ, lead time và năng lực cung ứng của từng đối tác.</p>
+          </button>
+          <button class="menu-card" data-tab="ai-tools">
+            <span>Công cụ AI</span>
+            <strong>Phân tích và điều phối</strong>
+            <p>Phân tích comment và cân bằng viewer giữa các phòng live.</p>
+          </button>
+        </div>
+      </section>
+
+      <section id="detail-screen" class="detail-screen hidden">
+        <button id="back-to-menu-btn" class="floating-back-btn" type="button">Quay lại</button>
+
+        <section id="tab-overview" class="tab-panel active hidden">
+          <div class="hero-overview">
+            <div class="hero-copy-card">
+              <h3>Hiệu suất vận hành hôm nay</h3>
+              <p id="overview-highlight">Đăng nhập để xem dữ liệu vận hành theo thời gian thực.</p>
+            </div>
+            <div id="kpi-grid" class="kpi-grid muted">Thông tin KPI sẽ hiển thị sau khi đăng nhập.</div>
           </div>
-          <div id="kpi-grid" class="kpi-grid muted">Thông tin KPI sẽ hiển thị sau khi đăng nhập.</div>
-        </div>
-        <div class="content-grid two-wide">
-          <section class="panel">
-            <div class="panel-header">
-              <h2>Nền tảng đang hoạt động</h2>
-              <p>Theo dõi nhanh sức tải viewer và mức độ lag trung bình trên từng nền tảng.</p>
-            </div>
-            <div id="platform-summary" class="stats-grid muted">Vui lòng đăng nhập để xem thống kê nền tảng.</div>
-          </section>
-          <section class="panel">
-            <div class="panel-header">
-              <h2>Tình trạng phiên làm việc</h2>
-              <p>Thông tin user đăng nhập và trạng thái hệ thống dùng cho vận hành.</p>
-            </div>
-            <div id="session-card" class="result-card muted">Phiên làm việc chưa được khởi tạo.</div>
-          </section>
-        </div>
-      </section>
-
-      <section id="tab-accounts" class="tab-panel hidden">
-        <div class="content-grid two-wide">
-          <section class="panel panel-span-2">
-            <div class="panel-header split">
-              <div>
-                <h2>Phòng livestream</h2>
-                <p>Danh sách phòng live, người phụ trách, kho xử lý và sức tải theo từng nền tảng.</p>
+          <div class="content-grid two-wide">
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Nền tảng đang hoạt động</h2>
+                <p>Theo dõi nhanh sức tải viewer và mức độ lag trung bình trên từng nền tảng.</p>
               </div>
-              <div class="panel-badge">Realtime operations</div>
-            </div>
-            <form id="account-form" class="stack compact-form">
-              <div class="form-grid four-cols">
-                <label>Tên phòng live<input id="account-name" placeholder="TikTok Beauty Flash 11" /></label>
-                <label>Nền tảng<select id="account-platform"><option value="tiktok">TikTok</option><option value="facebook">Facebook</option></select></label>
-                <label>Username<input id="account-username" placeholder="smartlive_tt_room_11" /></label>
-                <label>Host chính<input id="account-owner" placeholder="Hà My" /></label>
-                <label>Liên hệ dự phòng<input id="account-backup" placeholder="0909 000 111" /></label>
-                <label>Kho xử lý<input id="account-warehouse" placeholder="Kho Tổng HCM" /></label>
-                <label>Ca trực<input id="account-shift" placeholder="Ca tối" /></label>
-                <label>Stream URL<input id="account-stream-url" placeholder="https://tiktok.com/@smartlive_tt_room_11/live" /></label>
-                <label>Viewer hiện tại<input id="account-viewers" type="number" min="0" value="350" /></label>
-                <label>Sức chứa tối đa<input id="account-capacity" type="number" min="1" value="1400" /></label>
-                <label>Tỷ lệ tương tác<input id="account-engagement" type="number" min="0" max="1" step="0.01" value="0.62" /></label>
-                <label>Tín hiệu lag<input id="account-lag" type="number" min="0" max="1" step="0.01" value="0.14" /></label>
-                <label>Trạng thái<select id="account-status"><option value="active">Hoạt động</option><option value="stable">Ổn định</option><option value="warning">Cảnh báo</option></select></label>
+              <div id="platform-summary" class="stats-grid muted">Vui lòng đăng nhập để xem thống kê nền tảng.</div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Tình trạng phiên làm việc</h2>
+                <p>Thông tin user đăng nhập và trạng thái hệ thống dùng cho vận hành.</p>
               </div>
-              <button type="submit" class="primary-btn">Tạo phòng livestream</button>
-            </form>
-            <div id="account-form-result" class="result-card muted">Bạn có thể thêm phòng live mới để cập nhật lại danh sách vận hành.</div>
-          </section>
-          <section class="panel panel-span-2">
-            <div class="panel-header"><h2>Danh sách tài khoản theo nền tảng</h2><p>Dữ liệu lấy trực tiếp từ backend sau khi đăng nhập.</p></div>
-            <div id="accounts-result" class="muted">Đăng nhập để xem danh sách tài khoản livestream.</div>
-          </section>
-        </div>
-      </section>
-
-      <section id="tab-catalog" class="tab-panel hidden">
-        <div class="content-grid two-wide">
-          <section class="panel"><div class="panel-header"><h2>Danh mục hàng hóa</h2><p>Sản phẩm chủ lực theo ngành hàng, giá bán và tồn kho hiện tại.</p></div><div id="products-result" class="muted">Đăng nhập để xem danh mục sản phẩm.</div></section>
-          <section class="panel"><div class="panel-header"><h2>Offer đang chạy</h2><p>Ưu đãi nhập hàng dành cho các room livestream đang hoạt động.</p></div><div id="offers-result" class="muted">Đăng nhập để xem các offer hiện hành.</div></section>
-        </div>
-      </section>
-
-      <section id="tab-suppliers" class="tab-panel hidden">
-        <section class="panel"><div class="panel-header"><h2>Nhà cung cấp</h2><p>Đánh giá năng lực giao hàng, đầu mối liên hệ và lead time cho từng đối tác.</p></div><div id="suppliers-result" class="muted">Đăng nhập để xem danh sách nhà cung cấp.</div></section>
-      </section>
-
-      <section id="tab-ai-tools" class="tab-panel hidden">
-        <div class="content-grid two-wide">
-          <section class="panel">
-            <div class="panel-header"><h2>AI phân tích comment</h2><p>Ưu tiên lead, đo sentiment và gợi ý hành động cho CSKH livestream.</p></div>
-            <form id="comment-form" class="stack">
-              <label>Nội dung comment<textarea id="comment-input" rows="5" placeholder="Ví dụ: Shop ơi cho mình chốt 2 serum giao về quận 7 nhé"></textarea></label>
-              <button type="submit" class="primary-btn">Phân tích comment</button>
-            </form>
-            <div id="comment-result" class="result-card muted">Kết quả phân tích sẽ xuất hiện tại đây sau khi đăng nhập.</div>
-          </section>
-          <section class="panel">
-            <div class="panel-header"><h2>AI cân bằng viewer</h2><p>Điều phối lượt xem về room phù hợp để giảm rủi ro lag khi traffic tăng đột biến.</p></div>
-            <form id="viewer-form" class="stack">
-              <label>Viewer mới dự kiến<input id="incoming-viewers" type="number" min="0" value="450" /></label>
-              <div class="account-grid selectors">
-                <label>Phòng live A<select id="account-a-select"></select></label>
-                <label>Phòng live B<select id="account-b-select"></select></label>
+              <div id="session-card" class="result-card muted">Phiên làm việc chưa được khởi tạo.</div>
+              <div class="topbar-status">
+                <div class="status-pill"><span>Trạng thái gateway</span><strong id="gateway-status">Chưa đăng nhập</strong></div>
+                <div class="status-pill"><span>Trạng thái dịch vụ</span><strong id="ai-status">Chưa đăng nhập</strong></div>
+                <div class="status-pill"><span>Phiên hiện tại</span><strong id="user-status">Chưa đăng nhập</strong></div>
               </div>
-              <button type="submit" class="primary-btn">Tính cân bằng viewer</button>
-            </form>
-            <div id="viewer-result" class="result-card muted">Đề xuất phân bổ viewer sẽ hiển thị tại đây sau khi đăng nhập.</div>
-          </section>
-        </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="tab-accounts" class="tab-panel hidden">
+          <div class="content-grid two-wide">
+            <section class="panel panel-span-2">
+              <div class="panel-header split">
+                <div>
+                  <h2>Phòng livestream</h2>
+                  <p>Danh sách phòng live, người phụ trách, kho xử lý và sức tải theo từng nền tảng.</p>
+                </div>
+                <div class="panel-badge">Realtime operations</div>
+              </div>
+              <form id="account-form" class="stack compact-form">
+                <div class="form-grid four-cols">
+                  <label>Tên phòng live<input id="account-name" placeholder="TikTok Beauty Flash 11" /></label>
+                  <label>Nền tảng<select id="account-platform"><option value="tiktok">TikTok</option><option value="facebook">Facebook</option></select></label>
+                  <label>Username<input id="account-username" placeholder="smartlive_tt_room_11" /></label>
+                  <label>Mật khẩu live<input id="account-password" value="live123" placeholder="live123" /></label>
+                  <label>Host chính<input id="account-owner" placeholder="Hà My" /></label>
+                  <label>Liên hệ dự phòng<input id="account-backup" placeholder="0909 000 111" /></label>
+                  <label>Kho xử lý<input id="account-warehouse" placeholder="Kho Tổng HCM" /></label>
+                  <label>Ca trực<input id="account-shift" placeholder="Ca tối" /></label>
+                  <label>Stream URL<input id="account-stream-url" placeholder="https://tiktok.com/@smartlive_tt_room_11/live" /></label>
+                  <label>Viewer hiện tại<input id="account-viewers" type="number" min="0" value="350" /></label>
+                  <label>Sức chứa tối đa<input id="account-capacity" type="number" min="1" value="1400" /></label>
+                  <label>Tỷ lệ tương tác<input id="account-engagement" type="number" min="0" max="1" step="0.01" value="0.62" /></label>
+                  <label>Tín hiệu lag<input id="account-lag" type="number" min="0" max="1" step="0.01" value="0.14" /></label>
+                  <label>Trạng thái<select id="account-status"><option value="active">Hoạt động</option><option value="stable">Ổn định</option><option value="warning">Cảnh báo</option></select></label>
+                </div>
+                <button type="submit" class="primary-btn">Tạo phòng livestream</button>
+              </form>
+              <div id="account-form-result" class="result-card muted">Bạn có thể thêm phòng live mới để cập nhật lại danh sách vận hành.</div>
+            </section>
+            <section class="panel panel-span-2">
+              <div class="panel-header"><h2>Danh sách tài khoản theo nền tảng</h2><p>Dữ liệu lấy trực tiếp từ backend sau khi đăng nhập.</p></div>
+              <div id="accounts-result" class="muted">Đăng nhập để xem danh sách tài khoản livestream.</div>
+            </section>
+            <section id="staff-credentials-panel" class="panel panel-span-2">
+              <div class="panel-header"><h2>Tài khoản nhân viên</h2><p>Danh sách email và mật khẩu của từng tài khoản nhân viên trong hệ thống.</p></div>
+              <div id="staff-credentials-result" class="muted">Đăng nhập bằng admin để xem tài khoản nhân viên.</div>
+            </section>
+          </div>
+        </section>
+
+        <section id="tab-catalog" class="tab-panel hidden">
+          <div class="content-grid two-wide">
+            <section class="panel"><div class="panel-header"><h2>Danh mục hàng hóa</h2><p>Sản phẩm chủ lực theo ngành hàng, giá bán và tồn kho hiện tại.</p></div><div id="products-result" class="muted">Đăng nhập để xem danh mục sản phẩm.</div></section>
+            <section class="panel"><div class="panel-header"><h2>Offer đang chạy</h2><p>Ưu đãi nhập hàng dành cho các room livestream đang hoạt động.</p></div><div id="offers-result" class="muted">Đăng nhập để xem các offer hiện hành.</div></section>
+          </div>
+        </section>
+
+        <section id="tab-suppliers" class="tab-panel hidden">
+          <section class="panel"><div class="panel-header"><h2>Nhà cung cấp</h2><p>Đánh giá năng lực giao hàng, đầu mối liên hệ và lead time cho từng đối tác.</p></div><div id="suppliers-result" class="muted">Đăng nhập để xem danh sách nhà cung cấp.</div></section>
+        </section>
+
+        <section id="tab-ai-tools" class="tab-panel hidden">
+          <div class="content-grid two-wide">
+            <section class="panel">
+              <div class="panel-header"><h2>AI phân tích comment</h2><p>Ưu tiên lead, đo sentiment và gợi ý hành động cho CSKH livestream.</p></div>
+              <form id="comment-form" class="stack">
+                <label>Nội dung comment<textarea id="comment-input" rows="5" placeholder="Ví dụ: Shop ơi cho mình chốt 2 serum giao về quận 7 nhé"></textarea></label>
+                <button type="submit" class="primary-btn">Phân tích comment</button>
+              </form>
+              <div id="comment-result" class="result-card muted">Kết quả phân tích sẽ xuất hiện tại đây sau khi đăng nhập.</div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2>AI cân bằng viewer</h2><p>Điều phối lượt xem về room phù hợp để giảm rủi ro lag khi traffic tăng đột biến.</p></div>
+              <form id="viewer-form" class="stack">
+                <label>Viewer mới dự kiến<input id="incoming-viewers" type="number" min="0" value="450" /></label>
+                <div class="account-grid selectors">
+                  <label>Phòng live A<select id="account-a-select"></select></label>
+                  <label>Phòng live B<select id="account-b-select"></select></label>
+                </div>
+                <button type="submit" class="primary-btn">Tính cân bằng viewer</button>
+              </form>
+              <div id="viewer-result" class="result-card muted">Đề xuất phân bổ viewer sẽ hiển thị tại đây sau khi đăng nhập.</div>
+            </section>
+          </div>
+        </section>
       </section>
     </main>
   </section>

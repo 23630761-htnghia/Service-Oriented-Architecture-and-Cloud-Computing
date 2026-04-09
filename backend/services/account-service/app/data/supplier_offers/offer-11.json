@@ -3,12 +3,12 @@
   "offer_code": "OFF-UF-WEEKEND-03",
   "supplier_id": "supplier-02",
   "product_id": "product-03",
-  "offer_title": "Deal cu?i tu?n cho room t?ng tr??ng",
+  "offer_title": "Deal cuối tuần cho room tăng trưởng",
   "min_order_quantity": 120,
   "unit_price": 67200,
   "discount_percent": 13,
   "start_date": "2026-04-10",
   "end_date": "2026-04-12",
   "status": "scheduled",
-  "notes": "S? l??ng gi?i h?n cho chi?n d?ch cu?i tu?n."
+  "notes": "Số lượng giới hạn cho chiến dịch cuối tuần."
 }

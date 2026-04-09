@@ -1,14 +1,14 @@
 {
   "product_id": "product-07",
   "sku": "BAB-BOT-180",
-  "name": "B?nh s?a c? r?ng BabyNest 180ml",
-  "category": "M? v? b?",
+  "name": "Bình sữa cổ rộng BabyNest 180ml",
+  "category": "Mẹ và bé",
   "brand": "BabyNest",
   "cost_price": 58000,
   "retail_price": 119000,
   "stock_quantity": 210,
   "reorder_level": 50,
-  "unit": "b?nh",
-  "description": "B?nh s?a b?n ??u ? nh?m m? b?m tr?n Facebook Live.",
+  "unit": "bình",
+  "description": "Bình sữa bán đều ở nhóm mẹ bỉm trên Facebook Live.",
   "is_active": 1
 }

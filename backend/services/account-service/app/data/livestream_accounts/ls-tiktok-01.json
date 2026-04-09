@@ -5,7 +5,7 @@
   "platform_code": "tiktok",
   "username": "smartlive_tt_room_01",
   "owner_user_id": "user-admin",
-  "owner_name": "Ng?c Tr?m",
+  "owner_name": "Tran Minh Quan",
   "backup_contact": "0909 771 001",
   "current_viewers": 1180,
   "max_capacity": 1800,
@@ -13,7 +13,8 @@
   "lag_signal": 0.22,
   "status": "active",
   "stream_url": "https://tiktok.com/@smartlive_tt_room_01/live",
-  "warehouse_location": "Kho G? V?p",
-  "shift_label": "Ca s?ng",
-  "created_at": "2026-03-03T08:30:00"
+  "warehouse_location": "Kho Gò Vấp",
+  "shift_label": "Ca sáng",
+  "created_at": "2026-03-03T08:30:00",
+  "password": "live11"
 }

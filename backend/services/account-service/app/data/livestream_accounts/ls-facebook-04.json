@@ -1,11 +1,11 @@
 {
   "account_id": "ls-facebook-04",
   "account_code": "FB04",
-  "name": "Facebook Gia D?ng Cu?i Tu?n",
+  "name": "Facebook Gia Dụng Cuối Tuần",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_04",
-  "owner_user_id": "user-admin",
-  "owner_name": "Th?o Vy",
+  "owner_user_id": "user-staff-03",
+  "owner_name": "Pham Thu Ha",
   "backup_contact": "0909 881 004",
   "current_viewers": 380,
   "max_capacity": 850,
@@ -13,7 +13,8 @@
   "lag_signal": 0.1,
   "status": "active",
   "stream_url": "https://facebook.com/smartlive_fb_room_04/live",
-  "warehouse_location": "Kho T?n Ph?",
-  "shift_label": "Ca t?i",
-  "created_at": "2026-03-16T09:00:00"
+  "warehouse_location": "Kho Tân Phú",
+  "shift_label": "Ca tối",
+  "created_at": "2026-03-16T09:00:00",
+  "password": "live04"
 }

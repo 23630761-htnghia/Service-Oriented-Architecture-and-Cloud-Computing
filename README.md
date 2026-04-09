@@ -92,9 +92,9 @@ Hệ thống triển khai trên nền tảng Databricks theo định hướng cl
 
 ## 9. Hướng phát triển khả thi trong repo
 
-- `frontend/`: dashboard demo gọi API và hiển thị kết quả AI.
+- `frontend/`: dashboard gọi API và hiển thị kết quả AI.
 - `backend/services/api-gateway/`: đầu vào thống nhất cho frontend.
-- `backend/services/auth-service/`: đăng nhập demo và thông tin người dùng.
+- `backend/services/auth-service/`: đăng nhập và thông tin người dùng.
 - `backend/services/account-service/`: quản lý nhiều tài khoản livestream, sản phẩm, nhà cung cấp và offer bằng SQLite.
 - `backend/services/sync-service/`: đồng bộ comment và sự kiện livestream.
 - `backend/services/ai-service/`: phân tích comment và cân bằng viewer để chống lag.
@@ -105,9 +105,9 @@ Hệ thống triển khai trên nền tảng Databricks theo định hướng cl
 
 ## 10. Mã nguồn đã có trong repo
 
-- `frontend/`: static dashboard cho demo trên trình duyệt.
+- `frontend/`: static dashboard trên trình duyệt.
 - `backend/services/ai-service/`: FastAPI service cho phân tích comment và viewer balancing.
-- `backend/services/auth-service/`: FastAPI service cho đăng nhập demo.
+- `backend/services/auth-service/`: FastAPI service cho đăng nhập.
 - `backend/services/account-service/`: FastAPI service dùng SQLite để quản lý người dùng, tài khoản livestream, mặt hàng, nhà cung cấp và offer.
 - `backend/services/api-gateway/`: FastAPI gateway gom API cho frontend.
 - `ml/`: pipeline train `intent` và `sentiment` bằng scikit-learn.
@@ -118,7 +118,7 @@ Hệ thống triển khai trên nền tảng Databricks theo định hướng cl
 
 ### Cách 1 - Chạy nhanh bằng Docker Compose
 
-Đây là cách phù hợp nhất để demo nhanh toàn bộ hệ thống.
+Đây là cách phù hợp nhất để chạy nhanh toàn bộ hệ thống.
 
 Yêu cầu:
 
@@ -166,20 +166,23 @@ Sau khi chạy xong, các service backend sẽ mở trên:
 - Auth Service: `http://localhost:8002`
 - Account Service: `http://localhost:8003`
 
-### Tài khoản demo
+### Tài khoản hệ thống
 
 Bạn có thể đăng nhập bằng tài khoản mẫu:
 
-- Email: `admin@smartlive.vn` - Mật khẩu: `123456`
-- Email: `staff@smartlive.vn` - Mật khẩu: `123456`
+- Admin: `admin@smartlive.vn` - Mật khẩu: `123456`
+- Nhân viên: `staff@smartlive.vn` - Mật khẩu: `staff01`
 
 ### Database seed cho account-service
 
 `account-service` sẽ tự tạo SQLite database khi khởi động tại `backend/services/account-service/app/data/account_management.db` với dữ liệu mẫu:
 
 - 1 tài khoản admin.
+- 4 tài khoản nhân viên.
 - 10 tài khoản livestream TikTok.
 - 10 tài khoản livestream Facebook.
+- Mỗi tài khoản livestream đều có `username` và `password` riêng để admin theo dõi trong tab `Phòng live`.
+- Thông tin đầy đủ email và mật khẩu của các tài khoản nhân viên bổ sung chỉ hiển thị trong khu vực admin.
 - 10 mặt hàng.
 - 5 nhà cung cấp.
 - 12 offer từ nhà cung cấp.

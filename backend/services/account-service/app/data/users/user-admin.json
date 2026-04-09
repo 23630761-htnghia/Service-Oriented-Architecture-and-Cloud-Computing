@@ -2,10 +2,10 @@
   "user_id": "user-admin",
   "email": "admin@smartlive.vn",
   "password": "123456",
-  "full_name": "Tr?n Minh Qu?n",
+  "full_name": "Tran Minh Quan",
   "role": "admin",
   "phone": "0909 000 001",
-  "department": "Trung t?m v?n h?nh livestream",
+  "department": "Trung tam van hanh livestream",
   "status": "active",
   "created_at": "2026-03-10T08:00:00",
   "last_login_at": "2026-04-08T21:30:00"

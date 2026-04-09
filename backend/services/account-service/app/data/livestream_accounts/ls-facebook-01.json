@@ -5,7 +5,7 @@
   "platform_code": "facebook",
   "username": "smartlive_fb_room_01",
   "owner_user_id": "user-admin",
-  "owner_name": "Anh Th?",
+  "owner_name": "Tran Minh Quan",
   "backup_contact": "0909 881 001",
   "current_viewers": 690,
   "max_capacity": 1200,
@@ -13,7 +13,8 @@
   "lag_signal": 0.17,
   "status": "stable",
   "stream_url": "https://facebook.com/smartlive_fb_room_01/live",
-  "warehouse_location": "Kho Qu?n 7",
-  "shift_label": "Ca s?ng",
-  "created_at": "2026-03-13T09:00:00"
+  "warehouse_location": "Kho Quận 7",
+  "shift_label": "Ca sáng",
+  "created_at": "2026-03-13T09:00:00",
+  "password": "live01"
 }

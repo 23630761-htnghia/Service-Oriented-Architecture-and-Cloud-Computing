@@ -1,11 +1,11 @@
 {
   "account_id": "ls-facebook-02",
   "account_code": "FB02",
-  "name": "Facebook Ch?m S?c Da Official",
+  "name": "Facebook Chăm Sóc Da Official",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_02",
-  "owner_user_id": "user-admin",
-  "owner_name": "Mai H?",
+  "owner_user_id": "user-staff",
+  "owner_name": "Nguyen Bao Tram",
   "backup_contact": "0909 881 002",
   "current_viewers": 540,
   "max_capacity": 1050,
@@ -13,7 +13,8 @@
   "lag_signal": 0.13,
   "status": "active",
   "stream_url": "https://facebook.com/smartlive_fb_room_02/live",
-  "warehouse_location": "Kho Qu?n 7",
-  "shift_label": "Ca chi?u",
-  "created_at": "2026-03-14T09:00:00"
+  "warehouse_location": "Kho Quận 7",
+  "shift_label": "Ca chiều",
+  "created_at": "2026-03-14T09:00:00",
+  "password": "live02"
 }

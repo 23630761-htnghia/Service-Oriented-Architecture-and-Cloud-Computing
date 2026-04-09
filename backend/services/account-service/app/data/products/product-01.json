@@ -2,13 +2,13 @@
   "product_id": "product-01",
   "sku": "BEA-SER-C30",
   "name": "Serum Vitamin C LumiSkin 30ml",
-  "category": "Ch?m s?c da",
+  "category": "Chăm sóc da",
   "brand": "LumiSkin",
   "cost_price": 89000,
   "retail_price": 169000,
   "stock_quantity": 240,
   "reorder_level": 60,
   "unit": "chai",
-  "description": "Serum s?ng da b?n t?t trong c?c phi?n live beauty bu?i t?i.",
+  "description": "Serum sáng da bán tốt trong các phiên live beauty buổi tối.",
   "is_active": 1
 }

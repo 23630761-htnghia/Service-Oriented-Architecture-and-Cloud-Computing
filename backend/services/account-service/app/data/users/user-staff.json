@@ -1,0 +1,12 @@
+{
+  "user_id": "user-staff",
+  "email": "staff@smartlive.vn",
+  "password": "staff01",
+  "full_name": "Nguyen Bao Tram",
+  "role": "staff",
+  "phone": "0909 000 002",
+  "department": "Kinh doanh livestream",
+  "status": "active",
+  "created_at": "2026-03-12T08:00:00",
+  "last_login_at": "2026-04-08T19:30:00"
+}

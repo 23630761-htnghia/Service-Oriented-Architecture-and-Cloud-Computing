@@ -1,0 +1,12 @@
+{
+  "user_id": "user-staff-02",
+  "email": "staff02@smartlive.vn",
+  "password": "staff02",
+  "full_name": "Le Hoang My",
+  "role": "staff",
+  "phone": "0909 000 003",
+  "department": "Van hanh san",
+  "status": "active",
+  "created_at": "2026-03-13T08:00:00",
+  "last_login_at": "2026-04-08T20:05:00"
+}

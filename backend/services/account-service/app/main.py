@@ -49,7 +49,7 @@ def fetch_one(query: str, params: tuple = ()) -> dict | None:
 def list_users_data() -> list[UserAccount]:
     rows = fetch_all(
         """
-        SELECT user_id, email, full_name, role, phone, department, status, created_at, last_login_at
+        SELECT user_id, email, password, full_name, role, phone, department, status, created_at, last_login_at
         FROM users
         ORDER BY role DESC, full_name ASC
         """
@@ -66,8 +66,11 @@ def list_livestream_accounts_data(platform: str | None = None) -> list[Livestrea
             la.platform_code AS platform,
             p.display_name AS platform_display_name,
             la.username,
+            la.password,
             la.owner_user_id,
             la.owner_name,
+            u.email AS owner_email,
+            u.password AS owner_password,
             la.backup_contact,
             la.current_viewers,
             la.max_capacity,
@@ -80,6 +83,7 @@ def list_livestream_accounts_data(platform: str | None = None) -> list[Livestrea
             la.created_at
         FROM livestream_accounts la
         JOIN platforms p ON p.code = la.platform_code
+        LEFT JOIN users u ON u.user_id = la.owner_user_id
     """
     params: tuple = ()
     if platform:
@@ -272,6 +276,7 @@ def create_livestream_account(payload: LivestreamAccountCreate) -> LivestreamAcc
             "name": payload.name,
             "platform_code": normalized_platform,
             "username": payload.username,
+            "password": payload.password,
             "owner_user_id": owner_user_id,
             "owner_name": payload.owner_name,
             "backup_contact": payload.backup_contact,
@@ -294,6 +299,7 @@ def create_livestream_account(payload: LivestreamAccountCreate) -> LivestreamAcc
                 name,
                 platform_code,
                 username,
+                password,
                 owner_user_id,
                 owner_name,
                 backup_contact,
@@ -306,7 +312,7 @@ def create_livestream_account(payload: LivestreamAccountCreate) -> LivestreamAcc
                 warehouse_location,
                 shift_label,
                 created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             tuple(record[column] for column in [
                 "account_id",
@@ -314,6 +320,7 @@ def create_livestream_account(payload: LivestreamAccountCreate) -> LivestreamAcc
                 "name",
                 "platform_code",
                 "username",
+                "password",
                 "owner_user_id",
                 "owner_name",
                 "backup_contact",
@@ -339,8 +346,11 @@ def create_livestream_account(payload: LivestreamAccountCreate) -> LivestreamAcc
             la.platform_code AS platform,
             p.display_name AS platform_display_name,
             la.username,
+            la.password,
             la.owner_user_id,
             la.owner_name,
+            u.email AS owner_email,
+            u.password AS owner_password,
             la.backup_contact,
             la.current_viewers,
             la.max_capacity,
@@ -353,6 +363,7 @@ def create_livestream_account(payload: LivestreamAccountCreate) -> LivestreamAcc
             la.created_at
         FROM livestream_accounts la
         JOIN platforms p ON p.code = la.platform_code
+        LEFT JOIN users u ON u.user_id = la.owner_user_id
         WHERE la.account_id = ?
         """,
         (account_id,),

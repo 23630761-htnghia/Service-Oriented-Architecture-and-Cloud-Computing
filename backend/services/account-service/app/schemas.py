@@ -11,6 +11,7 @@ class HealthResponse(BaseModel):
 class UserAccount(BaseModel):
     user_id: str = Field(..., min_length=1)
     email: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1)
     full_name: str = Field(..., min_length=1)
     role: str = Field(..., min_length=1)
     phone: str = Field(..., min_length=1)
@@ -27,8 +28,11 @@ class LivestreamAccount(BaseModel):
     platform: str = Field(..., min_length=1)
     platform_display_name: str = Field(..., min_length=1)
     username: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1)
     owner_user_id: str | None = None
     owner_name: str = Field(..., min_length=1)
+    owner_email: str | None = None
+    owner_password: str | None = None
     backup_contact: str = Field(..., min_length=1)
     current_viewers: int = Field(..., ge=0)
     max_capacity: int = Field(..., gt=0)
@@ -45,6 +49,7 @@ class LivestreamAccountCreate(BaseModel):
     name: str = Field(..., min_length=1)
     platform: str = Field(..., min_length=1)
     username: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=1)
     owner_name: str = Field(..., min_length=1)
     owner_user_id: str | None = None
     backup_contact: str = Field(..., min_length=1)

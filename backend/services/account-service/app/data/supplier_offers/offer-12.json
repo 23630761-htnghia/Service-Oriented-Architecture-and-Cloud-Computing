@@ -3,12 +3,12 @@
   "offer_code": "OFF-LS-KOL-03",
   "supplier_id": "supplier-01",
   "product_id": "product-01",
-  "offer_title": "G?i serum d?nh ri?ng cho KOL room",
+  "offer_title": "Gói serum dành riêng cho KOL room",
   "min_order_quantity": 80,
   "unit_price": 78400,
   "discount_percent": 12,
   "start_date": "2026-04-12",
   "end_date": "2026-04-30",
   "status": "scheduled",
-  "notes": "?u ti?n booking l? ri?ng cho room doanh thu cao."
+  "notes": "Ưu tiên booking lô riêng cho room doanh thu cao."
 }

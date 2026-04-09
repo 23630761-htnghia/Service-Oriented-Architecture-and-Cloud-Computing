@@ -4,8 +4,8 @@
   "name": "Facebook Mega Sale Room",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_10",
-  "owner_user_id": "user-admin",
-  "owner_name": "Di?m My",
+  "owner_user_id": "user-staff-04",
+  "owner_name": "Vo Gia Han",
   "backup_contact": "0909 881 010",
   "current_viewers": 880,
   "max_capacity": 1400,
@@ -13,7 +13,8 @@
   "lag_signal": 0.22,
   "status": "warning",
   "stream_url": "https://facebook.com/smartlive_fb_room_10/live",
-  "warehouse_location": "Kho T?ng HCM",
-  "shift_label": "Ca t?i",
-  "created_at": "2026-03-22T09:00:00"
+  "warehouse_location": "Kho Tổng HCM",
+  "shift_label": "Ca tối",
+  "created_at": "2026-03-22T09:00:00",
+  "password": "live10"
 }

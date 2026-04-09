@@ -1,0 +1,12 @@
+{
+  "user_id": "user-staff-04",
+  "email": "staff04@smartlive.vn",
+  "password": "staff04",
+  "full_name": "Vo Gia Han",
+  "role": "staff",
+  "phone": "0909 000 005",
+  "department": "Cham soc khach hang",
+  "status": "active",
+  "created_at": "2026-03-15T08:00:00",
+  "last_login_at": "2026-04-08T20:45:00"
+}

@@ -98,6 +98,11 @@ async def login(payload: dict):
     return await forward_post(settings.auth_service_url, "/login", payload)
 
 
+@app.get("/api/v1/auth/captcha")
+async def get_captcha():
+    return await forward_get(settings.auth_service_url, "/captcha")
+
+
 @app.get("/api/v1/auth/me")
 async def me():
     return await forward_get(settings.auth_service_url, "/me")

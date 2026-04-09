@@ -4,8 +4,8 @@
   "name": "Facebook Mom Club Live",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_03",
-  "owner_user_id": "user-admin",
-  "owner_name": "B?ch Ng?c",
+  "owner_user_id": "user-staff-02",
+  "owner_name": "Le Hoang My",
   "backup_contact": "0909 881 003",
   "current_viewers": 430,
   "max_capacity": 900,
@@ -13,7 +13,8 @@
   "lag_signal": 0.12,
   "status": "stable",
   "stream_url": "https://facebook.com/smartlive_fb_room_03/live",
-  "warehouse_location": "Kho B?nh D??ng",
-  "shift_label": "Ca chi?u",
-  "created_at": "2026-03-15T09:00:00"
+  "warehouse_location": "Kho Bình Dương",
+  "shift_label": "Ca chiều",
+  "created_at": "2026-03-15T09:00:00",
+  "password": "live03"
 }
