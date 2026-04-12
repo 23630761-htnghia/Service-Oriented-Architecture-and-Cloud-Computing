@@ -1,0 +1,111 @@
+[
+  {
+    "sync_record_id": "record-0001",
+    "source": "tiktok-comments",
+    "source_comment_id": "cmt-1001",
+    "platform": "tiktok",
+    "account_id": "ls-tiktok-01",
+    "livestream_id": "live-tiktok-01",
+    "username": "khach_a",
+    "comment": "shop oi mau nay con hang khong",
+    "synced_at": "2026-04-12T10:15:00Z",
+    "sync_status": "synced",
+    "analysis": {
+      "intent": "ask_stock",
+      "sentiment": "neutral",
+      "lead_score": 74,
+      "priority": "high"
+    },
+    "error_detail": null
+  },
+  {
+    "sync_record_id": "record-0002",
+    "source": "tiktok-comments",
+    "source_comment_id": "cmt-1002",
+    "platform": "tiktok",
+    "account_id": "ls-tiktok-01",
+    "livestream_id": "live-tiktok-01",
+    "username": "khach_b",
+    "comment": "ib minh size m voi",
+    "synced_at": "2026-04-12T10:16:00Z",
+    "sync_status": "synced",
+    "analysis": {
+      "intent": "buying_intent",
+      "sentiment": "positive",
+      "lead_score": 91,
+      "priority": "high"
+    },
+    "error_detail": null
+  },
+  {
+    "sync_record_id": "record-0003",
+    "source": "facebook-comments",
+    "source_comment_id": "cmt-2001",
+    "platform": "facebook",
+    "account_id": "ls-facebook-03",
+    "livestream_id": "live-facebook-03",
+    "username": "khach_c",
+    "comment": "co freeship khong shop",
+    "synced_at": "2026-04-12T10:17:00Z",
+    "sync_status": "synced",
+    "analysis": {
+      "intent": "ask_shipping",
+      "sentiment": "neutral",
+      "lead_score": 63,
+      "priority": "medium"
+    },
+    "error_detail": null
+  },
+  {
+    "sync_record_id": "record-0004",
+    "source": "facebook-comments",
+    "source_comment_id": "cmt-2002",
+    "platform": "facebook",
+    "account_id": "ls-facebook-03",
+    "livestream_id": "live-facebook-03",
+    "username": "khach_d",
+    "comment": "spam link giam gia soc",
+    "synced_at": "2026-04-12T10:18:00Z",
+    "sync_status": "synced",
+    "analysis": {
+      "intent": "spam",
+      "sentiment": "negative",
+      "lead_score": 5,
+      "priority": "low"
+    },
+    "error_detail": null
+  },
+  {
+    "sync_record_id": "record-0005",
+    "source": "tiktok-comments",
+    "source_comment_id": "cmt-1003",
+    "platform": "tiktok",
+    "account_id": "ls-tiktok-02",
+    "livestream_id": "live-tiktok-02",
+    "username": "khach_e",
+    "comment": "cho minh xin gia combo 2 san pham",
+    "synced_at": "2026-04-12T10:19:00Z",
+    "sync_status": "synced",
+    "analysis": {
+      "intent": "ask_price",
+      "sentiment": "positive",
+      "lead_score": 82,
+      "priority": "high"
+    },
+    "error_detail": null
+  },
+  {
+    "sync_record_id": "record-0006",
+    "source": "facebook-comments",
+    "source_comment_id": "cmt-2003",
+    "platform": "facebook",
+    "account_id": "ls-facebook-05",
+    "livestream_id": "live-facebook-05",
+    "username": "khach_f",
+    "comment": "em gui them thong tin qua inbox",
+    "synced_at": "2026-04-12T10:20:00Z",
+    "sync_status": "analysis_failed",
+    "analysis": null,
+    "error_detail": "Khong the goi ai-service: timeout"
+  }
+]

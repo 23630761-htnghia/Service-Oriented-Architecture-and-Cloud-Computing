@@ -10,6 +10,7 @@ class HealthResponse(BaseModel):
 
 class UserAccount(BaseModel):
     user_id: str = Field(..., min_length=1)
+    staff_code: str | None = None
     email: str = Field(..., min_length=1)
     password: str = Field(..., min_length=1)
     full_name: str = Field(..., min_length=1)
@@ -19,6 +20,27 @@ class UserAccount(BaseModel):
     status: str = Field(..., min_length=1)
     created_at: str = Field(..., min_length=1)
     last_login_at: str | None = None
+
+
+class UserPasswordUpdate(BaseModel):
+    password: str = Field(..., min_length=3)
+
+
+class StaffUserCreate(BaseModel):
+    staff_code: str = Field(..., min_length=2)
+    email: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=3)
+    full_name: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=1)
+    department: str = Field(..., min_length=1)
+    status: str = "active"
+
+
+class UserDeleteResponse(BaseModel):
+    user_id: str = Field(..., min_length=1)
+    removed_email: str = Field(..., min_length=1)
+    reassigned_accounts: int = Field(..., ge=0)
+    message: str = Field(..., min_length=1)
 
 
 class LivestreamAccount(BaseModel):
@@ -61,6 +83,12 @@ class LivestreamAccountCreate(BaseModel):
     stream_url: str = Field(..., min_length=1)
     warehouse_location: str = Field(..., min_length=1)
     shift_label: str = Field(..., min_length=1)
+
+
+class LivestreamAccountDeleteResponse(BaseModel):
+    account_id: str = Field(..., min_length=1)
+    account_name: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1)
 
 
 class ProductItem(BaseModel):

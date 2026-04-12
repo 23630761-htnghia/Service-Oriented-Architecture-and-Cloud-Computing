@@ -12,7 +12,10 @@
   <section id="auth-screen" class="auth-screen">
     <div class="auth-brand-panel">
       <p class="eyebrow">SmartLive Commerce Suite</p>
-      <h1>Phần mềm điều hành livestream đa nền tảng</h1>
+      <h1 class="auth-hero-title">
+        <span>Điều hành livestream</span>
+        <span>đa nền tảng</span>
+      </h1>
       <p class="auth-copy">
         Theo dõi tài khoản live, nhà cung cấp, hàng hóa, hiệu suất viewer và chất lượng comment bằng một trung tâm vận hành thống nhất.
       </p>
@@ -42,7 +45,7 @@
           <button type="submit" class="primary-btn">Đăng nhập</button>
         </form>
         <div id="login-result" class="inline-note muted">Thông tin phiên đăng nhập sẽ hiển thị tại đây.</div>
-        <div class="demo-credentials">
+        <div class="demo-credentials hidden" aria-hidden="true">
           <span>Tài khoản hệ thống</span>
           <div class="demo-account-grid">
             <button
@@ -155,13 +158,51 @@
 
         <section id="tab-accounts" class="tab-panel hidden">
           <div class="content-grid two-wide">
-            <section class="panel panel-span-2">
+            <section id="admin-account-mode-panel" class="panel panel-span-2 hidden">
+              <div class="panel-header">
+                <h2>Phòng live</h2>
+                <p>Chọn chế độ xem nhanh phân công staff hoặc chuyển sang khu vực thêm, xóa và chỉnh sửa tài khoản.</p>
+              </div>
+              <div class="admin-account-switcher">
+                <button type="button" class="switcher-btn is-active" data-admin-account-mode="view">Xem tài khoản</button>
+                <button type="button" class="switcher-btn" data-admin-account-mode="manage">Chỉnh sửa tài khoản</button>
+              </div>
+            </section>
+
+            <section id="staff-assignment-panel" class="panel panel-span-2 hidden">
               <div class="panel-header split">
                 <div>
-                  <h2>Phòng livestream</h2>
-                  <p>Danh sách phòng live, người phụ trách, kho xử lý và sức tải theo từng nền tảng.</p>
+                  <h2>Xem tài khoản staff</h2>
+                  <p>Nhập tên staff để lọc nhanh, sau đó bấm vào từng người để xem room đang phụ trách, ca trực và nơi xử lý.</p>
                 </div>
-                <div class="panel-badge">Realtime operations</div>
+                <div class="panel-badge">Staff directory</div>
+              </div>
+              <div class="staff-search-bar">
+                <label for="staff-search-input">Tìm kiếm staff</label>
+                <input id="staff-search-input" type="search" placeholder="Ví dụ: tram, my, han..." />
+              </div>
+              <div id="staff-assignment-result" class="muted">Đăng nhập bằng admin để xem danh sách staff.</div>
+            </section>
+
+            <section id="manage-account-switcher-panel" class="panel panel-span-2 hidden">
+              <div class="panel-header">
+                <h2>Chỉnh sửa tài khoản</h2>
+                <p>Chọn đúng nhóm thao tác để tiếp cận nhanh hơn: thêm room mới, quản lý room đang có hoặc quản trị staff.</p>
+              </div>
+              <div class="admin-account-switcher">
+                <button type="button" class="switcher-btn is-active" data-manage-account-section="room-create">Thêm phòng live</button>
+                <button type="button" class="switcher-btn" data-manage-account-section="room-list">Danh sách room</button>
+                <button type="button" class="switcher-btn" data-manage-account-section="staff">Tài khoản staff</button>
+              </div>
+            </section>
+
+            <section id="account-form-panel-section" class="panel panel-span-2">
+              <div class="panel-header split">
+                <div>
+                  <h2>Thêm phòng livestream</h2>
+                  <p>Tạo room mới để đưa vào hệ thống vận hành và gán thông tin ca trực, kho xử lý.</p>
+                </div>
+                <div class="panel-badge">Add live room</div>
               </div>
               <form id="account-form" class="stack compact-form">
                 <div class="form-grid four-cols">
@@ -184,12 +225,29 @@
               </form>
               <div id="account-form-result" class="result-card muted">Bạn có thể thêm phòng live mới để cập nhật lại danh sách vận hành.</div>
             </section>
-            <section class="panel panel-span-2">
-              <div class="panel-header"><h2>Danh sách tài khoản theo nền tảng</h2><p>Dữ liệu lấy trực tiếp từ backend sau khi đăng nhập.</p></div>
+
+            <section id="accounts-list-panel" class="panel panel-span-2">
+              <div class="panel-header">
+                <h2>Danh sách room đang quản lý</h2>
+                <p>Admin có thể xem nhanh trạng thái phòng live và xóa những room không còn sử dụng.</p>
+              </div>
               <div id="accounts-result" class="muted">Đăng nhập để xem danh sách tài khoản livestream.</div>
             </section>
+
             <section id="staff-credentials-panel" class="panel panel-span-2">
-              <div class="panel-header"><h2>Tài khoản nhân viên</h2><p>Danh sách email và mật khẩu của từng tài khoản nhân viên trong hệ thống.</p></div>
+              <div class="panel-header"><h2>Chỉnh sửa tài khoản staff</h2><p>Thêm staff mới theo mã staff duy nhất, đồng thời đổi mật khẩu hoặc xóa từng tài khoản khi cần.</p></div>
+              <form id="staff-create-form" class="stack compact-form">
+                <div class="form-grid four-cols">
+                  <label>Mã staff<input id="staff-code" placeholder="STF005" /></label>
+                  <label>Họ và tên<input id="staff-full-name" placeholder="Nguyen Minh Anh" /></label>
+                  <label>Email công việc<input id="staff-email" type="email" placeholder="staff05@smartlive.vn" /></label>
+                  <label>Mật khẩu<input id="staff-password" value="staff05" placeholder="staff05" /></label>
+                  <label>Số điện thoại<input id="staff-phone" placeholder="0909 000 006" /></label>
+                  <label>Bộ phận<input id="staff-department" placeholder="Van hanh livestream" /></label>
+                </div>
+                <button type="submit" class="primary-btn">Tạo tài khoản staff</button>
+              </form>
+              <div id="staff-create-result" class="result-card muted">Mỗi staff cần một mã duy nhất. Nếu mã đã tồn tại, chỉ có thể tạo lại sau khi xóa tài khoản cũ.</div>
               <div id="staff-credentials-result" class="muted">Đăng nhập bằng admin để xem tài khoản nhân viên.</div>
             </section>
           </div>

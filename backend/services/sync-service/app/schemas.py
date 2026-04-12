@@ -48,6 +48,7 @@ class SyncedComment(BaseModel):
     synced_at: str
     sync_status: CommentSyncStatus
     analysis: dict | None = None
+    error_detail: str | None = None
 
 
 class SyncExecutionResponse(BaseModel):
@@ -64,4 +65,24 @@ class SyncSummary(BaseModel):
     total_comments_synced: int = Field(..., ge=0)
     total_comments_failed: int = Field(..., ge=0)
     jobs: list[SyncJob]
+
+
+class SyncRecordExport(BaseModel):
+    sync_record_id: str
+    source: str
+    source_comment_id: str
+    platform: str
+    account_id: str | None = None
+    livestream_id: str | None = None
+    username: str | None = None
+    comment: str
+    synced_at: str
+    event_date: str
+    sync_status: CommentSyncStatus
+    intent: str | None = None
+    sentiment: str | None = None
+    lead_score: int | None = Field(default=None, ge=0, le=100)
+    priority: str | None = None
+    error_detail: str | None = None
+    analysis: dict | None = None
 

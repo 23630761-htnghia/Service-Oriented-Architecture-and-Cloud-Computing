@@ -27,6 +27,43 @@ Các cổng mặc định:
 - `http://localhost:8004`: Sync Service
 - `http://localhost:8005`: Report Service
 
+Các URL nên dùng để kiểm tra:
+
+- API Gateway:
+  - root: `http://localhost:8000/`
+  - health: `http://localhost:8000/health`
+  - docs: `http://localhost:8000/docs`
+- AI Service:
+  - root: `http://localhost:8001/`
+  - health: `http://localhost:8001/health`
+  - docs: `http://localhost:8001/docs`
+- Auth Service:
+  - root: `http://localhost:8002/`
+  - health: `http://localhost:8002/health`
+  - docs: `http://localhost:8002/docs`
+- Account Service:
+  - root: `http://localhost:8003/`
+  - health: `http://localhost:8003/health`
+  - docs: `http://localhost:8003/docs`
+- Sync Service:
+  - root: `http://localhost:8004/`
+  - health: `http://localhost:8004/health`
+  - docs: `http://localhost:8004/docs`
+- Report Service:
+  - root: `http://localhost:8005/`
+  - health: `http://localhost:8005/health`
+  - docs: `http://localhost:8005/docs`
+
+Lưu ý:
+
+- Nếu bạn đang chạy image cũ thì root `/` có thể vẫn báo `Not Found`.
+- Khi đó cần build lại:
+
+```bash
+cd backend
+docker compose up --build
+```
+
 ## Gateway APIs chính
 
 - `GET /health`

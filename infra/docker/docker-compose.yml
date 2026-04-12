@@ -10,6 +10,8 @@ services:
     build:
       context: ../../backend/services/auth-service
     container_name: auth-service
+    environment:
+      ACCOUNT_SERVICE_URL: http://account-service:8003
     ports:
       - "8002:8002"
 

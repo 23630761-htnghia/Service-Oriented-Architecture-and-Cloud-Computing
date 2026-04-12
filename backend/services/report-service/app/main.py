@@ -84,6 +84,21 @@ async def shutdown_event() -> None:
     await app.state.client.aclose()
 
 
+@app.get("/")
+def root():
+    return {
+        "service": "report-service",
+        "status": "ok",
+        "message": "Report Service is running.",
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "main_routes": [
+            "/kpis/overview",
+            "/reports/operations",
+        ],
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 def health_check() -> HealthResponse:
     return HealthResponse(status="ok", service="report-service")

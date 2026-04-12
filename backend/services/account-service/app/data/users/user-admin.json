@@ -1,8 +1,9 @@
 {
   "user_id": "user-admin",
+  "staff_code": null,
   "email": "admin@smartlive.vn",
   "password": "123456",
-  "full_name": "Tran Minh Quan",
+  "full_name": "Hoàng Trọng Nghĩa",
   "role": "admin",
   "phone": "0909 000 001",
   "department": "Trung tam van hanh livestream",

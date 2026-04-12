@@ -19,7 +19,7 @@ TABLE_PRIMARY_KEYS = {
 TABLE_JSON_DIRS = {table: DATA_DIR / table for table in TABLE_PRIMARY_KEYS}
 
 TABLE_INSERT_COLUMNS = {
-    "users": ["user_id", "email", "password", "full_name", "role", "phone", "department", "status", "created_at", "last_login_at"],
+    "users": ["user_id", "staff_code", "email", "password", "full_name", "role", "phone", "department", "status", "created_at", "last_login_at"],
     "platforms": ["platform_id", "code", "display_name", "category", "region", "is_active"],
     "products": ["product_id", "sku", "name", "category", "brand", "cost_price", "retail_price", "stock_quantity", "reorder_level", "unit", "description", "is_active"],
     "suppliers": ["supplier_id", "supplier_code", "name", "contact_name", "phone", "email", "address", "rating", "lead_time_days", "status"],
@@ -48,6 +48,7 @@ TABLE_CLEAR_ORDER = ["supplier_offers", "livestream_accounts", "suppliers", "pro
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
     user_id TEXT PRIMARY KEY,
+    staff_code TEXT UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     full_name TEXT NOT NULL,
@@ -155,6 +156,12 @@ def save_json_record(table: str, record: dict) -> None:
     file_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def delete_json_record(table: str, record_id: str) -> None:
+    file_path = TABLE_JSON_DIRS[table] / f"{record_id}.json"
+    if file_path.exists():
+        file_path.unlink()
+
+
 def load_json_records(table: str) -> list[dict]:
     table_dir = TABLE_JSON_DIRS[table]
     if not table_dir.exists():
@@ -187,6 +194,20 @@ def insert_records(connection: sqlite3.Connection, table: str, records: list[dic
 
 
 def ensure_schema_migrations(connection: sqlite3.Connection) -> None:
+    user_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(users)").fetchall()
+    }
+    if "staff_code" not in user_columns:
+        connection.execute("ALTER TABLE users ADD COLUMN staff_code TEXT")
+    connection.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_staff_code
+        ON users(staff_code)
+        WHERE staff_code IS NOT NULL
+        """
+    )
+
     livestream_columns = {
         row["name"]
         for row in connection.execute("PRAGMA table_info(livestream_accounts)").fetchall()

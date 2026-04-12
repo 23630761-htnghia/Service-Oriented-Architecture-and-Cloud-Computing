@@ -22,6 +22,23 @@ app = FastAPI(
 )
 
 
+@app.get("/")
+def root():
+    return {
+        "service": "ai-service",
+        "status": "ok",
+        "message": "AI Service is running.",
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "main_routes": [
+            "/analyze-comment",
+            "/analyze-comments/batch",
+            "/balance-viewers",
+            "/session-optimizer",
+        ],
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 def health_check() -> HealthResponse:
     return HealthResponse(status="ok", service="ai-service")

@@ -30,8 +30,22 @@ async def forward_post(base_url: str, path: str, payload: dict):
     return response.json()
 
 
+async def forward_patch(base_url: str, path: str, payload: dict):
+    response = await app.state.client.patch(f"{base_url}{path}", json=payload)
+    if response.status_code >= 400:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.json()
+
+
 async def forward_get(base_url: str, path: str):
     response = await app.state.client.get(f"{base_url}{path}")
+    if response.status_code >= 400:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.json()
+
+
+async def forward_delete(base_url: str, path: str):
+    response = await app.state.client.delete(f"{base_url}{path}")
     if response.status_code >= 400:
         raise HTTPException(status_code=response.status_code, detail=response.text)
     return response.json()
@@ -45,6 +59,24 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     await app.state.client.aclose()
+
+
+@app.get("/")
+async def root():
+    return {
+        "service": "api-gateway",
+        "status": "ok",
+        "message": "API Gateway is running.",
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "main_routes": [
+            "/api/v1/auth/captcha",
+            "/api/v1/livestream-accounts",
+            "/api/v1/comments/analyze",
+            "/api/v1/sync/summary",
+            "/api/v1/reports/kpis/overview",
+        ],
+    }
 
 
 @app.get("/health", response_model=GatewayHealthResponse)
@@ -117,6 +149,21 @@ async def list_users():
     return await forward_get(settings.account_service_url, "/users")
 
 
+@app.post("/api/v1/users/staff")
+async def create_staff_user(payload: dict):
+    return await forward_post(settings.account_service_url, "/users/staff", payload)
+
+
+@app.patch("/api/v1/users/{user_id}/password")
+async def update_user_password(user_id: str, payload: dict):
+    return await forward_patch(settings.account_service_url, f"/users/{user_id}/password", payload)
+
+
+@app.delete("/api/v1/users/{user_id}")
+async def delete_user(user_id: str):
+    return await forward_delete(settings.account_service_url, f"/users/{user_id}")
+
+
 @app.get("/api/v1/livestream-accounts")
 async def list_livestream_accounts():
     return await forward_get(settings.account_service_url, "/livestream-accounts")
@@ -125,6 +172,11 @@ async def list_livestream_accounts():
 @app.get("/api/v1/livestream-accounts/grouped")
 async def list_grouped_livestream_accounts():
     return await forward_get(settings.account_service_url, "/livestream-accounts/grouped")
+
+
+@app.delete("/api/v1/livestream-accounts/{account_id}")
+async def delete_livestream_account(account_id: str):
+    return await forward_delete(settings.account_service_url, f"/livestream-accounts/{account_id}")
 
 
 @app.get("/api/v1/platform-summaries")
@@ -175,6 +227,11 @@ async def get_sync_summary():
 @app.get("/api/v1/sync/records")
 async def list_sync_records():
     return await forward_get(settings.sync_service_url, "/sync-records")
+
+
+@app.get("/api/v1/sync/records/export")
+async def export_sync_records():
+    return await forward_get(settings.sync_service_url, "/sync-records/export")
 
 
 @app.post("/api/v1/sync/comments")

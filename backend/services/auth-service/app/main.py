@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import base64
 import html
+import json
+import os
 from datetime import datetime, timedelta, timezone
 from random import choice, randint
+from urllib.error import URLError
+from urllib.request import urlopen
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
@@ -16,11 +20,13 @@ app = FastAPI(
     description="Authentication service for livestream management platform.",
 )
 
+ACCOUNT_SERVICE_URL = os.getenv("ACCOUNT_SERVICE_URL", "http://localhost:8003")
+
 DEMO_USERS = {
     "admin@smartlive.vn": {
         "password": "123456",
         "id": "user-admin",
-        "name": "Tran Minh Quan",
+        "name": "Hoàng Trọng Nghĩa",
         "role": "admin",
         "department": "Trung tam van hanh livestream",
     },
@@ -86,6 +92,27 @@ def create_captcha() -> CaptchaResponse:
     )
 
 
+def load_users() -> dict[str, dict[str, str]]:
+    try:
+        with urlopen(f"{ACCOUNT_SERVICE_URL}/users", timeout=2) as response:
+            records = json.loads(response.read().decode("utf-8"))
+        users = {
+            record["email"]: {
+                "password": record["password"],
+                "id": record["user_id"],
+                "name": record["full_name"],
+                "role": record["role"],
+                "department": record["department"],
+            }
+            for record in records
+        }
+        if users:
+            return users
+    except (URLError, OSError, ValueError, KeyError, json.JSONDecodeError):
+        pass
+    return DEMO_USERS
+
+
 def build_captcha_svg(captcha_text: str) -> str:
     width = 180
     height = 64
@@ -132,6 +159,22 @@ def build_captcha_svg(captcha_text: str) -> str:
     )
 
 
+@app.get("/")
+def root():
+    return {
+        "service": "auth-service",
+        "status": "ok",
+        "message": "Auth Service is running.",
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "main_routes": [
+            "/captcha",
+            "/login",
+            "/me",
+        ],
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 def health_check() -> HealthResponse:
     return HealthResponse(status="ok", service="auth-service")
@@ -151,7 +194,7 @@ def login(payload: LoginRequest) -> LoginResponse:
     if str(payload.captcha_answer).strip().upper() != captcha["answer"]:
         raise HTTPException(status_code=400, detail="Captcha khong chinh xac.")
 
-    user = DEMO_USERS.get(payload.email)
+    user = load_users().get(payload.email)
     if not user or user["password"] != payload.password:
         raise HTTPException(status_code=401, detail="Email hoac mat khau khong dung.")
 
@@ -169,10 +212,11 @@ def login(payload: LoginRequest) -> LoginResponse:
 
 @app.get("/me")
 def me():
+    admin = load_users().get("admin@smartlive.vn", DEMO_USERS["admin@smartlive.vn"])
     return {
-        "id": "user-admin",
-        "name": "Tran Minh Quan",
+        "id": admin["id"],
+        "name": admin["name"],
         "email": "admin@smartlive.vn",
-        "role": "admin",
-        "department": "Trung tam van hanh livestream",
+        "role": admin["role"],
+        "department": admin["department"],
     }

@@ -1,21 +1,26 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import re
 
 from fastapi import FastAPI, HTTPException
 
-from app.database import get_connection, initialize_database, save_json_record
+from app.database import delete_json_record, get_connection, initialize_database, save_json_record
 from app.schemas import (
     DatabaseOverview,
     HealthResponse,
     LivestreamAccount,
     LivestreamAccountCreate,
+    LivestreamAccountDeleteResponse,
     PlatformAccountsGroup,
     PlatformSummary,
     ProductItem,
+    StaffUserCreate,
     Supplier,
     SupplierOffer,
     UserAccount,
+    UserDeleteResponse,
+    UserPasswordUpdate,
 )
 
 app = FastAPI(
@@ -49,12 +54,44 @@ def fetch_one(query: str, params: tuple = ()) -> dict | None:
 def list_users_data() -> list[UserAccount]:
     rows = fetch_all(
         """
-        SELECT user_id, email, password, full_name, role, phone, department, status, created_at, last_login_at
+        SELECT user_id, staff_code, email, password, full_name, role, phone, department, status, created_at, last_login_at
         FROM users
         ORDER BY role DESC, full_name ASC
         """
     )
     return [UserAccount(**row) for row in rows]
+
+
+def get_user_record(user_id: str) -> dict:
+    user = fetch_one(
+        """
+        SELECT user_id, staff_code, email, password, full_name, role, phone, department, status, created_at, last_login_at
+        FROM users
+        WHERE user_id = ?
+        """,
+        (user_id,),
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="Khong tim thay tai khoan trong he thong.")
+    return user
+
+
+def require_staff_user(user_id: str) -> dict:
+    user = get_user_record(user_id)
+    if user["role"] != "staff":
+        raise HTTPException(status_code=400, detail="Chi co the thao tac tren tai khoan staff.")
+    return user
+
+
+def normalize_staff_code(staff_code: str) -> str:
+    normalized_code = re.sub(r"[^A-Z0-9-]", "", staff_code.strip().upper())
+    if len(normalized_code) < 2:
+        raise HTTPException(status_code=400, detail="Ma staff phai co it nhat 2 ky tu hop le.")
+    return normalized_code
+
+
+def build_staff_user_id(staff_code: str) -> str:
+    return f"user-{staff_code.lower()}"
 
 
 def list_livestream_accounts_data(platform: str | None = None) -> list[LivestreamAccount]:
@@ -185,6 +222,24 @@ def group_accounts_by_platform() -> list[PlatformAccountsGroup]:
     return groups
 
 
+@app.get("/")
+def root():
+    return {
+        "service": "account-service",
+        "status": "ok",
+        "message": "Account Service is running.",
+        "docs_url": "/docs",
+        "health_url": "/health",
+        "main_routes": [
+            "/users",
+            "/livestream-accounts",
+            "/platform-summaries",
+            "/products",
+            "/database-overview",
+        ],
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 def health_check() -> HealthResponse:
     return HealthResponse(status="ok", service="account-service")
@@ -193,6 +248,173 @@ def health_check() -> HealthResponse:
 @app.get("/users", response_model=list[UserAccount])
 def list_users() -> list[UserAccount]:
     return list_users_data()
+
+
+@app.post("/users/staff", response_model=UserAccount)
+def create_staff_user(payload: StaffUserCreate) -> UserAccount:
+    normalized_staff_code = normalize_staff_code(payload.staff_code)
+    user_id = build_staff_user_id(normalized_staff_code)
+    normalized_email = payload.email.strip().lower()
+
+    if fetch_one("SELECT user_id FROM users WHERE staff_code = ?", (normalized_staff_code,)):
+        raise HTTPException(status_code=409, detail="Ma staff da ton tai. Hay xoa tai khoan cu truoc khi tao lai.")
+    if fetch_one("SELECT user_id FROM users WHERE email = ?", (normalized_email,)):
+        raise HTTPException(status_code=409, detail="Email nay da ton tai trong he thong.")
+    if fetch_one("SELECT user_id FROM users WHERE user_id = ?", (user_id,)):
+        raise HTTPException(status_code=409, detail="Ma staff nay dang xung dot voi tai khoan khac trong he thong.")
+
+    with get_connection() as connection:
+        created_at = connection.execute("SELECT datetime('now')").fetchone()[0]
+        record = {
+            "user_id": user_id,
+            "staff_code": normalized_staff_code,
+            "email": normalized_email,
+            "password": payload.password,
+            "full_name": payload.full_name.strip(),
+            "role": "staff",
+            "phone": payload.phone.strip(),
+            "department": payload.department.strip(),
+            "status": payload.status,
+            "created_at": created_at,
+            "last_login_at": None,
+        }
+        connection.execute(
+            """
+            INSERT INTO users (
+                user_id,
+                staff_code,
+                email,
+                password,
+                full_name,
+                role,
+                phone,
+                department,
+                status,
+                created_at,
+                last_login_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            tuple(
+                record[column]
+                for column in [
+                    "user_id",
+                    "staff_code",
+                    "email",
+                    "password",
+                    "full_name",
+                    "role",
+                    "phone",
+                    "department",
+                    "status",
+                    "created_at",
+                    "last_login_at",
+                ]
+            ),
+        )
+        connection.commit()
+
+    save_json_record("users", record)
+    return UserAccount(**record)
+
+
+@app.patch("/users/{user_id}/password", response_model=UserAccount)
+def update_staff_password(user_id: str, payload: UserPasswordUpdate) -> UserAccount:
+    user = require_staff_user(user_id)
+
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE users SET password = ? WHERE user_id = ?",
+            (payload.password, user_id),
+        )
+        connection.commit()
+
+    updated_user = {**user, "password": payload.password}
+    save_json_record("users", updated_user)
+    return UserAccount(**updated_user)
+
+
+@app.delete("/users/{user_id}", response_model=UserDeleteResponse)
+def delete_staff_user(user_id: str) -> UserDeleteResponse:
+    user = require_staff_user(user_id)
+    owned_accounts = fetch_all(
+        """
+        SELECT
+            account_id,
+            account_code,
+            name,
+            platform_code,
+            username,
+            password,
+            owner_user_id,
+            owner_name,
+            backup_contact,
+            current_viewers,
+            max_capacity,
+            engagement_rate,
+            lag_signal,
+            status,
+            stream_url,
+            warehouse_location,
+            shift_label,
+            created_at
+        FROM livestream_accounts
+        WHERE owner_user_id = ?
+        """,
+        (user_id,),
+    )
+
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE livestream_accounts
+            SET owner_user_id = NULL, owner_name = ?
+            WHERE owner_user_id = ?
+            """,
+            ("Chua gan", user_id),
+        )
+        connection.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+        connection.commit()
+
+    delete_json_record("users", user_id)
+    for account in owned_accounts:
+        updated_account = {
+            **account,
+            "owner_user_id": None,
+            "owner_name": "Chua gan",
+        }
+        save_json_record("livestream_accounts", updated_account)
+
+    return UserDeleteResponse(
+        user_id=user_id,
+        removed_email=user["email"],
+        reassigned_accounts=len(owned_accounts),
+        message="Da xoa tai khoan staff khoi he thong.",
+    )
+
+
+@app.delete("/livestream-accounts/{account_id}", response_model=LivestreamAccountDeleteResponse)
+def delete_livestream_account(account_id: str) -> LivestreamAccountDeleteResponse:
+    account = fetch_one(
+        """
+        SELECT account_id, name
+        FROM livestream_accounts
+        WHERE account_id = ?
+        """,
+        (account_id,),
+    )
+    if not account:
+        raise HTTPException(status_code=404, detail="Khong tim thay phong livestream trong he thong.")
+
+    with get_connection() as connection:
+        connection.execute("DELETE FROM livestream_accounts WHERE account_id = ?", (account_id,))
+        connection.commit()
+
+    delete_json_record("livestream_accounts", account_id)
+    return LivestreamAccountDeleteResponse(
+        account_id=account["account_id"],
+        account_name=account["name"],
+        message="Da xoa phong livestream khoi he thong.",
+    )
 
 
 @app.get("/livestream-accounts", response_model=list[LivestreamAccount])
