@@ -103,8 +103,8 @@ Nếu muốn trình bày theo hướng có job cố định trong UI:
 ### Thiết lập biến môi trường
 
 ```powershell
-$env:DATABRICKS_HOST = "https://dbc-be833553-0488.cloud.databricks.com"
-$env:DATABRICKS_TOKEN = "dapi6aeb786e9d96f7cab709b7c19199d8ff"
+$env:DATABRICKS_HOST = ""
+$env:DATABRICKS_TOKEN = ""
 ```
 
 ### Submit pipeline
