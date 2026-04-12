@@ -42,6 +42,8 @@ services:
       AI_SERVICE_URL: http://ai-service:8001
       AUTH_SERVICE_URL: http://auth-service:8002
       ACCOUNT_SERVICE_URL: http://account-service:8003
+      SYNC_SERVICE_URL: http://sync-service:8004
+      REPORT_SERVICE_URL: http://report-service:8005
     depends_on:
       - ai-service
       - auth-service

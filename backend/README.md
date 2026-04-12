@@ -1,16 +1,15 @@
-﻿# Backend
+# Backend
 
-Thư mục này chứa toàn bộ backend của dự án.
+Thư mục này chứa toàn bộ backend của hệ thống Smart Livestream Management Platform.
 
-## Cấu trúc
+## Services hiện có
 
-- `services/api-gateway/`: cổng vào API cho frontend
-- `services/auth-service/`: xác thực người dùng demo
-- `services/account-service/`: quản lý tài khoản livestream, sản phẩm, nhà cung cấp và offer
-- `services/ai-service/`: phân tích comment và cân bằng viewer
-- `services/sync-service/`: nơi dành cho luồng đồng bộ dữ liệu trong tương lai
-- `services/report-service/`: nơi dành cho service báo cáo trong tương lai
-- `docker-compose.yml`: chạy nhanh toàn bộ backend mà không cần frontend
+- `services/api-gateway/`: cổng vào thống nhất cho frontend và client.
+- `services/auth-service/`: auth demo với CAPTCHA và login.
+- `services/account-service/`: quản lý dữ liệu user, livestream account, sản phẩm, nhà cung cấp và offer bằng SQLite.
+- `services/ai-service/`: phân tích comment và cân bằng viewer.
+- `services/sync-service/`: nhận comment qua API, gọi `ai-service` để enrich và lưu lịch sử sync trong memory.
+- `services/report-service/`: tổng hợp KPI bằng cách gọi `account-service` và `sync-service`.
 
 ## Chạy nhanh backend
 
@@ -19,9 +18,30 @@ cd backend
 docker compose up --build
 ```
 
-Sau khi chạy xong, các service backend sẽ mở trên:
+Các cổng mặc định:
 
 - `http://localhost:8000`: API Gateway
 - `http://localhost:8001`: AI Service
 - `http://localhost:8002`: Auth Service
 - `http://localhost:8003`: Account Service
+- `http://localhost:8004`: Sync Service
+- `http://localhost:8005`: Report Service
+
+## Gateway APIs chính
+
+- `GET /health`
+- `GET /api/v1/auth/captcha`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/livestream-accounts`
+- `POST /api/v1/comments/analyze`
+- `POST /api/v1/streams/balance-viewers`
+- `POST /api/v1/sync/comments`
+- `GET /api/v1/sync/summary`
+- `GET /api/v1/reports/kpis/overview`
+- `GET /api/v1/reports/operations`
+
+## Ghi chú
+
+- `account-service` có dữ liệu seed SQLite sẵn trong `services/account-service/app/data/`.
+- `sync-service` hiện chưa có database riêng.
+- `report-service` chỉ tổng hợp từ API nội bộ của các service khác.

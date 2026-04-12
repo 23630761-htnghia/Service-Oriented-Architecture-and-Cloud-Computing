@@ -53,11 +53,15 @@ async def health_check():
         "ai_service": {"status": "unknown"},
         "auth_service": {"status": "unknown"},
         "account_service": {"status": "unknown"},
+        "sync_service": {"status": "unknown"},
+        "report_service": {"status": "unknown"},
     }
     service_map = {
         "ai_service": settings.ai_service_url,
         "auth_service": settings.auth_service_url,
         "account_service": settings.account_service_url,
+        "sync_service": settings.sync_service_url,
+        "report_service": settings.report_service_url,
     }
     for service_name, base_url in service_map.items():
         try:
@@ -156,3 +160,38 @@ async def get_database_overview():
 @app.post("/api/v1/livestream-accounts")
 async def create_livestream_account(payload: dict):
     return await forward_post(settings.account_service_url, "/livestream-accounts", payload)
+
+
+@app.get("/api/v1/sync/jobs")
+async def list_sync_jobs():
+    return await forward_get(settings.sync_service_url, "/sync-jobs")
+
+
+@app.get("/api/v1/sync/summary")
+async def get_sync_summary():
+    return await forward_get(settings.sync_service_url, "/sync-summary")
+
+
+@app.get("/api/v1/sync/records")
+async def list_sync_records():
+    return await forward_get(settings.sync_service_url, "/sync-records")
+
+
+@app.post("/api/v1/sync/comments")
+async def sync_comment(payload: dict):
+    return await forward_post(settings.sync_service_url, "/sync-comments", payload)
+
+
+@app.post("/api/v1/sync/comments/batch")
+async def sync_comments_batch(payload: dict):
+    return await forward_post(settings.sync_service_url, "/sync-comments/batch", payload)
+
+
+@app.get("/api/v1/reports/kpis/overview")
+async def get_kpis_overview():
+    return await forward_get(settings.report_service_url, "/kpis/overview")
+
+
+@app.get("/api/v1/reports/operations")
+async def get_operations_report():
+    return await forward_get(settings.report_service_url, "/reports/operations")
