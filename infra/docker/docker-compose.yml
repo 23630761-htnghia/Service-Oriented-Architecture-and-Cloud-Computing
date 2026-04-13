@@ -12,6 +12,8 @@ services:
     container_name: auth-service
     environment:
       ACCOUNT_SERVICE_URL: http://account-service:8003
+    depends_on:
+      - account-service
     ports:
       - "8002:8002"
 
@@ -19,6 +21,8 @@ services:
     build:
       context: ../../backend/services/account-service
     container_name: account-service
+    volumes:
+      - ../../backend/services/account-service/app/data:/app/app/data
     ports:
       - "8003:8003"
 

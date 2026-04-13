@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,32 +24,46 @@ app.add_middleware(
 )
 
 
-async def forward_post(base_url: str, path: str, payload: dict):
-    response = await app.state.client.post(f"{base_url}{path}", json=payload)
-    if response.status_code >= 400:
-        raise HTTPException(status_code=response.status_code, detail=response.text)
-    return response.json()
+SERVICE_URLS = {
+    "ai_service": lambda: settings.ai_service_url,
+    "auth_service": lambda: settings.auth_service_url,
+    "account_service": lambda: settings.account_service_url,
+    "sync_service": lambda: settings.sync_service_url,
+    "report_service": lambda: settings.report_service_url,
+}
 
 
-async def forward_patch(base_url: str, path: str, payload: dict):
-    response = await app.state.client.patch(f"{base_url}{path}", json=payload)
+async def forward_request(method: str, base_url: str, path: str, payload: dict | None = None):
+    request_kwargs = {"json": payload} if payload is not None else {}
+    response = await app.state.client.request(method, f"{base_url}{path}", **request_kwargs)
     if response.status_code >= 400:
         raise HTTPException(status_code=response.status_code, detail=response.text)
     return response.json()
 
 
 async def forward_get(base_url: str, path: str):
-    response = await app.state.client.get(f"{base_url}{path}")
-    if response.status_code >= 400:
-        raise HTTPException(status_code=response.status_code, detail=response.text)
-    return response.json()
+    return await forward_request("GET", base_url, path)
 
 
 async def forward_delete(base_url: str, path: str):
-    response = await app.state.client.delete(f"{base_url}{path}")
-    if response.status_code >= 400:
-        raise HTTPException(status_code=response.status_code, detail=response.text)
-    return response.json()
+    return await forward_request("DELETE", base_url, path)
+
+
+async def forward_post(base_url: str, path: str, payload: dict):
+    return await forward_request("POST", base_url, path, payload)
+
+
+async def forward_patch(base_url: str, path: str, payload: dict):
+    return await forward_request("PATCH", base_url, path, payload)
+
+
+async def check_dependency(service_name: str, base_url: str) -> tuple[str, dict]:
+    try:
+        response = await app.state.client.get(f"{base_url}/health")
+        response.raise_for_status()
+        return service_name, response.json()
+    except httpx.HTTPError:
+        return service_name, {"status": "unreachable"}
 
 
 @app.on_event("startup")
@@ -81,26 +96,12 @@ async def root():
 
 @app.get("/health", response_model=GatewayHealthResponse)
 async def health_check():
-    dependencies = {
-        "ai_service": {"status": "unknown"},
-        "auth_service": {"status": "unknown"},
-        "account_service": {"status": "unknown"},
-        "sync_service": {"status": "unknown"},
-        "report_service": {"status": "unknown"},
-    }
-    service_map = {
-        "ai_service": settings.ai_service_url,
-        "auth_service": settings.auth_service_url,
-        "account_service": settings.account_service_url,
-        "sync_service": settings.sync_service_url,
-        "report_service": settings.report_service_url,
-    }
-    for service_name, base_url in service_map.items():
-        try:
-            response = await app.state.client.get(f"{base_url}/health")
-            dependencies[service_name] = response.json()
-        except httpx.HTTPError:
-            dependencies[service_name] = {"status": "unreachable"}
+    dependencies = {service_name: {"status": "unknown"} for service_name in SERVICE_URLS}
+    checks = await asyncio.gather(
+        *(check_dependency(service_name, get_base_url()) for service_name, get_base_url in SERVICE_URLS.items())
+    )
+    for service_name, health_payload in checks:
+        dependencies[service_name] = health_payload
 
     return GatewayHealthResponse(
         status="ok",
@@ -154,6 +155,11 @@ async def create_staff_user(payload: dict):
     return await forward_post(settings.account_service_url, "/users/staff", payload)
 
 
+@app.post("/api/v1/users/managed")
+async def create_managed_user(payload: dict):
+    return await forward_post(settings.account_service_url, "/users/managed", payload)
+
+
 @app.patch("/api/v1/users/{user_id}/password")
 async def update_user_password(user_id: str, payload: dict):
     return await forward_patch(settings.account_service_url, f"/users/{user_id}/password", payload)
@@ -194,9 +200,54 @@ async def list_products():
     return await forward_get(settings.account_service_url, "/products")
 
 
+@app.get("/api/v1/livestream-product-assignments")
+async def list_livestream_product_assignments():
+    return await forward_get(settings.account_service_url, "/livestream-product-assignments")
+
+
+@app.post("/api/v1/livestream-product-assignments")
+async def create_livestream_product_assignment(payload: dict):
+    return await forward_post(settings.account_service_url, "/livestream-product-assignments", payload)
+
+
+@app.delete("/api/v1/livestream-product-assignments/{assignment_id}")
+async def delete_livestream_product_assignment(assignment_id: str):
+    return await forward_delete(settings.account_service_url, f"/livestream-product-assignments/{assignment_id}")
+
+
+@app.post("/api/v1/products")
+async def create_product(payload: dict):
+    return await forward_post(settings.account_service_url, "/products", payload)
+
+
+@app.patch("/api/v1/products/{product_id}")
+async def update_product(product_id: str, payload: dict):
+    return await forward_patch(settings.account_service_url, f"/products/{product_id}", payload)
+
+
+@app.delete("/api/v1/products/{product_id}")
+async def delete_product(product_id: str):
+    return await forward_delete(settings.account_service_url, f"/products/{product_id}")
+
+
 @app.get("/api/v1/suppliers")
 async def list_suppliers():
     return await forward_get(settings.account_service_url, "/suppliers")
+
+
+@app.post("/api/v1/suppliers")
+async def create_supplier(payload: dict):
+    return await forward_post(settings.account_service_url, "/suppliers", payload)
+
+
+@app.patch("/api/v1/suppliers/{supplier_id}")
+async def update_supplier(supplier_id: str, payload: dict):
+    return await forward_patch(settings.account_service_url, f"/suppliers/{supplier_id}", payload)
+
+
+@app.delete("/api/v1/suppliers/{supplier_id}")
+async def delete_supplier(supplier_id: str):
+    return await forward_delete(settings.account_service_url, f"/suppliers/{supplier_id}")
 
 
 @app.get("/api/v1/supplier-offers")

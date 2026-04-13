@@ -1,11 +1,11 @@
-{
+﻿{
   "account_id": "ls-facebook-08",
   "account_code": "FB08",
   "name": "Facebook Kho Xả Live",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_08",
   "owner_user_id": "user-staff-02",
-  "owner_name": "Le Hoang My",
+  "owner_name": "Lê Hoàng My",
   "backup_contact": "0909 881 008",
   "current_viewers": 620,
   "max_capacity": 1100,

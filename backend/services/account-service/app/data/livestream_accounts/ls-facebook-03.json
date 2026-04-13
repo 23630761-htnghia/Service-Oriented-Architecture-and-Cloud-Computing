@@ -1,11 +1,11 @@
-{
+﻿{
   "account_id": "ls-facebook-03",
   "account_code": "FB03",
   "name": "Facebook Mom Club Live",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_03",
   "owner_user_id": "user-staff-02",
-  "owner_name": "Le Hoang My",
+  "owner_name": "Lê Hoàng My",
   "backup_contact": "0909 881 003",
   "current_viewers": 430,
   "max_capacity": 900,

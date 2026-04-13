@@ -7,7 +7,7 @@
     "account_id": "ls-tiktok-01",
     "livestream_id": "live-tiktok-01",
     "username": "khach_a",
-    "comment": "shop oi mau nay con hang khong",
+    "comment": "shop ơi màu này còn hàng không",
     "synced_at": "2026-04-12T10:15:00Z",
     "sync_status": "synced",
     "analysis": {
@@ -45,7 +45,7 @@
     "account_id": "ls-facebook-03",
     "livestream_id": "live-facebook-03",
     "username": "khach_c",
-    "comment": "co freeship khong shop",
+    "comment": "có freeship không shop",
     "synced_at": "2026-04-12T10:17:00Z",
     "sync_status": "synced",
     "analysis": {
@@ -64,7 +64,7 @@
     "account_id": "ls-facebook-03",
     "livestream_id": "live-facebook-03",
     "username": "khach_d",
-    "comment": "spam link giam gia soc",
+    "comment": "spam link giảm giá sốc",
     "synced_at": "2026-04-12T10:18:00Z",
     "sync_status": "synced",
     "analysis": {
@@ -83,7 +83,7 @@
     "account_id": "ls-tiktok-02",
     "livestream_id": "live-tiktok-02",
     "username": "khach_e",
-    "comment": "cho minh xin gia combo 2 san pham",
+    "comment": "cho mình xin giá combo 2 sản phẩm",
     "synced_at": "2026-04-12T10:19:00Z",
     "sync_status": "synced",
     "analysis": {
@@ -106,6 +106,6 @@
     "synced_at": "2026-04-12T10:20:00Z",
     "sync_status": "analysis_failed",
     "analysis": null,
-    "error_detail": "Khong the goi ai-service: timeout"
+    "error_detail": "Không thể gọi ai-service: timeout"
   }
 ]

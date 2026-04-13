@@ -1,11 +1,11 @@
-{
+﻿{
   "account_id": "ls-facebook-02",
   "account_code": "FB02",
   "name": "Facebook Chăm Sóc Da Official",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_02",
   "owner_user_id": "user-staff",
-  "owner_name": "Nguyen Bao Tram",
+  "owner_name": "Nguyễn Bảo Trâm",
   "backup_contact": "0909 881 002",
   "current_viewers": 540,
   "max_capacity": 1050,

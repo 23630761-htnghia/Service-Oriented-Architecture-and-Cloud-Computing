@@ -4,22 +4,22 @@ from app.schemas import CommentRequest, ViewerAccount, ViewerBalancingRequest
 
 
 def test_buying_comment_gets_high_score():
-    result = analyze_comment(CommentRequest(comment="Shop oi ib minh de minh dat 2 san pham"))
+    result = analyze_comment(CommentRequest(comment="Shop ơi ib mình để mình đặt 2 sản phẩm"))
     assert result.intent == "buying_intent"
     assert result.lead_score >= 80
     assert result.priority == "high"
 
 
 def test_spam_comment_gets_low_score():
-    result = analyze_comment(CommentRequest(comment="Spam link https://abc.xyz kiem tien"))
+    result = analyze_comment(CommentRequest(comment="Spam link https://abc.xyz kiếm tiền"))
     assert result.intent == "spam"
     assert result.lead_score <= 10
     assert result.priority == "low"
 
 
 def test_rule_based_predictors_still_work_without_models():
-    assert detect_intent("shop oi bao nhieu vay") in {"ask_price", "other"}
-    assert detect_sentiment("dep qua shop") in {"positive", "neutral"}
+    assert detect_intent("shop ơi bao nhiêu vậy") in {"ask_price", "other"}
+    assert detect_sentiment("đẹp quá shop") in {"positive", "neutral"}
 
 
 def test_balancer_moves_viewers_from_overloaded_accounts():

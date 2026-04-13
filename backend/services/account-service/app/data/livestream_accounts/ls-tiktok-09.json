@@ -1,11 +1,11 @@
-{
+﻿{
   "account_id": "ls-tiktok-09",
   "account_code": "TT09",
   "name": "TikTok Livestream Kho Tổng",
   "platform_code": "tiktok",
   "username": "smartlive_tt_room_09",
   "owner_user_id": "user-staff-03",
-  "owner_name": "Pham Thu Ha",
+  "owner_name": "Phạm Thu Hà",
   "backup_contact": "0909 771 009",
   "current_viewers": 560,
   "max_capacity": 1000,

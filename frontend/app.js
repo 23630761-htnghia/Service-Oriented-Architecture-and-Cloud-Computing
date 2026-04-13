@@ -1,4 +1,4 @@
-﻿const API_BASE = "http://localhost:8000";
+const API_BASE = "http://localhost:8000";
 const SESSION_KEY = "smartlive-session";
 const AUTH_LOCK_CLASS = "auth-locked";
 
@@ -31,11 +31,21 @@ const accountForm = document.getElementById("account-form");
 const accountFormResult = document.getElementById("account-form-result");
 const accountsResult = document.getElementById("accounts-result");
 const staffCreateForm = document.getElementById("staff-create-form");
+const staffRole = document.getElementById("staff-role");
 const staffCreateResult = document.getElementById("staff-create-result");
 const staffCredentialsResult = document.getElementById("staff-credentials-result");
 const staffSearchInput = document.getElementById("staff-search-input");
 const staffAssignmentResult = document.getElementById("staff-assignment-result");
+const productCreateForm = document.getElementById("product-create-form");
+const productCreateResult = document.getElementById("product-create-result");
 const productsResult = document.getElementById("products-result");
+const assignmentCreateForm = document.getElementById("assignment-create-form");
+const assignmentCreateResult = document.getElementById("assignment-create-result");
+const assignmentAccountSelect = document.getElementById("assignment-account-id");
+const assignmentProductSelect = document.getElementById("assignment-product-id");
+const productAssignmentResult = document.getElementById("product-assignment-result");
+const supplierCreateForm = document.getElementById("supplier-create-form");
+const supplierCreateResult = document.getElementById("supplier-create-result");
 const suppliersResult = document.getElementById("suppliers-result");
 const offersResult = document.getElementById("offers-result");
 const commentForm = document.getElementById("comment-form");
@@ -53,10 +63,15 @@ const accountFormPanel = accountForm.closest(".panel");
 const accountsListPanel = accountsResult.closest(".panel");
 const staffCredentialsPanel = document.getElementById("staff-credentials-panel");
 const staffAssignmentPanel = document.getElementById("staff-assignment-panel");
+const productManagementPanel = document.getElementById("product-management-panel");
+const assignmentManagementPanel = document.getElementById("assignment-management-panel");
+const supplierManagementPanel = document.getElementById("supplier-management-panel");
 const adminAccountModePanel = document.getElementById("admin-account-mode-panel");
 const adminAccountModeButtons = document.querySelectorAll("[data-admin-account-mode]");
 const manageAccountSwitcherPanel = document.getElementById("manage-account-switcher-panel");
 const manageAccountSectionButtons = document.querySelectorAll("[data-manage-account-section]");
+const overviewMenuCard = document.querySelector('.menu-card[data-tab="overview"]');
+const accountsMenuCard = document.querySelector('.menu-card[data-tab="accounts"]');
 const suppliersMenuCard = document.querySelector('.menu-card[data-tab="suppliers"]');
 const aiToolsMenuCard = document.querySelector('.menu-card[data-tab="ai-tools"]');
 
@@ -69,10 +84,14 @@ let captchaCountdownTimer = null;
 let captchaLoadRequestId = 0;
 let staffCredentialFlashMessage = "";
 let accountManagementFlashMessage = "";
+let productManagementFlashMessage = "";
+let supplierManagementFlashMessage = "";
+let productAssignmentFlashMessage = "";
 let adminAccountsMode = "view";
 let adminManageSection = "room-create";
 let activeStaffAssignmentUserId = null;
 let currentUsers = [];
+let currentAssignments = [];
 
 function applyDemoCredentials(email, password) {
   loginEmail.value = email;
@@ -82,6 +101,7 @@ function applyDemoCredentials(email, password) {
 
 function formatRole(role) {
   if (role === "admin") return "Quản trị vận hành";
+  if (role === "product_manager") return "Quản lý sản phẩm";
   if (role === "staff") return "Nhân sự bán hàng";
   return role;
 }
@@ -121,8 +141,16 @@ function isAdminSession() {
   return currentSession?.user?.role === "admin";
 }
 
+function isProductManagerSession() {
+  return currentSession?.user?.role === "product_manager";
+}
+
 function isStaffSession() {
   return currentSession?.user?.role === "staff";
+}
+
+function canManageCatalog() {
+  return isAdminSession() || isProductManagerSession();
 }
 
 function setAdminManageSection(section = "room-create") {
@@ -174,31 +202,27 @@ function getOwnedAccounts(accounts = livestreamAccounts) {
   return accounts.filter((account) => account.owner_user_id === currentSession.user.id);
 }
 
-function inferRelevantCategoryKeys(accounts) {
-  const rules = [
-    { category: "Chăm sóc da", keywords: ["beauty", "cham soc da", "skincare", "lumiskin"] },
-    { category: "Mẹ và bé", keywords: ["me bim", "me va be", "mom", "babynest"] },
-    { category: "Gia dụng", keywords: ["gia dung", "nha cua", "homeset"] },
-    { category: "Phụ kiện công nghệ", keywords: ["cong nghe", "techgo"] },
-    { category: "Thời trang nữ", keywords: ["thoi trang", "urbanflex", "fashion", "outfit"] },
-  ];
-  const categoryKeys = new Set();
-  for (const account of accounts) {
-    const haystack = normalizeSearchText(`${account.name} ${account.platform_display_name} ${account.username}`);
-    for (const rule of rules) {
-      if (rule.keywords.some((keyword) => haystack.includes(keyword))) {
-        categoryKeys.add(normalizeSearchText(rule.category));
-      }
+function buildAssignmentsByAccount(assignments = []) {
+  const grouped = new Map();
+  assignments.forEach((assignment) => {
+    if (!grouped.has(assignment.account_id)) {
+      grouped.set(assignment.account_id, []);
     }
-  }
-  return categoryKeys;
+    grouped.get(assignment.account_id).push(assignment);
+  });
+  return grouped;
 }
 
-function getVisibleProducts(products) {
+function getVisibleAssignments(assignments, accounts = livestreamAccounts) {
+  if (!isStaffSession()) return assignments;
+  const ownedAccountIds = new Set(getOwnedAccounts(accounts).map((account) => account.account_id));
+  return assignments.filter((assignment) => ownedAccountIds.has(assignment.account_id));
+}
+
+function getVisibleProducts(products, assignments, accounts = livestreamAccounts) {
   if (!isStaffSession()) return products;
-  const categoryKeys = inferRelevantCategoryKeys(getOwnedAccounts());
-  if (!categoryKeys.size) return [];
-  return products.filter((product) => categoryKeys.has(normalizeSearchText(product.category)));
+  const assignedProductIds = new Set(getVisibleAssignments(assignments, accounts).map((assignment) => assignment.product_id));
+  return products.filter((product) => assignedProductIds.has(product.product_id));
 }
 
 function getVisibleOffers(offers, visibleProducts) {
@@ -237,10 +261,19 @@ function buildGroupedAccounts(accounts) {
 
 function applyRoleBasedNavigation() {
   const adminMode = isAdminSession();
-  suppliersMenuCard.classList.toggle("hidden", !adminMode);
+  const productManagerMode = isProductManagerSession();
+  const catalogManagerMode = canManageCatalog();
+
+  overviewMenuCard.classList.toggle("hidden", productManagerMode);
+  accountsMenuCard.classList.toggle("hidden", productManagerMode);
+  suppliersMenuCard.classList.toggle("hidden", !(adminMode || productManagerMode));
   aiToolsMenuCard.classList.toggle("hidden", !adminMode);
   platformSummaryPanel.classList.toggle("hidden", !adminMode);
   topbarStatus.classList.toggle("hidden", !adminMode);
+  productManagementPanel.classList.toggle("hidden", !catalogManagerMode);
+  supplierManagementPanel.classList.toggle("hidden", !catalogManagerMode);
+  assignmentCreateForm.classList.toggle("hidden", !catalogManagerMode);
+  assignmentCreateResult.classList.toggle("hidden", !catalogManagerMode);
   setAdminAccountsMode(adminMode ? adminAccountsMode : "view");
 }
 
@@ -277,9 +310,13 @@ function unlockDashboard() {
 
 function resetDashboardState() {
   currentUsers = [];
+  currentAssignments = [];
   livestreamAccounts = [];
   staffCredentialFlashMessage = "";
   accountManagementFlashMessage = "";
+  productManagementFlashMessage = "";
+  supplierManagementFlashMessage = "";
+  productAssignmentFlashMessage = "";
   adminAccountsMode = "view";
   adminManageSection = "room-create";
   activeStaffAssignmentUserId = null;
@@ -297,9 +334,17 @@ function resetDashboardState() {
   accountsResult.classList.add("muted");
   accountsResult.textContent = "Đăng nhập để xem danh sách tài khoản livestream.";
   staffCredentialsResult.classList.add("muted");
-  staffCredentialsResult.textContent = "Đăng nhập bằng admin để xem tài khoản nhân viên.";
+  staffCredentialsResult.textContent = "Đăng nhập bằng admin để xem tài khoản nội bộ.";
+  productCreateResult.classList.add("muted");
+  productCreateResult.textContent = "Admin hoặc quản lý sản phẩm có thể thêm mặt hàng mới tại đây.";
   productsResult.classList.add("muted");
   productsResult.textContent = "Đăng nhập để xem danh mục sản phẩm.";
+  assignmentCreateResult.classList.add("muted");
+  assignmentCreateResult.textContent = "Admin hoặc quản lý sản phẩm có thể gán sản phẩm cho từng phòng livestream.";
+  productAssignmentResult.classList.add("muted");
+  productAssignmentResult.textContent = "Đăng nhập để xem sản phẩm đã gán cho các phòng livestream.";
+  supplierCreateResult.classList.add("muted");
+  supplierCreateResult.textContent = "Admin hoặc quản lý sản phẩm có thể thêm nhà cung cấp mới tại đây.";
   offersResult.classList.add("muted");
   offersResult.textContent = "Đăng nhập để xem các offer hiện hành.";
   suppliersResult.classList.add("muted");
@@ -315,6 +360,8 @@ function resetDashboardState() {
   staffAssignmentResult.classList.add("muted");
   staffAssignmentResult.textContent = "Đăng nhập bằng admin để xem danh sách staff.";
   staffSearchInput.value = "";
+  assignmentAccountSelect.innerHTML = "";
+  assignmentProductSelect.innerHTML = "";
   sessionCard.classList.add("muted");
   sessionCard.textContent = "Phiên làm việc chưa được khởi tạo.";
   accountASelect.innerHTML = "";
@@ -323,6 +370,10 @@ function resetDashboardState() {
   topbarStatus.classList.remove("hidden");
   suppliersMenuCard.classList.remove("hidden");
   aiToolsMenuCard.classList.remove("hidden");
+  productManagementPanel.classList.remove("hidden");
+  supplierManagementPanel.classList.remove("hidden");
+  assignmentCreateForm.classList.remove("hidden");
+  assignmentCreateResult.classList.remove("hidden");
   adminAccountModePanel.classList.add("hidden");
   staffAssignmentPanel.classList.add("hidden");
   manageAccountSwitcherPanel.classList.add("hidden");
@@ -357,7 +408,9 @@ function syncSessionUI() {
   sidebarUserRole.textContent = formatRole(currentSession.user.role);
   topbarSubtitle.textContent = isAdminSession()
     ? `${currentSession.user.name} đang theo dõi hiệu suất hệ thống, hàng hóa và nhà cung cấp trong ca trực hiện tại.`
-    : `${currentSession.user.name} đang theo dõi room được phân công, ca làm hiện tại và danh mục hàng hóa cần bán.`;
+    : isProductManagerSession()
+      ? `${currentSession.user.name} đang quản lý danh mục sản phẩm, nhà cung cấp và cấu hình sản phẩm cho từng phòng livestream.`
+      : `${currentSession.user.name} đang theo dõi room được phân công, ca làm hiện tại và danh mục hàng hóa cần bán.`;
   sessionCard.classList.remove("muted");
   sessionCard.innerHTML = `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>${formatRole(currentSession.user.role)}</span><br /><span>${currentSession.user.department}</span>`;
 }
@@ -485,7 +538,9 @@ function renderKpis(summary, overview) {
     { label: "Room cảnh báo", value: warningRooms.toString(), note: "Phòng live đang có mức lag cần theo dõi" },
   ].map((item) => `<article class="kpi-card"><span>${item.label}</span><strong>${item.value}</strong><p>${item.note}</p></article>`).join("");
   const topPlatform = [...summary].sort((a, b) => b.total_viewers - a.total_viewers)[0];
-  overviewHighlight.textContent = `${topPlatform.display_name} đang dẫn đầu với ${topPlatform.total_viewers.toLocaleString("vi-VN")} viewer realtime trên ${topPlatform.total_accounts} phòng live. Hệ thống hiện có ${warningRooms} room cần theo dõi tín hiệu lag.`;
+  overviewHighlight.textContent = topPlatform
+    ? `${topPlatform.display_name} đang dẫn đầu với ${topPlatform.total_viewers.toLocaleString("vi-VN")} viewer realtime trên ${topPlatform.total_accounts} phòng live. Hệ thống hiện có ${warningRooms} room cần theo dõi tín hiệu lag.`
+    : "Chưa có dữ liệu nền tảng để tổng hợp KPI vận hành.";
 }
 
 function renderPlatformSummary(items) {
@@ -518,8 +573,9 @@ function renderStaffOverview(accounts, products, offers) {
     : `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>Chưa có room được phân công.</span>`;
 }
 
-function renderStaffAssignments(users, accounts) {
+function renderStaffAssignments(users, accounts, assignments) {
   const query = normalizeSearchText(staffSearchInput.value);
+  const assignmentsByAccount = buildAssignmentsByAccount(assignments);
   const staffUsers = users
     .filter((user) => user.role === "staff")
     .filter((user) => !query || normalizeSearchText(`${user.full_name} ${user.staff_code || ""} ${user.email}`).includes(query))
@@ -540,20 +596,27 @@ function renderStaffAssignments(users, accounts) {
   staffAssignmentResult.innerHTML = `<div class="staff-assignment-list">${staffUsers.map((user) => {
     const assignedAccounts = accounts.filter((account) => account.owner_user_id === user.user_id);
     const isOpen = activeStaffAssignmentUserId === user.user_id;
-    return `<article class="staff-assignment-card ${isOpen ? "is-open" : ""}"><button type="button" class="staff-assignment-toggle" data-user-id="${escapeHtml(user.user_id)}"><div><strong>${escapeHtml(user.full_name)}</strong><span>Mã staff: ${escapeHtml(user.staff_code || "Chưa gán")} | ${escapeHtml(user.department)}</span></div><div class="staff-assignment-summary"><strong>${assignedAccounts.length}</strong><span>room</span></div></button><div class="staff-assignment-body ${isOpen ? "" : "hidden"}"><div class="assignment-meta"><span>${escapeHtml(user.email)}</span><span>${escapeHtml(user.phone)}</span><span>${escapeHtml(user.status)}</span></div>${assignedAccounts.length ? `<div class="assignment-room-list">${assignedAccounts.map((account) => `<article class="assignment-room-card"><h3>${escapeHtml(account.name)}</h3><p>${escapeHtml(account.platform_display_name)} | ${escapeHtml(account.username)}</p><div class="table-meta"><span>Ca trực: ${escapeHtml(account.shift_label)}</span><span>Kho xử lý: ${escapeHtml(account.warehouse_location)}</span><span>Host chính: ${escapeHtml(account.owner_name)}</span><span class="tag ${account.status}">${formatStatus(account.status)}</span></div></article>`).join("")}</div>` : `<div class="inline-note muted">Staff này hiện chưa được phân công room livestream nào.</div>`}</div></article>`;
+    return `<article class="staff-assignment-card ${isOpen ? "is-open" : ""}"><button type="button" class="staff-assignment-toggle" data-user-id="${escapeHtml(user.user_id)}"><div><strong>${escapeHtml(user.full_name)}</strong><span>Mã staff: ${escapeHtml(user.staff_code || "Chưa gán")} | ${escapeHtml(user.department)}</span></div><div class="staff-assignment-summary"><strong>${assignedAccounts.length}</strong><span>room</span></div></button><div class="staff-assignment-body ${isOpen ? "" : "hidden"}"><div class="assignment-meta"><span>${escapeHtml(user.email)}</span><span>${escapeHtml(user.phone)}</span><span>${escapeHtml(user.status)}</span></div>${assignedAccounts.length ? `<div class="assignment-room-list">${assignedAccounts.map((account) => {
+      const accountAssignments = assignmentsByAccount.get(account.account_id) || [];
+      const assignedProductNames = accountAssignments.map((item) => item.product_name).join(", ");
+      return `<article class="assignment-room-card"><h3>${escapeHtml(account.name)}</h3><p>${escapeHtml(account.platform_display_name)} | ${escapeHtml(account.username)}</p><div class="table-meta"><span>Ca trực: ${escapeHtml(account.shift_label)}</span><span>Kho xử lý: ${escapeHtml(account.warehouse_location)}</span><span>Host chính: ${escapeHtml(account.owner_name)}</span><span class="tag ${account.status}">${formatStatus(account.status)}</span></div><div class="inline-note ${accountAssignments.length ? "" : "muted"}">Sản phẩm live: ${escapeHtml(assignedProductNames || "Chưa gán sản phẩm")}</div></article>`;
+    }).join("")}</div>` : `<div class="inline-note muted">Staff này hiện chưa được phân công room livestream nào.</div>`}</div></article>`;
   }).join("")}</div>`;
 }
 
-function renderAccounts(groups) {
+function renderAccounts(groups, assignmentsByAccount) {
   accountsResult.classList.remove("muted");
   if (!groups.length) {
     accountsResult.innerHTML = "Bạn chưa được phân công phòng livestream nào.";
     return;
   }
-  accountsResult.innerHTML = groups.map((group) => `<section class="account-table-card"><h3>${group.display_name}</h3><p class="table-subline">${group.summary.total_accounts} phòng live | ${group.summary.total_viewers.toLocaleString("vi-VN")} viewer realtime</p><div class="account-cards">${group.accounts.map((account) => `<article class="account-table-card"><h3>${account.name}</h3><p>${account.owner_name} - ${account.shift_label}</p><div class="table-meta"><span><strong>${account.current_viewers}</strong> / ${account.max_capacity} viewer</span><span>${account.username}</span><span>${account.warehouse_location}</span><span class="tag ${account.status}">${formatStatus(account.status)}</span></div>${isAdminSession() ? `<div class="credential-grid"><div class="credential-card"><span>Tài khoản live</span><strong>${account.username}</strong><small>Mật khẩu: ${account.password}</small></div><div class="credential-card"><span>Tài khoản nhân viên</span><strong>${account.owner_email || "Chưa gán"}</strong><small>Mật khẩu: ${account.owner_password || "Chưa gán"}</small></div></div>` : ""}</article>`).join("")}</div></section>`).join("");
+  accountsResult.innerHTML = groups.map((group) => `<section class="account-table-card"><h3>${group.display_name}</h3><p class="table-subline">${group.summary.total_accounts} phòng live | ${group.summary.total_viewers.toLocaleString("vi-VN")} viewer realtime</p><div class="account-cards">${group.accounts.map((account) => {
+    const accountAssignments = assignmentsByAccount.get(account.account_id) || [];
+    return `<article class="account-table-card"><h3>${account.name}</h3><p>${account.owner_name} - ${account.shift_label}</p><div class="table-meta"><span><strong>${account.current_viewers}</strong> / ${account.max_capacity} viewer</span><span>${account.username}</span><span>${account.warehouse_location}</span><span class="tag ${account.status}">${formatStatus(account.status)}</span></div><div class="inline-note ${accountAssignments.length ? "" : "muted"}">Sản phẩm được gán: ${escapeHtml(accountAssignments.map((item) => item.product_name).join(", ") || "Chưa có sản phẩm nào")}</div>${isAdminSession() ? `<div class="credential-grid"><div class="credential-card"><span>Tài khoản live</span><strong>${account.username}</strong><small>Mật khẩu: ${account.password}</small></div><div class="credential-card"><span>Tài khoản nhân viên</span><strong>${account.owner_email || "Chưa gán"}</strong><small>Mật khẩu: ${account.owner_password || "Chưa gán"}</small></div></div>` : ""}</article>`;
+  }).join("")}</div></section>`).join("");
 }
 
-function renderManagedAccounts(accounts) {
+function renderManagedAccounts(accounts, assignmentsByAccount) {
   const flashNote = accountManagementFlashMessage
     ? `<div class="inline-note">${escapeHtml(accountManagementFlashMessage)}</div>`
     : "";
@@ -571,26 +634,33 @@ function renderManagedAccounts(accounts) {
     return left.name.localeCompare(right.name, "vi");
   });
 
-  accountsResult.innerHTML = `${flashNote}<div class="account-cards">${sortedAccounts.map((account) => `<article class="account-table-card manage-account-card" data-account-id="${escapeHtml(account.account_id)}"><h3>${escapeHtml(account.name)}</h3><p>${escapeHtml(account.platform_display_name)} | ${escapeHtml(account.owner_name || "Chưa gán")}</p><div class="table-meta"><span>Username: ${escapeHtml(account.username)}</span><span>Ca trực: ${escapeHtml(account.shift_label)}</span><span>Kho xử lý: ${escapeHtml(account.warehouse_location)}</span><span><strong>${account.current_viewers}</strong> / ${account.max_capacity} viewer</span><span class="tag ${account.status}">${formatStatus(account.status)}</span></div><button type="button" class="ghost-btn danger-btn manage-account-delete-btn">Xóa phòng live</button><div class="staff-action-result muted">Admin có thể xóa room không còn sử dụng.</div></article>`).join("")}</div>`;
+  accountsResult.innerHTML = `${flashNote}<div class="account-cards">${sortedAccounts.map((account) => `<article class="account-table-card manage-account-card" data-account-id="${escapeHtml(account.account_id)}"><h3>${escapeHtml(account.name)}</h3><p>${escapeHtml(account.platform_display_name)} | ${escapeHtml(account.owner_name || "Chưa gán")}</p><div class="table-meta"><span>Username: ${escapeHtml(account.username)}</span><span>Ca trực: ${escapeHtml(account.shift_label)}</span><span>Kho xử lý: ${escapeHtml(account.warehouse_location)}</span><span><strong>${account.current_viewers}</strong> / ${account.max_capacity} viewer</span><span>Sản phẩm gán: ${(assignmentsByAccount.get(account.account_id) || []).length}</span><span class="tag ${account.status}">${formatStatus(account.status)}</span></div><button type="button" class="ghost-btn danger-btn manage-account-delete-btn">Xóa phòng live</button><div class="staff-action-result muted">Admin có thể xóa room không còn sử dụng.</div></article>`).join("")}</div>`;
 }
 
 function renderStaffCredentials(users) {
-  const staffUsers = users.filter((user) => user.role === "staff");
+  const staffUsers = users
+    .filter((user) => user.role !== "admin")
+    .sort((left, right) => {
+      const roleCompare = formatRole(left.role).localeCompare(formatRole(right.role), "vi");
+      if (roleCompare !== 0) return roleCompare;
+      return left.full_name.localeCompare(right.full_name, "vi");
+    });
   staffCredentialsResult.classList.remove("muted");
   const flashNote = staffCredentialFlashMessage
     ? `<div class="inline-note">${escapeHtml(staffCredentialFlashMessage)}</div>`
     : "";
   staffCredentialFlashMessage = "";
   if (!staffUsers.length) {
-    staffCredentialsResult.innerHTML = `${flashNote}Chưa có tài khoản nhân viên nào trong hệ thống.`;
+    staffCredentialsResult.innerHTML = `${flashNote}Chưa có tài khoản nội bộ nào trong hệ thống.`;
     return;
   }
-  staffCredentialsResult.innerHTML = `${flashNote}<div class="credential-grid">${staffUsers.map((user) => `<article class="credential-card staff-management-card" data-user-id="${escapeHtml(user.user_id)}"><span>${escapeHtml(user.full_name)}</span><strong>${escapeHtml(user.email)}</strong><small>Mã staff: ${escapeHtml(user.staff_code || "Chưa gán")}</small><small>Mật khẩu hiện tại: ${escapeHtml(user.password)}</small><small>Bộ phận: ${escapeHtml(user.department)}</small><form class="staff-password-form"><label>Mật khẩu mới<input name="password" type="text" value="${escapeHtml(user.password)}" minlength="3" required /></label><button type="submit" class="primary-btn staff-action-btn">Cập nhật mật khẩu</button></form><button type="button" class="ghost-btn danger-btn staff-delete-btn">Xóa tài khoản staff</button><div class="staff-action-result muted">Admin có thể cập nhật mật khẩu hoặc xóa tài khoản này.</div></article>`).join("")}</div>`;
+  staffCredentialsResult.innerHTML = `${flashNote}<div class="credential-grid">${staffUsers.map((user) => `<article class="credential-card staff-management-card" data-user-id="${escapeHtml(user.user_id)}"><span>${escapeHtml(user.full_name)}</span><strong>${escapeHtml(user.email)}</strong><small>Vai trò: ${escapeHtml(formatRole(user.role))}</small><small>Mã nội bộ: ${escapeHtml(user.staff_code || "Chưa gán")}</small><small>Mật khẩu hiện tại: ${escapeHtml(user.password)}</small><small>Bộ phận: ${escapeHtml(user.department)}</small><form class="staff-password-form"><label>Mật khẩu mới<input name="password" type="text" value="${escapeHtml(user.password)}" minlength="3" required /></label><button type="submit" class="primary-btn staff-action-btn">Cập nhật mật khẩu</button></form><button type="button" class="ghost-btn danger-btn staff-delete-btn">Xóa tài khoản</button><div class="staff-action-result muted">Admin có thể cập nhật mật khẩu hoặc xóa tài khoản này.</div></article>`).join("")}</div>`;
 }
 
-async function handleStaffCreate() {
+async function handleManagedUserCreate() {
   if (!isAdminSession()) return;
 
+  const selectedRole = staffRole.value;
   const payload = {
     staff_code: document.getElementById("staff-code").value.trim(),
     full_name: document.getElementById("staff-full-name").value.trim(),
@@ -598,24 +668,26 @@ async function handleStaffCreate() {
     password: document.getElementById("staff-password").value.trim(),
     phone: document.getElementById("staff-phone").value.trim(),
     department: document.getElementById("staff-department").value.trim(),
+    role: selectedRole,
   };
 
   staffCreateResult.classList.remove("muted");
-  staffCreateResult.textContent = "Đang tạo tài khoản staff...";
+  staffCreateResult.textContent = "Đang tạo tài khoản nội bộ...";
 
   try {
-    const createdUser = await fetchJson("/api/v1/users/staff", {
+    const createdUser = await fetchJson("/api/v1/users/managed", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    staffCreateResult.innerHTML = `Đã tạo staff <strong>${escapeHtml(createdUser.full_name)}</strong> với mã <strong>${escapeHtml(createdUser.staff_code || "")}</strong>.`;
+    staffCreateResult.innerHTML = `Đã tạo <strong>${escapeHtml(formatRole(createdUser.role))}</strong> cho <strong>${escapeHtml(createdUser.full_name)}</strong> với mã <strong>${escapeHtml(createdUser.staff_code || "")}</strong>.`;
     staffCreateForm.reset();
+    staffRole.value = "staff";
     document.getElementById("staff-password").value = "staff05";
-    staffCredentialFlashMessage = `Đã thêm tài khoản ${createdUser.full_name} với mã ${createdUser.staff_code}.`;
+    staffCredentialFlashMessage = `Đã thêm ${formatRole(createdUser.role)} ${createdUser.full_name} với mã ${createdUser.staff_code}.`;
     await loadDashboardData();
   } catch (error) {
-    staffCreateResult.textContent = extractErrorMessage(error, "Không thể tạo tài khoản staff.");
+    staffCreateResult.textContent = extractErrorMessage(error, "Không thể tạo tài khoản nội bộ.");
   }
 }
 
@@ -669,7 +741,7 @@ async function handleStaffDelete(button) {
 
   button.disabled = true;
   resultBox.classList.remove("muted");
-  resultBox.textContent = "Đang xóa tài khoản staff...";
+  resultBox.textContent = "Đang xóa tài khoản nội bộ...";
 
   try {
     const deletedUser = await fetchJson(`/api/v1/users/${userId}`, { method: "DELETE" });
@@ -679,7 +751,7 @@ async function handleStaffDelete(button) {
     staffCredentialFlashMessage = `${deletedUser.message}${reassignedMessage}`;
     await loadDashboardData();
   } catch (error) {
-    resultBox.textContent = extractErrorMessage(error, "Không thể xóa tài khoản staff này.");
+    resultBox.textContent = extractErrorMessage(error, "Không thể xóa tài khoản nội bộ này.");
   } finally {
     button.disabled = false;
   }
@@ -711,13 +783,202 @@ async function handleLivestreamAccountDelete(button) {
   }
 }
 
-function renderProducts(products) {
+async function handleProductCreate() {
+  if (!canManageCatalog()) return;
+
+  const payload = {
+    sku: document.getElementById("product-sku").value.trim(),
+    name: document.getElementById("product-name").value.trim(),
+    category: document.getElementById("product-category").value.trim(),
+    brand: document.getElementById("product-brand").value.trim(),
+    cost_price: Number(document.getElementById("product-cost-price").value),
+    retail_price: Number(document.getElementById("product-retail-price").value),
+    stock_quantity: Number(document.getElementById("product-stock-quantity").value),
+    reorder_level: Number(document.getElementById("product-reorder-level").value),
+    unit: document.getElementById("product-unit").value.trim(),
+    description: document.getElementById("product-description").value.trim(),
+    is_active: document.getElementById("product-is-active").value === "true",
+  };
+
+  productCreateResult.classList.remove("muted");
+  productCreateResult.textContent = "Đang thêm sản phẩm...";
+
+  try {
+    const createdProduct = await fetchJson("/api/v1/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    productCreateResult.innerHTML = `Đã thêm sản phẩm <strong>${escapeHtml(createdProduct.name)}</strong> với SKU <strong>${escapeHtml(createdProduct.sku)}</strong>.`;
+    productCreateForm.reset();
+    document.getElementById("product-cost-price").value = 99000;
+    document.getElementById("product-retail-price").value = 189000;
+    document.getElementById("product-stock-quantity").value = 120;
+    document.getElementById("product-reorder-level").value = 30;
+    document.getElementById("product-is-active").value = "true";
+    productManagementFlashMessage = `Đã thêm sản phẩm ${createdProduct.name}.`;
+    await loadDashboardData();
+  } catch (error) {
+    productCreateResult.textContent = extractErrorMessage(error, "Không thể thêm sản phẩm mới.");
+  }
+}
+
+async function handleProductDelete(button) {
+  if (!canManageCatalog()) return;
+
+  const card = button.closest(".manage-product-card");
+  const productId = card?.dataset.productId;
+  const productName = card?.querySelector("h3")?.textContent || "sản phẩm này";
+  const resultBox = card?.querySelector(".staff-action-result");
+
+  if (!productId || !resultBox) return;
+  if (!window.confirm(`Bạn có chắc muốn xóa ${productName} khỏi hệ thống?`)) return;
+
+  button.disabled = true;
+  resultBox.classList.remove("muted");
+  resultBox.textContent = "Đang xóa sản phẩm...";
+
+  try {
+    const deletedProduct = await fetchJson(`/api/v1/products/${productId}`, { method: "DELETE" });
+    productManagementFlashMessage = deletedProduct.message;
+    await loadDashboardData();
+  } catch (error) {
+    resultBox.textContent = extractErrorMessage(error, "Không thể xóa sản phẩm này.");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function handleSupplierCreate() {
+  if (!canManageCatalog()) return;
+
+  const payload = {
+    supplier_code: document.getElementById("supplier-code").value.trim(),
+    name: document.getElementById("supplier-name").value.trim(),
+    contact_name: document.getElementById("supplier-contact-name").value.trim(),
+    phone: document.getElementById("supplier-phone").value.trim(),
+    email: document.getElementById("supplier-email").value.trim(),
+    address: document.getElementById("supplier-address").value.trim(),
+    rating: Number(document.getElementById("supplier-rating").value),
+    lead_time_days: Number(document.getElementById("supplier-lead-time").value),
+    status: document.getElementById("supplier-status").value,
+  };
+
+  supplierCreateResult.classList.remove("muted");
+  supplierCreateResult.textContent = "Đang thêm nhà cung cấp...";
+
+  try {
+    const createdSupplier = await fetchJson("/api/v1/suppliers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    supplierCreateResult.innerHTML = `Đã thêm nhà cung cấp <strong>${escapeHtml(createdSupplier.name)}</strong> với mã <strong>${escapeHtml(createdSupplier.supplier_code)}</strong>.`;
+    supplierCreateForm.reset();
+    document.getElementById("supplier-rating").value = 4.5;
+    document.getElementById("supplier-lead-time").value = 3;
+    document.getElementById("supplier-status").value = "active";
+    supplierManagementFlashMessage = `Đã thêm nhà cung cấp ${createdSupplier.name}.`;
+    await loadDashboardData();
+  } catch (error) {
+    supplierCreateResult.textContent = extractErrorMessage(error, "Không thể thêm nhà cung cấp mới.");
+  }
+}
+
+async function handleSupplierDelete(button) {
+  if (!canManageCatalog()) return;
+
+  const card = button.closest(".manage-supplier-card");
+  const supplierId = card?.dataset.supplierId;
+  const supplierName = card?.querySelector("h3")?.textContent || "nhà cung cấp này";
+  const resultBox = card?.querySelector(".staff-action-result");
+
+  if (!supplierId || !resultBox) return;
+  if (!window.confirm(`Bạn có chắc muốn xóa ${supplierName} khỏi hệ thống?`)) return;
+
+  button.disabled = true;
+  resultBox.classList.remove("muted");
+  resultBox.textContent = "Đang xóa nhà cung cấp...";
+
+  try {
+    const deletedSupplier = await fetchJson(`/api/v1/suppliers/${supplierId}`, { method: "DELETE" });
+    supplierManagementFlashMessage = deletedSupplier.message;
+    await loadDashboardData();
+  } catch (error) {
+    resultBox.textContent = extractErrorMessage(error, "Không thể xóa nhà cung cấp này.");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function handleProductAssignmentCreate() {
+  if (!canManageCatalog()) return;
+
+  const payload = {
+    account_id: assignmentAccountSelect.value,
+    product_id: assignmentProductSelect.value,
+    assigned_by_user_id: currentSession?.user?.id || null,
+  };
+
+  assignmentCreateResult.classList.remove("muted");
+  assignmentCreateResult.textContent = "Đang gán sản phẩm cho phòng livestream...";
+
+  try {
+    const createdAssignment = await fetchJson("/api/v1/livestream-product-assignments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    assignmentCreateResult.innerHTML = `Đã gán <strong>${escapeHtml(createdAssignment.product_name)}</strong> cho <strong>${escapeHtml(createdAssignment.account_name)}</strong>.`;
+    productAssignmentFlashMessage = `Đã cập nhật danh mục live cho ${createdAssignment.account_name}.`;
+    await loadDashboardData();
+  } catch (error) {
+    assignmentCreateResult.textContent = extractErrorMessage(error, "Không thể gán sản phẩm cho phòng livestream.");
+  }
+}
+
+async function handleProductAssignmentDelete(button) {
+  if (!canManageCatalog()) return;
+
+  const card = button.closest(".product-assignment-card");
+  const assignmentId = card?.dataset.assignmentId;
+  const productName = card?.querySelector("h3")?.textContent || "sản phẩm này";
+
+  if (!assignmentId) return;
+  if (!window.confirm(`Bạn có chắc muốn gỡ ${productName} khỏi phòng livestream?`)) return;
+
+  button.disabled = true;
+
+  try {
+    const deletedAssignment = await fetchJson(`/api/v1/livestream-product-assignments/${assignmentId}`, { method: "DELETE" });
+    productAssignmentFlashMessage = deletedAssignment.message;
+    await loadDashboardData();
+  } catch (error) {
+    assignmentCreateResult.classList.remove("muted");
+    assignmentCreateResult.textContent = extractErrorMessage(error, "Không thể gỡ sản phẩm khỏi phòng livestream.");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function renderProducts(products, assignments) {
+  const assignmentCountByProduct = new Map();
+  assignments.forEach((assignment) => {
+    assignmentCountByProduct.set(
+      assignment.product_id,
+      (assignmentCountByProduct.get(assignment.product_id) || 0) + 1,
+    );
+  });
+  const flashNote = productManagementFlashMessage
+    ? `<div class="inline-note">${escapeHtml(productManagementFlashMessage)}</div>`
+    : "";
+  productManagementFlashMessage = "";
   productsResult.classList.remove("muted");
   if (!products.length) {
-    productsResult.innerHTML = "Chưa có sản phẩm nào được phân cho ca làm hiện tại.";
+    productsResult.innerHTML = `${flashNote}Chưa có sản phẩm nào được phân cho ca làm hiện tại.`;
     return;
   }
-  productsResult.innerHTML = `<div class="product-grid">${products.map((item) => `<article class="product-card"><h3>${item.name}</h3><p>${item.brand} - ${item.category}</p><div class="product-meta"><span>SKU: ${item.sku}</span><span>Giá bán: ${item.retail_price.toLocaleString("vi-VN")} đ</span><span>Giá vốn: ${item.cost_price.toLocaleString("vi-VN")} đ</span><span>Tồn kho: ${item.stock_quantity} ${item.unit}</span></div></article>`).join("")}</div>`;
+  productsResult.innerHTML = `${flashNote}<div class="product-grid">${products.map((item) => `<article class="product-card manage-product-card" data-product-id="${escapeHtml(item.product_id)}"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.brand)} - ${escapeHtml(item.category)}</p><div class="product-meta"><span>SKU: ${escapeHtml(item.sku)}</span><span>Giá bán: ${item.retail_price.toLocaleString("vi-VN")} đ</span><span>Giá vốn: ${item.cost_price.toLocaleString("vi-VN")} đ</span><span>Tồn kho: ${item.stock_quantity} ${escapeHtml(item.unit)}</span><span>Đang gán cho: ${(assignmentCountByProduct.get(item.product_id) || 0)} room</span></div><p>${escapeHtml(item.description)}</p>${canManageCatalog() ? `<button type="button" class="ghost-btn danger-btn product-delete-btn">Xóa sản phẩm</button><div class="staff-action-result muted">Sản phẩm chỉ xóa được khi không còn offer gắn kèm.</div>` : ""}</article>`).join("")}</div>`;
 }
 
 function renderOffers(offers) {
@@ -730,8 +991,51 @@ function renderOffers(offers) {
 }
 
 function renderSuppliers(suppliers) {
+  const flashNote = supplierManagementFlashMessage
+    ? `<div class="inline-note">${escapeHtml(supplierManagementFlashMessage)}</div>`
+    : "";
+  supplierManagementFlashMessage = "";
   suppliersResult.classList.remove("muted");
-  suppliersResult.innerHTML = `<div class="supplier-grid">${suppliers.map((item) => `<article class="supplier-card"><h3>${item.name}</h3><p>${item.contact_name}</p><div class="supplier-meta"><span>${item.phone}</span><span>${item.email}</span><span>${item.address}</span><span>Rating: ${item.rating}/5</span><span>Lead time: ${item.lead_time_days} ngày</span></div></article>`).join("")}</div>`;
+  if (!suppliers.length) {
+    suppliersResult.innerHTML = `${flashNote}Chưa có nhà cung cấp nào trong hệ thống.`;
+    return;
+  }
+  suppliersResult.innerHTML = `${flashNote}<div class="supplier-grid">${suppliers.map((item) => `<article class="supplier-card manage-supplier-card" data-supplier-id="${escapeHtml(item.supplier_id)}"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.contact_name)}</p><div class="supplier-meta"><span>${escapeHtml(item.phone)}</span><span>${escapeHtml(item.email)}</span><span>${escapeHtml(item.address)}</span><span>Rating: ${item.rating}/5</span><span>Lead time: ${item.lead_time_days} ngày</span><span class="tag ${escapeHtml(item.status)}">${formatStatus(item.status)}</span></div>${canManageCatalog() ? `<button type="button" class="ghost-btn danger-btn supplier-delete-btn">Xóa nhà cung cấp</button><div class="staff-action-result muted">Nhà cung cấp chỉ xóa được khi không còn offer đang tham chiếu.</div>` : ""}</article>`).join("")}</div>`;
+}
+
+function renderProductAssignments(assignments) {
+  const flashNote = productAssignmentFlashMessage
+    ? `<div class="inline-note">${escapeHtml(productAssignmentFlashMessage)}</div>`
+    : "";
+  productAssignmentFlashMessage = "";
+  productAssignmentResult.classList.remove("muted");
+
+  if (!assignments.length) {
+    productAssignmentResult.innerHTML = `${flashNote}${isStaffSession()
+      ? "Bạn chưa có sản phẩm nào được gán cho các room đang phụ trách."
+      : "Chưa có cấu hình gán sản phẩm nào cho các phòng livestream."}`;
+    return;
+  }
+
+  const grouped = new Map();
+  [...assignments]
+    .sort((left, right) => {
+      const accountCompare = left.account_name.localeCompare(right.account_name, "vi");
+      if (accountCompare !== 0) return accountCompare;
+      return left.product_name.localeCompare(right.product_name, "vi");
+    })
+    .forEach((assignment) => {
+      if (!grouped.has(assignment.account_id)) {
+        grouped.set(assignment.account_id, {
+          account_name: assignment.account_name,
+          platform_display_name: assignment.platform_display_name,
+          items: [],
+        });
+      }
+      grouped.get(assignment.account_id).items.push(assignment);
+    });
+
+  productAssignmentResult.innerHTML = `${flashNote}<div class="account-cards">${[...grouped.entries()].map(([accountId, group]) => `<article class="account-table-card"><h3>${escapeHtml(group.account_name)}</h3><p>${escapeHtml(group.platform_display_name)} | ${group.items.length} sản phẩm được gán</p><div class="offer-grid">${group.items.map((assignment) => `<article class="offer-card product-assignment-card" data-assignment-id="${escapeHtml(assignment.assignment_id)}"><h3>${escapeHtml(assignment.product_name)}</h3><p>${escapeHtml(assignment.product_category)} | ${escapeHtml(assignment.product_sku)}</p><div class="offer-meta"><span>Mã cấu hình: ${escapeHtml(assignment.assignment_id)}</span><span>Người gán: ${escapeHtml(assignment.assigned_by_name || "Chưa ghi nhận")}</span><span>Thời điểm: ${escapeHtml(assignment.assigned_at)}</span></div>${canManageCatalog() ? `<button type="button" class="ghost-btn danger-btn assignment-delete-btn">Gỡ sản phẩm khỏi room</button>` : ""}</article>`).join("")}</div></article>`).join("")}</div>`;
 }
 
 function fillAccountSelectors(accounts) {
@@ -740,6 +1044,23 @@ function fillAccountSelectors(accounts) {
   accountBSelect.innerHTML = options;
   if (accounts[0]) accountASelect.value = accounts[0].account_id;
   if (accounts[1]) accountBSelect.value = accounts[1].account_id;
+}
+
+function fillAssignmentSelectors(accounts, products) {
+  const accountOptions = [...accounts]
+    .sort((left, right) => left.name.localeCompare(right.name, "vi"))
+    .map((account) => `<option value="${account.account_id}">${account.name} (${account.platform_display_name} - ${account.owner_name})</option>`)
+    .join("");
+  const productOptions = [...products]
+    .sort((left, right) => left.name.localeCompare(right.name, "vi"))
+    .map((product) => `<option value="${product.product_id}">${product.name} (${product.sku})</option>`)
+    .join("");
+
+  assignmentAccountSelect.innerHTML = accountOptions;
+  assignmentProductSelect.innerHTML = productOptions;
+
+  if (accounts[0]) assignmentAccountSelect.value = accounts[0].account_id;
+  if (products[0]) assignmentProductSelect.value = products[0].product_id;
 }
 
 function renderCommentResult(data) {
@@ -760,34 +1081,45 @@ async function loadDashboardData() {
     return;
   }
 
-  const [summary, overview, groups, products, suppliers, offers] = await Promise.all([
-    fetchJson("/api/v1/platform-summaries"),
-    fetchJson("/api/v1/database-overview"),
-    fetchJson("/api/v1/livestream-accounts/grouped"),
-    fetchJson("/api/v1/products"),
-    fetchJson("/api/v1/suppliers"),
-    fetchJson("/api/v1/supplier-offers"),
-  ]);
-  currentUsers = overview.users;
-  livestreamAccounts = isStaffSession() ? getOwnedAccounts(overview.livestream_accounts) : overview.livestream_accounts;
-  const visibleProducts = getVisibleProducts(products);
+  const overview = await fetchJson("/api/v1/database-overview");
+  const summary = overview.platform_summaries || [];
+  const allLivestreamAccounts = overview.livestream_accounts || [];
+  const products = overview.products || [];
+  const suppliers = overview.suppliers || [];
+  const offers = overview.supplier_offers || [];
+  const allAssignments = overview.livestream_product_assignments || [];
+  currentAssignments = allAssignments;
+  const visibleAssignments = getVisibleAssignments(allAssignments, allLivestreamAccounts);
+  const allAssignmentsByAccount = buildAssignmentsByAccount(allAssignments);
+  const visibleAssignmentsByAccount = buildAssignmentsByAccount(visibleAssignments);
+
+  currentUsers = overview.users || [];
+  livestreamAccounts = isStaffSession() ? getOwnedAccounts(allLivestreamAccounts) : allLivestreamAccounts;
+  const visibleProducts = getVisibleProducts(products, allAssignments, allLivestreamAccounts);
   const visibleOffers = getVisibleOffers(offers, visibleProducts);
 
   if (isAdminSession()) {
     renderPlatformSummary(summary);
     renderKpis(summary, overview);
-    renderStaffAssignments(overview.users, overview.livestream_accounts);
-    renderManagedAccounts(overview.livestream_accounts);
-    renderStaffCredentials(overview.users);
+    renderStaffAssignments(currentUsers, allLivestreamAccounts, allAssignments);
+    renderManagedAccounts(allLivestreamAccounts, allAssignmentsByAccount);
+    renderStaffCredentials(currentUsers);
     renderSuppliers(suppliers);
-    fillAccountSelectors(livestreamAccounts);
+    fillAccountSelectors(allLivestreamAccounts);
+  } else if (isProductManagerSession()) {
+    renderSuppliers(suppliers);
   } else {
     renderStaffOverview(livestreamAccounts, visibleProducts, visibleOffers);
-    renderAccounts(buildGroupedAccounts(livestreamAccounts));
+    renderAccounts(buildGroupedAccounts(livestreamAccounts), visibleAssignmentsByAccount);
   }
 
-  renderProducts(visibleProducts);
+  if (canManageCatalog()) {
+    fillAssignmentSelectors(allLivestreamAccounts, products);
+  }
+
+  renderProducts(visibleProducts, visibleAssignments);
   renderOffers(visibleOffers);
+  renderProductAssignments(visibleAssignments);
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -855,14 +1187,34 @@ refreshCaptchaBtn.addEventListener("click", async () => {
   }
 });
 
+staffRole.addEventListener("change", () => {
+  const passwordInput = document.getElementById("staff-password");
+  const departmentInput = document.getElementById("staff-department");
+  if (staffRole.value === "product_manager") {
+    if (!passwordInput.value || passwordInput.value === "staff05") {
+      passwordInput.value = "pm001";
+    }
+    if (!departmentInput.value || departmentInput.value === "Vận hành livestream") {
+      departmentInput.value = "Quản lý sản phẩm";
+    }
+    return;
+  }
+  if (!passwordInput.value || passwordInput.value === "pm001") {
+    passwordInput.value = "staff05";
+  }
+  if (!departmentInput.value || departmentInput.value === "Quản lý sản phẩm") {
+    departmentInput.value = "Vận hành livestream";
+  }
+});
+
 staffSearchInput.addEventListener("input", () => {
   if (!isAdminSession()) return;
-  renderStaffAssignments(currentUsers, livestreamAccounts);
+  renderStaffAssignments(currentUsers, livestreamAccounts, currentAssignments);
 });
 
 staffCreateForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  await handleStaffCreate();
+  await handleManagedUserCreate();
 });
 
 staffAssignmentResult.addEventListener("click", (event) => {
@@ -870,7 +1222,7 @@ staffAssignmentResult.addEventListener("click", (event) => {
   if (!toggleButton) return;
   const userId = toggleButton.dataset.userId;
   activeStaffAssignmentUserId = activeStaffAssignmentUserId === userId ? null : userId;
-  renderStaffAssignments(currentUsers, livestreamAccounts);
+  renderStaffAssignments(currentUsers, livestreamAccounts, currentAssignments);
 });
 
 staffCredentialsResult.addEventListener("submit", async (event) => {
@@ -892,6 +1244,24 @@ accountsResult.addEventListener("click", async (event) => {
   await handleLivestreamAccountDelete(deleteButton);
 });
 
+productsResult.addEventListener("click", async (event) => {
+  const deleteButton = event.target.closest(".product-delete-btn");
+  if (!deleteButton) return;
+  await handleProductDelete(deleteButton);
+});
+
+suppliersResult.addEventListener("click", async (event) => {
+  const deleteButton = event.target.closest(".supplier-delete-btn");
+  if (!deleteButton) return;
+  await handleSupplierDelete(deleteButton);
+});
+
+productAssignmentResult.addEventListener("click", async (event) => {
+  const deleteButton = event.target.closest(".assignment-delete-btn");
+  if (!deleteButton) return;
+  await handleProductAssignmentDelete(deleteButton);
+});
+
 logoutBtn.addEventListener("click", () => {
   setSession(null);
   lockToAuthScreen();
@@ -899,6 +1269,7 @@ logoutBtn.addEventListener("click", () => {
 
 accountForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (!isAdminSession()) return;
   accountFormResult.textContent = "Đang tạo phòng livestream...";
   const payload = {
     name: document.getElementById("account-name").value.trim(),
@@ -931,6 +1302,21 @@ accountForm.addEventListener("submit", async (event) => {
   } catch (error) {
     accountFormResult.textContent = "Không thể tạo phòng livestream. Hãy kiểm tra lại thông tin nhập.";
   }
+});
+
+productCreateForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await handleProductCreate();
+});
+
+supplierCreateForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await handleSupplierCreate();
+});
+
+assignmentCreateForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await handleProductAssignmentCreate();
 });
 
 commentForm.addEventListener("submit", async (event) => {

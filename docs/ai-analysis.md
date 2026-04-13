@@ -58,7 +58,7 @@ Có 2 hướng:
 ### Hướng 1 - Rule-based + AI API
 
 - Tiền xử lý văn bản.
-- Nhận diện từ khóa quan trọng như `bao nhieu`, `ib`, `mua`, `ship`.
+- Nhận diện từ khóa quan trọng như `bao nhiêu`, `ib`, `mua`, `ship`.
 - Gọi model NLP/API để phân loại intent và sentiment.
 - Kết hợp rule để tính lead score.
 
@@ -91,7 +91,7 @@ Tổng điểm được giới hạn trong khoảng 0-100.
 ### Comment 1
 
 Input:
-`Shop oi san pham nay bao nhieu vay?`
+`Shop ơi sản phẩm này bao nhiêu vậy?`
 
 Output:
 
@@ -115,7 +115,7 @@ Output:
 ### Comment 3
 
 Input:
-`Spam link kiem tien online`
+`Spam link kiếm tiền online`
 
 Output:
 

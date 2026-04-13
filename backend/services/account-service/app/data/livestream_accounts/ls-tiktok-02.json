@@ -1,11 +1,11 @@
-{
+﻿{
   "account_id": "ls-tiktok-02",
   "account_code": "TT02",
   "name": "TikTok Chốt Đơn 1",
   "platform_code": "tiktok",
   "username": "smartlive_tt_room_02",
   "owner_user_id": "user-staff",
-  "owner_name": "Nguyen Bao Tram",
+  "owner_name": "Nguyễn Bảo Trâm",
   "backup_contact": "0909 771 002",
   "current_viewers": 860,
   "max_capacity": 1500,

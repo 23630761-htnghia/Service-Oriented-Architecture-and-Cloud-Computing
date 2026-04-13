@@ -1,11 +1,11 @@
-{
+﻿{
   "account_id": "ls-facebook-04",
   "account_code": "FB04",
   "name": "Facebook Gia Dụng Cuối Tuần",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_04",
   "owner_user_id": "user-staff-03",
-  "owner_name": "Pham Thu Ha",
+  "owner_name": "Phạm Thu Hà",
   "backup_contact": "0909 881 004",
   "current_viewers": 380,
   "max_capacity": 850,

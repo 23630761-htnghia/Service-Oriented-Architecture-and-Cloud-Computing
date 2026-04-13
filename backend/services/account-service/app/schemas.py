@@ -36,6 +36,10 @@ class StaffUserCreate(BaseModel):
     status: str = "active"
 
 
+class ManagedUserCreate(StaffUserCreate):
+    role: str = Field(..., pattern="^(staff|product_manager)$")
+
+
 class UserDeleteResponse(BaseModel):
     user_id: str = Field(..., min_length=1)
     removed_email: str = Field(..., min_length=1)
@@ -106,6 +110,30 @@ class ProductItem(BaseModel):
     is_active: bool
 
 
+class ProductCreate(BaseModel):
+    sku: str = Field(..., min_length=1)
+    name: str = Field(..., min_length=1)
+    category: str = Field(..., min_length=1)
+    brand: str = Field(..., min_length=1)
+    cost_price: float = Field(..., ge=0)
+    retail_price: float = Field(..., ge=0)
+    stock_quantity: int = Field(..., ge=0)
+    reorder_level: int = Field(..., ge=0)
+    unit: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    is_active: bool = True
+
+
+class ProductUpdate(ProductCreate):
+    pass
+
+
+class ProductDeleteResponse(BaseModel):
+    product_id: str = Field(..., min_length=1)
+    product_name: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1)
+
+
 class Supplier(BaseModel):
     supplier_id: str = Field(..., min_length=1)
     supplier_code: str = Field(..., min_length=1)
@@ -117,6 +145,28 @@ class Supplier(BaseModel):
     rating: float = Field(..., ge=0, le=5)
     lead_time_days: int = Field(..., ge=0)
     status: str = Field(..., min_length=1)
+
+
+class SupplierCreate(BaseModel):
+    supplier_code: str = Field(..., min_length=1)
+    name: str = Field(..., min_length=1)
+    contact_name: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=1)
+    email: str = Field(..., min_length=1)
+    address: str = Field(..., min_length=1)
+    rating: float = Field(..., ge=0, le=5)
+    lead_time_days: int = Field(..., ge=0)
+    status: str = Field(..., min_length=1)
+
+
+class SupplierUpdate(SupplierCreate):
+    pass
+
+
+class SupplierDeleteResponse(BaseModel):
+    supplier_id: str = Field(..., min_length=1)
+    supplier_name: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1)
 
 
 class SupplierOffer(BaseModel):
@@ -134,6 +184,34 @@ class SupplierOffer(BaseModel):
     end_date: str = Field(..., min_length=1)
     status: str = Field(..., min_length=1)
     notes: str = Field(..., min_length=1)
+
+
+class LivestreamProductAssignment(BaseModel):
+    assignment_id: str = Field(..., min_length=1)
+    account_id: str = Field(..., min_length=1)
+    account_name: str = Field(..., min_length=1)
+    platform: str = Field(..., min_length=1)
+    platform_display_name: str = Field(..., min_length=1)
+    product_id: str = Field(..., min_length=1)
+    product_name: str = Field(..., min_length=1)
+    product_sku: str = Field(..., min_length=1)
+    product_category: str = Field(..., min_length=1)
+    assigned_by_user_id: str | None = None
+    assigned_by_name: str | None = None
+    assigned_at: str = Field(..., min_length=1)
+
+
+class LivestreamProductAssignmentCreate(BaseModel):
+    account_id: str = Field(..., min_length=1)
+    product_id: str = Field(..., min_length=1)
+    assigned_by_user_id: str | None = None
+
+
+class LivestreamProductAssignmentDeleteResponse(BaseModel):
+    assignment_id: str = Field(..., min_length=1)
+    account_id: str = Field(..., min_length=1)
+    product_id: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1)
 
 
 class PlatformSummary(BaseModel):
@@ -160,3 +238,4 @@ class DatabaseOverview(BaseModel):
     products: list[ProductItem]
     suppliers: list[Supplier]
     supplier_offers: list[SupplierOffer]
+    livestream_product_assignments: list[LivestreamProductAssignment]

@@ -1,6 +1,9 @@
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
 databricks/runs/*.json
 databricks/runs/*.md
 !databricks/runs/.gitkeep
+
+backend/services/account-service/app/data/account_management.db

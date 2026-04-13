@@ -53,7 +53,7 @@ async def analyze_comment(payload: SyncCommentRequest) -> dict:
         response.raise_for_status()
         return response.json()
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Khong the goi ai-service: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Không thể gọi ai-service: {exc}") from exc
 
 
 def build_sync_record(

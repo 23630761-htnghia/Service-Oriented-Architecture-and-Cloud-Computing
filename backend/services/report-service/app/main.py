@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -25,15 +26,19 @@ async def fetch_json(base_url: str, path: str) -> dict | list:
         response.raise_for_status()
         return response.json()
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Khong the goi service phu thuoc: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Không thể gọi service phụ thuộc: {exc}") from exc
 
 
 async def build_report_payload() -> tuple[KpiOverview, list[PlatformSyncMetric], list[dict]]:
-    overview = await fetch_json(ACCOUNT_SERVICE_URL, "/database-overview")
-    sync_summary = await fetch_json(SYNC_SERVICE_URL, "/sync-summary")
-    sync_records = await fetch_json(SYNC_SERVICE_URL, "/sync-records")
+    overview, sync_summary, sync_records = await asyncio.gather(
+        fetch_json(ACCOUNT_SERVICE_URL, "/database-overview"),
+        fetch_json(SYNC_SERVICE_URL, "/sync-summary"),
+        fetch_json(SYNC_SERVICE_URL, "/sync-records"),
+    )
 
-    platform_metrics_map: dict[str, dict] = defaultdict(lambda: {"total_comments": 0, "high_priority_comments": 0, "lead_scores": []})
+    platform_metrics_map: dict[str, dict] = defaultdict(
+        lambda: {"total_comments": 0, "high_priority_comments": 0, "lead_scores": []}
+    )
     for record in sync_records:
         platform = record.get("platform", "unknown")
         platform_metrics_map[platform]["total_comments"] += 1

@@ -1,0 +1,13 @@
+{
+  "user_id": "user-pm001",
+  "staff_code": "PM001",
+  "email": "product.manager@smartlive.vn",
+  "password": "pm001",
+  "full_name": "Trần Gia Phúc",
+  "role": "product_manager",
+  "phone": "0909 000 006",
+  "department": "Quản lý sản phẩm",
+  "status": "active",
+  "created_at": "2026-03-14T08:00:00",
+  "last_login_at": "2026-04-08T18:20:00"
+}

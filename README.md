@@ -164,13 +164,21 @@ Nếu chưa có model, `ai-service` sẽ fallback về rule-based analyzer.
 ### Account
 
 - `GET /api/v1/users`
+- `POST /api/v1/users/staff`
+- `PATCH /api/v1/users/{user_id}/password`
 - `GET /api/v1/livestream-accounts`
 - `GET /api/v1/livestream-accounts/grouped`
 - `GET /api/v1/platform-summaries`
 - `GET /api/v1/platforms/{platform}/accounts`
 - `POST /api/v1/livestream-accounts`
 - `GET /api/v1/products`
+- `POST /api/v1/products`
+- `PATCH /api/v1/products/{product_id}`
+- `DELETE /api/v1/products/{product_id}`
 - `GET /api/v1/suppliers`
+- `POST /api/v1/suppliers`
+- `PATCH /api/v1/suppliers/{supplier_id}`
+- `DELETE /api/v1/suppliers/{supplier_id}`
 - `GET /api/v1/supplier-offers`
 - `GET /api/v1/database-overview`
 

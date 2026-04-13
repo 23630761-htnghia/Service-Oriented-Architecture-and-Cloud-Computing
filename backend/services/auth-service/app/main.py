@@ -21,6 +21,8 @@ app = FastAPI(
 )
 
 ACCOUNT_SERVICE_URL = os.getenv("ACCOUNT_SERVICE_URL", "http://localhost:8003")
+ACCOUNT_SERVICE_TIMEOUT_SECONDS = float(os.getenv("ACCOUNT_SERVICE_TIMEOUT_SECONDS", "2"))
+AUTH_ALLOW_DEMO_FALLBACK = os.getenv("AUTH_ALLOW_DEMO_FALLBACK", "false").strip().lower() == "true"
 
 DEMO_USERS = {
     "admin@smartlive.vn": {
@@ -28,35 +30,42 @@ DEMO_USERS = {
         "id": "user-admin",
         "name": "Hoàng Trọng Nghĩa",
         "role": "admin",
-        "department": "Trung tam van hanh livestream",
+        "department": "Trung tâm vận hành livestream",
     },
     "staff@smartlive.vn": {
         "password": "staff01",
         "id": "user-staff",
-        "name": "Nguyen Bao Tram",
+        "name": "Nguyễn Bảo Trâm",
         "role": "staff",
         "department": "Kinh doanh livestream",
     },
     "staff02@smartlive.vn": {
         "password": "staff02",
         "id": "user-staff-02",
-        "name": "Le Hoang My",
+        "name": "Lê Hoàng My",
         "role": "staff",
-        "department": "Van hanh san",
+        "department": "Vận hành sàn",
     },
     "staff03@smartlive.vn": {
         "password": "staff03",
         "id": "user-staff-03",
-        "name": "Pham Thu Ha",
+        "name": "Phạm Thu Hà",
         "role": "staff",
-        "department": "Chot don livestream",
+        "department": "Chốt đơn livestream",
     },
     "staff04@smartlive.vn": {
         "password": "staff04",
         "id": "user-staff-04",
-        "name": "Vo Gia Han",
+        "name": "Võ Gia Hân",
         "role": "staff",
-        "department": "Cham soc khach hang",
+        "department": "Chăm sóc khách hàng",
+    },
+    "product.manager@smartlive.vn": {
+        "password": "pm001",
+        "id": "user-pm001",
+        "name": "Trần Gia Phúc",
+        "role": "product_manager",
+        "department": "Quản lý sản phẩm",
     },
 }
 
@@ -94,7 +103,7 @@ def create_captcha() -> CaptchaResponse:
 
 def load_users() -> dict[str, dict[str, str]]:
     try:
-        with urlopen(f"{ACCOUNT_SERVICE_URL}/users", timeout=2) as response:
+        with urlopen(f"{ACCOUNT_SERVICE_URL}/users", timeout=ACCOUNT_SERVICE_TIMEOUT_SECONDS) as response:
             records = json.loads(response.read().decode("utf-8"))
         users = {
             record["email"]: {
@@ -108,9 +117,14 @@ def load_users() -> dict[str, dict[str, str]]:
         }
         if users:
             return users
-    except (URLError, OSError, ValueError, KeyError, json.JSONDecodeError):
-        pass
-    return DEMO_USERS
+        raise ValueError("Không có tài khoản nào trong database.")
+    except (URLError, OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        if AUTH_ALLOW_DEMO_FALLBACK:
+            return DEMO_USERS
+        raise HTTPException(
+            status_code=503,
+            detail="Không thể tải dữ liệu đăng nhập từ account-service.",
+        ) from exc
 
 
 def build_captcha_svg(captcha_text: str) -> str:
@@ -190,13 +204,13 @@ def login(payload: LoginRequest) -> LoginResponse:
     prune_expired_captchas()
     captcha = captcha_store.pop(payload.captcha_id, None)
     if not captcha:
-        raise HTTPException(status_code=400, detail="Captcha khong hop le hoac da het han.")
+        raise HTTPException(status_code=400, detail="Captcha không hợp lệ hoặc đã hết hạn.")
     if str(payload.captcha_answer).strip().upper() != captcha["answer"]:
-        raise HTTPException(status_code=400, detail="Captcha khong chinh xac.")
+        raise HTTPException(status_code=400, detail="Captcha không chính xác.")
 
     user = load_users().get(payload.email)
     if not user or user["password"] != payload.password:
-        raise HTTPException(status_code=401, detail="Email hoac mat khau khong dung.")
+        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng.")
 
     return LoginResponse(
         access_token=f"access-token-{user['id']}",
@@ -212,7 +226,9 @@ def login(payload: LoginRequest) -> LoginResponse:
 
 @app.get("/me")
 def me():
-    admin = load_users().get("admin@smartlive.vn", DEMO_USERS["admin@smartlive.vn"])
+    admin = load_users().get("admin@smartlive.vn")
+    if not admin:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản admin trong database.")
     return {
         "id": admin["id"],
         "name": admin["name"],

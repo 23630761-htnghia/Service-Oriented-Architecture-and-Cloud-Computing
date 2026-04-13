@@ -1,11 +1,11 @@
-{
+﻿{
   "account_id": "ls-facebook-10",
   "account_code": "FB10",
   "name": "Facebook Mega Sale Room",
   "platform_code": "facebook",
   "username": "smartlive_fb_room_10",
   "owner_user_id": "user-staff-04",
-  "owner_name": "Vo Gia Han",
+  "owner_name": "Võ Gia Hân",
   "backup_contact": "0909 881 010",
   "current_viewers": 880,
   "max_capacity": 1400,

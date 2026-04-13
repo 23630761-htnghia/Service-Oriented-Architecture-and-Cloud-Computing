@@ -51,12 +51,12 @@ def choose_entry_account(allocations: list[ViewerAllocation]) -> str:
 
 def build_recommendation(viewer_delta: int, lag_risk: str) -> str:
     if lag_risk in {"critical", "high"} and viewer_delta < 0:
-        return "Giam tai ngay, ha bitrate hoac chuyen mot phan nguoi xem sang kenh khac."
+        return "Giảm tải ngay, hạ bitrate hoặc chuyển một phần người xem sang kênh khác."
     if viewer_delta > 0:
-        return "Co the tiep tuc nhan them nguoi xem trong cua so tiep theo."
+        return "Có thể tiếp tục nhận thêm người xem trong cửa sổ tiếp theo."
     if viewer_delta < 0:
-        return "Nen dieu huong bot nguoi xem de tranh tang do tre."
-    return "Giu on dinh phien livestream hien tai."
+        return "Nên điều hướng bớt người xem để tránh tăng độ trễ."
+    return "Giữ ổn định phiên livestream hiện tại."
 
 
 def apportion_targets(capacities: list[int], total_viewers: int) -> list[int]:
@@ -103,7 +103,7 @@ def build_transfer_plan(allocations: list[ViewerAllocation]) -> list[TransferSug
                     from_account_id=source_account,
                     to_account_id=target_account,
                     viewers_to_shift=moved,
-                    reason="Can bang tai giua cac tai khoan de giam nguy co lag.",
+                    reason="Cân bằng tải giữa các tài khoản để giảm nguy cơ lag.",
                 )
             )
 
@@ -150,9 +150,9 @@ def balance_viewers(request: ViewerBalancingRequest) -> ViewerBalancingResponse:
     high_risk_count = sum(1 for item in allocations if item.lag_risk in {"high", "critical"})
 
     summary = (
-        f"Da danh gia {len(allocations)} tai khoan livestream. "
-        f"Phat hien {high_risk_count} tai khoan co nguy co lag cao, "
-        f"va de xuat kenh uu tien nhan viewer moi la {recommended_entry_account_id}."
+        f"Đã đánh giá {len(allocations)} tài khoản livestream. "
+        f"Phát hiện {high_risk_count} tài khoản có nguy cơ lag cao, "
+        f"và đề xuất kênh ưu tiên nhận viewer mới là {recommended_entry_account_id}."
     )
 
     return ViewerBalancingResponse(
