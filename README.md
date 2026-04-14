@@ -27,7 +27,9 @@ Các nghiệp vụ chính đang hỗ trợ:
 
 - `api-gateway`: cổng vào thống nhất cho frontend và client
 - `auth-service`: CAPTCHA và đăng nhập
-- `account-service`: quản lý user, phòng livestream, sản phẩm, nhà cung cấp, offer, gán sản phẩm
+- `account-service`: quản lý identity, user nội bộ và phân quyền
+- `catalog-service`: quản lý sản phẩm, nhà cung cấp và offer
+- `livestream-service`: quản lý nền tảng, phòng livestream và gán sản phẩm cho room
 - `ai-service`: phân tích comment và cân bằng viewer
 - `sync-service`: nhận comment, enrich dữ liệu AI, lưu lịch sử sync
 - `report-service`: tổng hợp KPI và báo cáo từ các service khác
@@ -39,9 +41,55 @@ Các nghiệp vụ chính đang hỗ trợ:
 
 ### AI và dữ liệu
 
-- `account-service` dùng `SQLite` để lưu dữ liệu chính
+- `account-service`, `catalog-service`, `livestream-service` cùng dùng `SQLite` chung ở giai đoạn hiện tại
 - JSON seed được dùng để khởi tạo dữ liệu mẫu
 - `ai-service` dùng model `scikit-learn`, có fallback rule-based khi chưa có model
+
+## Công dụng của từng service
+
+### Sơ đồ service
+
+```mermaid
+flowchart LR
+    FE[Frontend Dashboard] --> GW[API Gateway]
+
+    GW --> AUTH[Auth Service]
+    GW --> ID[Account Service / Identity]
+    GW --> CAT[Catalog Service]
+    GW --> LIVE[Livestream Service]
+    GW --> AI[AI Service]
+    GW --> SYNC[Sync Service]
+    GW --> REP[Report Service]
+
+    AUTH --> ID
+    SYNC --> AI
+    REP --> ID
+    REP --> CAT
+    REP --> LIVE
+    REP --> SYNC
+
+    ID <--> DB[(SQLite + JSON Seed)]
+    CAT <--> DB
+    LIVE <--> DB
+```
+
+### Danh sách service
+
+- `api-gateway`: nhận request từ frontend và chuyển tiếp đến đúng service bên trong hệ thống.
+- `auth-service`: tạo CAPTCHA, kiểm tra thông tin đăng nhập và trả thông tin user sau khi xác thực.
+- `account-service`: quản lý tài khoản nội bộ, role, thông tin nhân sự và mật khẩu.
+- `catalog-service`: quản lý sản phẩm, nhà cung cấp và các offer từ nhà cung cấp.
+- `livestream-service`: quản lý nền tảng livestream, tài khoản livestream và danh sách sản phẩm được gán cho từng room.
+- `ai-service`: phân tích comment khách hàng, xác định `intent`, `sentiment`, `lead_score`, `priority` và hỗ trợ cân bằng viewer.
+- `sync-service`: nhận dữ liệu comment, gọi `ai-service` để enrich dữ liệu và lưu lịch sử đồng bộ.
+- `report-service`: tổng hợp dữ liệu từ nhiều service để tạo dashboard tổng quan, KPI và báo cáo vận hành.
+
+### Ghi chú kỹ thuật hiện tại
+
+Ở thời điểm hiện tại, `account-service`, `catalog-service`, `livestream-service` vẫn đang dùng chung:
+
+- dữ liệu seed JSON
+- SQLite database
 
 ## Công nghệ sử dụng
 
@@ -69,7 +117,7 @@ docs/                                   Tài liệu hệ thống
 databricks/                             Dữ liệu mẫu và notebook hỗ trợ
 ```
 
-Dữ liệu của `account-service` được chia theo domain để dễ quản lý:
+Dữ liệu dùng chung cho `identity`, `catalog`, `livestream` được chia theo domain để dễ quản lý:
 
 ```text
 backend/services/account-service/app/data/
@@ -89,9 +137,7 @@ backend/services/account-service/app/data/
 
 ## Cách chạy
 
-### Cách 1: chạy toàn bộ hệ thống bằng Docker
-
-Chạy đầy đủ cả `backend` và `frontend` bằng Docker Compose:
+Project hiện được tối ưu để chạy bằng Docker Compose cho toàn bộ hệ thống:
 
 ```bash
 cd infra/docker
@@ -107,6 +153,8 @@ Các URL chính:
 - Account Service: `http://localhost:8003`
 - Sync Service: `http://localhost:8004`
 - Report Service: `http://localhost:8005`
+- Catalog Service: `http://localhost:8006`
+- Livestream Service: `http://localhost:8007`
 
 Dừng hệ thống:
 
@@ -114,53 +162,6 @@ Dừng hệ thống:
 cd infra/docker
 docker compose down
 ```
-
-### Cách 2: chạy qua backend và frontend riêng
-
-#### Chạy backend
-
-```bash
-cd backend
-docker compose up --build
-```
-
-Sau khi backend chạy xong:
-
-- Gateway: `http://localhost:8000`
-- Health: `http://localhost:8000/health`
-- Swagger Docs: `http://localhost:8000/docs`
-
-Dừng backend:
-
-```bash
-cd backend
-docker compose down
-```
-
-#### Chạy frontend
-
-Frontend là static site, có thể serve trực tiếp bằng Python:
-
-```bash
-cd frontend
-python -m http.server 3000
-```
-
-Nếu dùng Windows và `python` không nhận:
-
-```bash
-cd frontend
-py -m http.server 3000
-```
-
-Mở frontend tại:
-
-- `http://localhost:3000`
-
-Lưu ý:
-
-- Frontend đang gọi gateway tại `http://localhost:8000`
-- Vì vậy cần chạy backend trước rồi mới mở frontend
 
 ## Tài khoản mẫu
 
@@ -187,12 +188,6 @@ Lưu ý:
 - `POST /api/v1/users/staff`
 - `PATCH /api/v1/users/{user_id}/password`
 - `DELETE /api/v1/users/{user_id}`
-- `GET /api/v1/livestream-accounts`
-- `GET /api/v1/livestream-accounts/grouped`
-- `POST /api/v1/livestream-accounts`
-- `DELETE /api/v1/livestream-accounts/{account_id}`
-- `GET /api/v1/platform-summaries`
-- `GET /api/v1/platforms/{platform}/accounts`
 - `GET /api/v1/products`
 - `POST /api/v1/products`
 - `PATCH /api/v1/products/{product_id}`
@@ -202,6 +197,15 @@ Lưu ý:
 - `PATCH /api/v1/suppliers/{supplier_id}`
 - `DELETE /api/v1/suppliers/{supplier_id}`
 - `GET /api/v1/supplier-offers`
+
+### Livestream
+
+- `GET /api/v1/livestream-accounts`
+- `GET /api/v1/livestream-accounts/grouped`
+- `POST /api/v1/livestream-accounts`
+- `DELETE /api/v1/livestream-accounts/{account_id}`
+- `GET /api/v1/platform-summaries`
+- `GET /api/v1/platforms/{platform}/accounts`
 - `GET /api/v1/livestream-product-assignments`
 - `POST /api/v1/livestream-product-assignments`
 - `DELETE /api/v1/livestream-product-assignments/{assignment_id}`

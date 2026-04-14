@@ -13,6 +13,8 @@ from app.schemas import HealthResponse, KpiOverview, OperationsReport, PlatformS
 app = FastAPI(title="Report Service", version="0.2.0", description="Reporting service for livestream KPIs.")
 
 ACCOUNT_SERVICE_URL = os.getenv("ACCOUNT_SERVICE_URL", "http://localhost:8003")
+CATALOG_SERVICE_URL = os.getenv("CATALOG_SERVICE_URL", "http://localhost:8006")
+LIVESTREAM_SERVICE_URL = os.getenv("LIVESTREAM_SERVICE_URL", "http://localhost:8007")
 SYNC_SERVICE_URL = os.getenv("SYNC_SERVICE_URL", "http://localhost:8004")
 
 
@@ -31,7 +33,7 @@ async def fetch_json(base_url: str, path: str) -> dict | list:
 
 async def build_report_payload() -> tuple[KpiOverview, list[PlatformSyncMetric], list[dict]]:
     overview, sync_summary, sync_records = await asyncio.gather(
-        fetch_json(ACCOUNT_SERVICE_URL, "/database-overview"),
+        build_database_overview(),
         fetch_json(SYNC_SERVICE_URL, "/sync-summary"),
         fetch_json(SYNC_SERVICE_URL, "/sync-records"),
     )
@@ -79,6 +81,27 @@ async def build_report_payload() -> tuple[KpiOverview, list[PlatformSyncMetric],
     return kpi, platform_metrics, latest_jobs
 
 
+async def build_database_overview() -> dict:
+    users, platform_summaries, livestream_accounts, products, suppliers, supplier_offers, assignments = await asyncio.gather(
+        fetch_json(ACCOUNT_SERVICE_URL, "/users"),
+        fetch_json(LIVESTREAM_SERVICE_URL, "/platform-summaries"),
+        fetch_json(LIVESTREAM_SERVICE_URL, "/livestream-accounts"),
+        fetch_json(CATALOG_SERVICE_URL, "/products"),
+        fetch_json(CATALOG_SERVICE_URL, "/suppliers"),
+        fetch_json(CATALOG_SERVICE_URL, "/supplier-offers"),
+        fetch_json(LIVESTREAM_SERVICE_URL, "/livestream-product-assignments"),
+    )
+    return {
+        "users": users,
+        "platform_summaries": platform_summaries,
+        "livestream_accounts": livestream_accounts,
+        "products": products,
+        "suppliers": suppliers,
+        "supplier_offers": supplier_offers,
+        "livestream_product_assignments": assignments,
+    }
+
+
 @app.on_event("startup")
 async def startup_event() -> None:
     app.state.client = httpx.AsyncClient(timeout=10.0)
@@ -98,6 +121,7 @@ def root():
         "docs_url": "/docs",
         "health_url": "/health",
         "main_routes": [
+            "/database-overview",
             "/kpis/overview",
             "/reports/operations",
         ],
@@ -113,6 +137,11 @@ def health_check() -> HealthResponse:
 async def kpi_overview() -> KpiOverview:
     kpi, _, _ = await build_report_payload()
     return kpi
+
+
+@app.get("/database-overview")
+async def database_overview() -> dict:
+    return await build_database_overview()
 
 
 @app.get("/reports/operations", response_model=OperationsReport)

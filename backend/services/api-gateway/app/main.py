@@ -27,7 +27,9 @@ app.add_middleware(
 SERVICE_URLS = {
     "ai_service": lambda: settings.ai_service_url,
     "auth_service": lambda: settings.auth_service_url,
-    "account_service": lambda: settings.account_service_url,
+    "identity_service": lambda: settings.account_service_url,
+    "catalog_service": lambda: settings.catalog_service_url,
+    "livestream_service": lambda: settings.livestream_service_url,
     "sync_service": lambda: settings.sync_service_url,
     "report_service": lambda: settings.report_service_url,
 }
@@ -172,97 +174,97 @@ async def delete_user(user_id: str):
 
 @app.get("/api/v1/livestream-accounts")
 async def list_livestream_accounts():
-    return await forward_get(settings.account_service_url, "/livestream-accounts")
+    return await forward_get(settings.livestream_service_url, "/livestream-accounts")
 
 
 @app.get("/api/v1/livestream-accounts/grouped")
 async def list_grouped_livestream_accounts():
-    return await forward_get(settings.account_service_url, "/livestream-accounts/grouped")
+    return await forward_get(settings.livestream_service_url, "/livestream-accounts/grouped")
 
 
 @app.delete("/api/v1/livestream-accounts/{account_id}")
 async def delete_livestream_account(account_id: str):
-    return await forward_delete(settings.account_service_url, f"/livestream-accounts/{account_id}")
+    return await forward_delete(settings.livestream_service_url, f"/livestream-accounts/{account_id}")
 
 
 @app.get("/api/v1/platform-summaries")
 async def list_platform_summaries():
-    return await forward_get(settings.account_service_url, "/platform-summaries")
+    return await forward_get(settings.livestream_service_url, "/platform-summaries")
 
 
 @app.get("/api/v1/platforms/{platform}/accounts")
 async def list_accounts_by_platform(platform: str):
-    return await forward_get(settings.account_service_url, f"/platforms/{platform}/accounts")
+    return await forward_get(settings.livestream_service_url, f"/platforms/{platform}/accounts")
 
 
 @app.get("/api/v1/products")
 async def list_products():
-    return await forward_get(settings.account_service_url, "/products")
+    return await forward_get(settings.catalog_service_url, "/products")
 
 
 @app.get("/api/v1/livestream-product-assignments")
 async def list_livestream_product_assignments():
-    return await forward_get(settings.account_service_url, "/livestream-product-assignments")
+    return await forward_get(settings.livestream_service_url, "/livestream-product-assignments")
 
 
 @app.post("/api/v1/livestream-product-assignments")
 async def create_livestream_product_assignment(payload: dict):
-    return await forward_post(settings.account_service_url, "/livestream-product-assignments", payload)
+    return await forward_post(settings.livestream_service_url, "/livestream-product-assignments", payload)
 
 
 @app.delete("/api/v1/livestream-product-assignments/{assignment_id}")
 async def delete_livestream_product_assignment(assignment_id: str):
-    return await forward_delete(settings.account_service_url, f"/livestream-product-assignments/{assignment_id}")
+    return await forward_delete(settings.livestream_service_url, f"/livestream-product-assignments/{assignment_id}")
 
 
 @app.post("/api/v1/products")
 async def create_product(payload: dict):
-    return await forward_post(settings.account_service_url, "/products", payload)
+    return await forward_post(settings.catalog_service_url, "/products", payload)
 
 
 @app.patch("/api/v1/products/{product_id}")
 async def update_product(product_id: str, payload: dict):
-    return await forward_patch(settings.account_service_url, f"/products/{product_id}", payload)
+    return await forward_patch(settings.catalog_service_url, f"/products/{product_id}", payload)
 
 
 @app.delete("/api/v1/products/{product_id}")
 async def delete_product(product_id: str):
-    return await forward_delete(settings.account_service_url, f"/products/{product_id}")
+    return await forward_delete(settings.catalog_service_url, f"/products/{product_id}")
 
 
 @app.get("/api/v1/suppliers")
 async def list_suppliers():
-    return await forward_get(settings.account_service_url, "/suppliers")
+    return await forward_get(settings.catalog_service_url, "/suppliers")
 
 
 @app.post("/api/v1/suppliers")
 async def create_supplier(payload: dict):
-    return await forward_post(settings.account_service_url, "/suppliers", payload)
+    return await forward_post(settings.catalog_service_url, "/suppliers", payload)
 
 
 @app.patch("/api/v1/suppliers/{supplier_id}")
 async def update_supplier(supplier_id: str, payload: dict):
-    return await forward_patch(settings.account_service_url, f"/suppliers/{supplier_id}", payload)
+    return await forward_patch(settings.catalog_service_url, f"/suppliers/{supplier_id}", payload)
 
 
 @app.delete("/api/v1/suppliers/{supplier_id}")
 async def delete_supplier(supplier_id: str):
-    return await forward_delete(settings.account_service_url, f"/suppliers/{supplier_id}")
+    return await forward_delete(settings.catalog_service_url, f"/suppliers/{supplier_id}")
 
 
 @app.get("/api/v1/supplier-offers")
 async def list_supplier_offers():
-    return await forward_get(settings.account_service_url, "/supplier-offers")
+    return await forward_get(settings.catalog_service_url, "/supplier-offers")
 
 
 @app.get("/api/v1/database-overview")
 async def get_database_overview():
-    return await forward_get(settings.account_service_url, "/database-overview")
+    return await forward_get(settings.report_service_url, "/database-overview")
 
 
 @app.post("/api/v1/livestream-accounts")
 async def create_livestream_account(payload: dict):
-    return await forward_post(settings.account_service_url, "/livestream-accounts", payload)
+    return await forward_post(settings.livestream_service_url, "/livestream-accounts", payload)
 
 
 @app.get("/api/v1/sync/jobs")

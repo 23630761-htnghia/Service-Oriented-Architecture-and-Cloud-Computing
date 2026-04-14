@@ -5,9 +5,7 @@ import os
 import sqlite3
 from pathlib import Path
 
-DEFAULT_DATA_DIR = Path(__file__).resolve().parent / "data"
-if not DEFAULT_DATA_DIR.exists():
-    DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "account-service" / "app" / "data"
+DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "account-service" / "app" / "data"
 DATA_DIR = Path(os.getenv("APP_DATA_DIR", str(DEFAULT_DATA_DIR))).resolve()
 LEGACY_DB_PATH = DATA_DIR / "account_management.db"
 DB_PATH = DATA_DIR / "sqlite" / "account_management.db"
