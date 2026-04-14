@@ -75,14 +75,40 @@ flowchart LR
 
 ### Danh sách service
 
-- `api-gateway`: nhận request từ frontend và chuyển tiếp đến đúng service bên trong hệ thống.
-- `auth-service`: tạo CAPTCHA, kiểm tra thông tin đăng nhập và trả thông tin user sau khi xác thực.
-- `account-service`: quản lý tài khoản nội bộ, role, thông tin nhân sự và mật khẩu.
-- `catalog-service`: quản lý sản phẩm, nhà cung cấp và các offer từ nhà cung cấp.
-- `livestream-service`: quản lý nền tảng livestream, tài khoản livestream và danh sách sản phẩm được gán cho từng room.
-- `ai-service`: phân tích comment khách hàng, xác định `intent`, `sentiment`, `lead_score`, `priority` và hỗ trợ cân bằng viewer.
-- `sync-service`: nhận dữ liệu comment, gọi `ai-service` để enrich dữ liệu và lưu lịch sử đồng bộ.
-- `report-service`: tổng hợp dữ liệu từ nhiều service để tạo dashboard tổng quan, KPI và báo cáo vận hành.
+- `api-gateway`:
+  - Là cổng vào duy nhất của hệ thống cho frontend.
+  - Nhận request từ giao diện và chuyển tiếp đến đúng service phía sau.
+  - Giúp frontend không phải gọi trực tiếp từng service riêng lẻ.
+- `auth-service`:
+  - Tạo CAPTCHA cho màn hình đăng nhập.
+  - Kiểm tra email, mật khẩu và xác thực người dùng.
+  - Trả thông tin user sau khi đăng nhập thành công.
+- `account-service`:
+  - Quản lý tài khoản nội bộ như `admin`, `staff`, `product_manager`.
+  - Lưu thông tin nhân sự, vai trò và mật khẩu đăng nhập.
+  - Hỗ trợ tạo mới, đổi mật khẩu và xóa tài khoản nội bộ.
+- `catalog-service`:
+  - Quản lý danh mục sản phẩm bán trong livestream.
+  - Quản lý thông tin nhà cung cấp.
+  - Quản lý các offer/bảng giá từ nhà cung cấp cho từng sản phẩm.
+  - Hỗ trợ thêm, sửa, xóa sản phẩm và nhà cung cấp.
+- `livestream-service`:
+  - Quản lý nền tảng livestream như TikTok, Facebook.
+  - Quản lý tài khoản/phòng livestream đang vận hành.
+  - Quản lý danh sách sản phẩm được gán cho từng room để nhân viên có dữ liệu lên live giới thiệu.
+  - Tổng hợp số liệu theo nền tảng như số room, tổng viewers, trạng thái hoạt động.
+- `ai-service`:
+  - Phân tích nội dung comment của khách hàng.
+  - Xác định `intent`, `sentiment`, `lead_score`, `priority`.
+  - Hỗ trợ bài toán cân bằng viewer giữa các room livestream.
+- `sync-service`:
+  - Nhận dữ liệu comment từ các nguồn đồng bộ.
+  - Gọi `ai-service` để enrich dữ liệu comment bằng kết quả phân tích.
+  - Lưu lịch sử các lần sync và danh sách comment đã xử lý.
+- `report-service`:
+  - Lấy dữ liệu từ `account-service`, `catalog-service`, `livestream-service`, `sync-service`.
+  - Tổng hợp dữ liệu để tạo `database overview`.
+  - Sinh KPI tổng quan và báo cáo vận hành cho dashboard quản trị.
 
 ### Ghi chú kỹ thuật hiện tại
 
