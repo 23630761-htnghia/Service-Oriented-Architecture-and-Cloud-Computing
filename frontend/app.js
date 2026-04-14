@@ -30,23 +30,29 @@ const overviewHighlight = document.getElementById("overview-highlight");
 const accountForm = document.getElementById("account-form");
 const accountFormResult = document.getElementById("account-form-result");
 const accountsResult = document.getElementById("accounts-result");
+const accountsSearchInput = document.getElementById("accounts-search-input");
 const staffCreateForm = document.getElementById("staff-create-form");
 const staffRole = document.getElementById("staff-role");
 const staffCreateResult = document.getElementById("staff-create-result");
 const staffCredentialsResult = document.getElementById("staff-credentials-result");
+const staffCredentialsSearchInput = document.getElementById("staff-credentials-search-input");
 const staffSearchInput = document.getElementById("staff-search-input");
 const staffAssignmentResult = document.getElementById("staff-assignment-result");
 const productCreateForm = document.getElementById("product-create-form");
 const productCreateResult = document.getElementById("product-create-result");
+const productSearchInput = document.getElementById("product-search-input");
 const productsResult = document.getElementById("products-result");
 const assignmentCreateForm = document.getElementById("assignment-create-form");
 const assignmentCreateResult = document.getElementById("assignment-create-result");
 const assignmentAccountSelect = document.getElementById("assignment-account-id");
 const assignmentProductSelect = document.getElementById("assignment-product-id");
+const assignmentSearchInput = document.getElementById("assignment-search-input");
 const productAssignmentResult = document.getElementById("product-assignment-result");
 const supplierCreateForm = document.getElementById("supplier-create-form");
 const supplierCreateResult = document.getElementById("supplier-create-result");
+const supplierSearchInput = document.getElementById("supplier-search-input");
 const suppliersResult = document.getElementById("suppliers-result");
+const offerSearchInput = document.getElementById("offer-search-input");
 const offersResult = document.getElementById("offers-result");
 const commentForm = document.getElementById("comment-form");
 const commentInput = document.getElementById("comment-input");
@@ -64,12 +70,13 @@ const accountsListPanel = accountsResult.closest(".panel");
 const staffCredentialsPanel = document.getElementById("staff-credentials-panel");
 const staffAssignmentPanel = document.getElementById("staff-assignment-panel");
 const productManagementPanel = document.getElementById("product-management-panel");
-const assignmentManagementPanel = document.getElementById("assignment-management-panel");
 const supplierManagementPanel = document.getElementById("supplier-management-panel");
 const adminAccountModePanel = document.getElementById("admin-account-mode-panel");
 const adminAccountModeButtons = document.querySelectorAll("[data-admin-account-mode]");
 const manageAccountSwitcherPanel = document.getElementById("manage-account-switcher-panel");
 const manageAccountSectionButtons = document.querySelectorAll("[data-manage-account-section]");
+const catalogSectionButtons = document.querySelectorAll("[data-catalog-section]");
+const catalogSections = document.querySelectorAll(".catalog-section");
 const overviewMenuCard = document.querySelector('.menu-card[data-tab="overview"]');
 const accountsMenuCard = document.querySelector('.menu-card[data-tab="accounts"]');
 const suppliersMenuCard = document.querySelector('.menu-card[data-tab="suppliers"]');
@@ -89,9 +96,14 @@ let supplierManagementFlashMessage = "";
 let productAssignmentFlashMessage = "";
 let adminAccountsMode = "view";
 let adminManageSection = "room-create";
+let activeCatalogSection = "products";
 let activeStaffAssignmentUserId = null;
 let currentUsers = [];
 let currentAssignments = [];
+let currentAllAccounts = [];
+let currentProducts = [];
+let currentSuppliers = [];
+let currentOffers = [];
 
 function applyDemoCredentials(email, password) {
   loginEmail.value = email;
@@ -128,6 +140,10 @@ function normalizeSearchText(value) {
   return (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+function includesSearch(value, query) {
+  return normalizeSearchText(value).includes(query);
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -151,6 +167,18 @@ function isStaffSession() {
 
 function canManageCatalog() {
   return isAdminSession() || isProductManagerSession();
+}
+
+function setCatalogSection(section = "products") {
+  activeCatalogSection = section;
+
+  catalogSectionButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.catalogSection === section);
+  });
+
+  catalogSections.forEach((panel) => {
+    panel.classList.toggle("hidden", panel.id !== `catalog-${section}-section`);
+  });
 }
 
 function setAdminManageSection(section = "room-create") {
@@ -274,7 +302,62 @@ function applyRoleBasedNavigation() {
   supplierManagementPanel.classList.toggle("hidden", !catalogManagerMode);
   assignmentCreateForm.classList.toggle("hidden", !catalogManagerMode);
   assignmentCreateResult.classList.toggle("hidden", !catalogManagerMode);
+  setCatalogSection(activeCatalogSection);
   setAdminAccountsMode(adminMode ? adminAccountsMode : "view");
+}
+
+function filterAccountsBySearch(accounts, queryValue) {
+  const query = normalizeSearchText(queryValue);
+  if (!query) return accounts;
+  return accounts.filter((account) => includesSearch(
+    `${account.name} ${account.account_code} ${account.platform_display_name} ${account.username} ${account.owner_name} ${account.warehouse_location} ${account.shift_label}`,
+    query,
+  ));
+}
+
+function filterUsersBySearch(users, queryValue) {
+  const query = normalizeSearchText(queryValue);
+  if (!query) return users;
+  return users.filter((user) => includesSearch(
+    `${user.full_name} ${user.staff_code || ""} ${user.email} ${formatRole(user.role)} ${user.department} ${user.phone}`,
+    query,
+  ));
+}
+
+function filterProductsBySearch(products, queryValue) {
+  const query = normalizeSearchText(queryValue);
+  if (!query) return products;
+  return products.filter((product) => includesSearch(
+    `${product.name} ${product.sku} ${product.brand} ${product.category} ${product.description}`,
+    query,
+  ));
+}
+
+function filterOffersBySearch(offers, queryValue) {
+  const query = normalizeSearchText(queryValue);
+  if (!query) return offers;
+  return offers.filter((offer) => includesSearch(
+    `${offer.offer_title} ${offer.offer_code} ${offer.supplier_name} ${offer.product_name} ${offer.status}`,
+    query,
+  ));
+}
+
+function filterSuppliersBySearch(suppliers, queryValue) {
+  const query = normalizeSearchText(queryValue);
+  if (!query) return suppliers;
+  return suppliers.filter((supplier) => includesSearch(
+    `${supplier.name} ${supplier.supplier_code} ${supplier.contact_name} ${supplier.phone} ${supplier.email} ${supplier.address} ${supplier.status}`,
+    query,
+  ));
+}
+
+function filterAssignmentsBySearch(assignments, queryValue) {
+  const query = normalizeSearchText(queryValue);
+  if (!query) return assignments;
+  return assignments.filter((assignment) => includesSearch(
+    `${assignment.assignment_id} ${assignment.account_name} ${assignment.platform_display_name} ${assignment.product_name} ${assignment.product_sku} ${assignment.product_category} ${assignment.assigned_by_name || ""}`,
+    query,
+  ));
 }
 
 function showMenuScreen() {
@@ -292,6 +375,9 @@ function openTab(tabName) {
   document.getElementById(`tab-${tabName}`).classList.remove("hidden");
   if (tabName === "accounts") {
     setAdminAccountsMode(isAdminSession() ? adminAccountsMode : "view");
+  }
+  if (tabName === "catalog") {
+    setCatalogSection(activeCatalogSection);
   }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -311,6 +397,10 @@ function unlockDashboard() {
 function resetDashboardState() {
   currentUsers = [];
   currentAssignments = [];
+  currentAllAccounts = [];
+  currentProducts = [];
+  currentSuppliers = [];
+  currentOffers = [];
   livestreamAccounts = [];
   staffCredentialFlashMessage = "";
   accountManagementFlashMessage = "";
@@ -319,6 +409,7 @@ function resetDashboardState() {
   productAssignmentFlashMessage = "";
   adminAccountsMode = "view";
   adminManageSection = "room-create";
+  activeCatalogSection = "products";
   activeStaffAssignmentUserId = null;
   gatewayStatus.textContent = "Chưa đăng nhập";
   aiStatus.textContent = "Chưa đăng nhập";
@@ -356,10 +447,16 @@ function resetDashboardState() {
   accountFormResult.classList.add("muted");
   accountFormResult.textContent = "Bạn có thể thêm phòng live mới để cập nhật lại danh sách vận hành.";
   staffCreateResult.classList.add("muted");
-  staffCreateResult.textContent = "Mỗi staff cần một mã duy nhất. Nếu mã đã tồn tại, chỉ có thể tạo lại sau khi xóa tài khoản cũ.";
+  staffCreateResult.textContent = "Mỗi tài khoản nội bộ cần một mã duy nhất. Nếu mã đã tồn tại, chỉ có thể tạo lại sau khi xóa tài khoản cũ.";
   staffAssignmentResult.classList.add("muted");
-  staffAssignmentResult.textContent = "Đăng nhập bằng admin để xem danh sách staff.";
+  staffAssignmentResult.textContent = "Đăng nhập bằng admin để xem danh sách nhân viên livestream.";
   staffSearchInput.value = "";
+  staffCredentialsSearchInput.value = "";
+  accountsSearchInput.value = "";
+  productSearchInput.value = "";
+  offerSearchInput.value = "";
+  supplierSearchInput.value = "";
+  assignmentSearchInput.value = "";
   assignmentAccountSelect.innerHTML = "";
   assignmentProductSelect.innerHTML = "";
   sessionCard.classList.add("muted");
@@ -380,6 +477,7 @@ function resetDashboardState() {
   accountFormPanel.classList.remove("hidden");
   accountsListPanel.classList.remove("hidden");
   staffCredentialsPanel.classList.remove("hidden");
+  setCatalogSection(activeCatalogSection);
   showMenuScreen();
 }
 
@@ -574,11 +672,12 @@ function renderStaffOverview(accounts, products, offers) {
 }
 
 function renderStaffAssignments(users, accounts, assignments) {
-  const query = normalizeSearchText(staffSearchInput.value);
   const assignmentsByAccount = buildAssignmentsByAccount(assignments);
-  const staffUsers = users
-    .filter((user) => user.role === "staff")
-    .filter((user) => !query || normalizeSearchText(`${user.full_name} ${user.staff_code || ""} ${user.email}`).includes(query))
+  const query = normalizeSearchText(staffSearchInput.value);
+  const staffUsers = filterUsersBySearch(
+    users.filter((user) => user.role === "staff"),
+    staffSearchInput.value,
+  )
     .sort((left, right) => left.full_name.localeCompare(right.full_name, "vi"));
 
   if (!staffUsers.some((user) => user.user_id === activeStaffAssignmentUserId)) {
@@ -588,8 +687,8 @@ function renderStaffAssignments(users, accounts, assignments) {
   staffAssignmentResult.classList.remove("muted");
   if (!staffUsers.length) {
     staffAssignmentResult.innerHTML = query
-      ? "Không tìm thấy staff phù hợp với từ khóa này."
-      : "Chưa có staff nào trong hệ thống.";
+      ? "Không tìm thấy nhân viên livestream phù hợp với từ khóa này."
+      : "Chưa có nhân viên livestream nào trong hệ thống.";
     return;
   }
 
@@ -628,7 +727,7 @@ function renderManagedAccounts(accounts, assignmentsByAccount) {
     return;
   }
 
-  const sortedAccounts = [...accounts].sort((left, right) => {
+  const sortedAccounts = filterAccountsBySearch(accounts, accountsSearchInput.value).sort((left, right) => {
     const platformCompare = left.platform_display_name.localeCompare(right.platform_display_name, "vi");
     if (platformCompare !== 0) return platformCompare;
     return left.name.localeCompare(right.name, "vi");
@@ -638,8 +737,10 @@ function renderManagedAccounts(accounts, assignmentsByAccount) {
 }
 
 function renderStaffCredentials(users) {
-  const staffUsers = users
-    .filter((user) => user.role !== "admin")
+  const staffUsers = filterUsersBySearch(
+    users.filter((user) => user.role !== "admin"),
+    staffCredentialsSearchInput.value,
+  )
     .sort((left, right) => {
       const roleCompare = formatRole(left.role).localeCompare(formatRole(right.role), "vi");
       if (roleCompare !== 0) return roleCompare;
@@ -974,20 +1075,22 @@ function renderProducts(products, assignments) {
     : "";
   productManagementFlashMessage = "";
   productsResult.classList.remove("muted");
-  if (!products.length) {
+  const filteredProducts = filterProductsBySearch(products, productSearchInput.value);
+  if (!filteredProducts.length) {
     productsResult.innerHTML = `${flashNote}Chưa có sản phẩm nào được phân cho ca làm hiện tại.`;
     return;
   }
-  productsResult.innerHTML = `${flashNote}<div class="product-grid">${products.map((item) => `<article class="product-card manage-product-card" data-product-id="${escapeHtml(item.product_id)}"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.brand)} - ${escapeHtml(item.category)}</p><div class="product-meta"><span>SKU: ${escapeHtml(item.sku)}</span><span>Giá bán: ${item.retail_price.toLocaleString("vi-VN")} đ</span><span>Giá vốn: ${item.cost_price.toLocaleString("vi-VN")} đ</span><span>Tồn kho: ${item.stock_quantity} ${escapeHtml(item.unit)}</span><span>Đang gán cho: ${(assignmentCountByProduct.get(item.product_id) || 0)} room</span></div><p>${escapeHtml(item.description)}</p>${canManageCatalog() ? `<button type="button" class="ghost-btn danger-btn product-delete-btn">Xóa sản phẩm</button><div class="staff-action-result muted">Sản phẩm chỉ xóa được khi không còn offer gắn kèm.</div>` : ""}</article>`).join("")}</div>`;
+  productsResult.innerHTML = `${flashNote}<div class="product-grid">${filteredProducts.map((item) => `<article class="product-card manage-product-card" data-product-id="${escapeHtml(item.product_id)}"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.brand)} - ${escapeHtml(item.category)}</p><div class="product-meta"><span>SKU: ${escapeHtml(item.sku)}</span><span>Giá bán: ${item.retail_price.toLocaleString("vi-VN")} đ</span><span>Giá vốn: ${item.cost_price.toLocaleString("vi-VN")} đ</span><span>Tồn kho: ${item.stock_quantity} ${escapeHtml(item.unit)}</span><span>Đang gán cho: ${(assignmentCountByProduct.get(item.product_id) || 0)} room</span></div><p>${escapeHtml(item.description)}</p>${canManageCatalog() ? `<button type="button" class="ghost-btn danger-btn product-delete-btn">Xóa sản phẩm</button><div class="staff-action-result muted">Sản phẩm chỉ xóa được khi không còn offer gắn kèm.</div>` : ""}</article>`).join("")}</div>`;
 }
 
 function renderOffers(offers) {
   offersResult.classList.remove("muted");
-  if (!offers.length) {
+  const filteredOffers = filterOffersBySearch(offers, offerSearchInput.value);
+  if (!filteredOffers.length) {
     offersResult.innerHTML = "Không có offer nào áp dụng cho room và ca làm hiện tại.";
     return;
   }
-  offersResult.innerHTML = `<div class="offer-grid">${offers.map((item) => `<article class="offer-card"><h3>${item.offer_title}</h3><p>${item.supplier_name}</p><div class="offer-meta"><span>Sản phẩm: ${item.product_name}</span><span>MOQ: ${item.min_order_quantity}</span><span>Giá nhập: ${item.unit_price.toLocaleString("vi-VN")} đ</span><span>Chiết khấu: ${item.discount_percent}%</span><span class="tag ${item.status}">${formatStatus(item.status)}</span></div></article>`).join("")}</div>`;
+  offersResult.innerHTML = `<div class="offer-grid">${filteredOffers.map((item) => `<article class="offer-card"><h3>${item.offer_title}</h3><p>${item.supplier_name}</p><div class="offer-meta"><span>Sản phẩm: ${item.product_name}</span><span>MOQ: ${item.min_order_quantity}</span><span>Giá nhập: ${item.unit_price.toLocaleString("vi-VN")} đ</span><span>Chiết khấu: ${item.discount_percent}%</span><span class="tag ${item.status}">${formatStatus(item.status)}</span></div></article>`).join("")}</div>`;
 }
 
 function renderSuppliers(suppliers) {
@@ -996,11 +1099,12 @@ function renderSuppliers(suppliers) {
     : "";
   supplierManagementFlashMessage = "";
   suppliersResult.classList.remove("muted");
-  if (!suppliers.length) {
+  const filteredSuppliers = filterSuppliersBySearch(suppliers, supplierSearchInput.value);
+  if (!filteredSuppliers.length) {
     suppliersResult.innerHTML = `${flashNote}Chưa có nhà cung cấp nào trong hệ thống.`;
     return;
   }
-  suppliersResult.innerHTML = `${flashNote}<div class="supplier-grid">${suppliers.map((item) => `<article class="supplier-card manage-supplier-card" data-supplier-id="${escapeHtml(item.supplier_id)}"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.contact_name)}</p><div class="supplier-meta"><span>${escapeHtml(item.phone)}</span><span>${escapeHtml(item.email)}</span><span>${escapeHtml(item.address)}</span><span>Rating: ${item.rating}/5</span><span>Lead time: ${item.lead_time_days} ngày</span><span class="tag ${escapeHtml(item.status)}">${formatStatus(item.status)}</span></div>${canManageCatalog() ? `<button type="button" class="ghost-btn danger-btn supplier-delete-btn">Xóa nhà cung cấp</button><div class="staff-action-result muted">Nhà cung cấp chỉ xóa được khi không còn offer đang tham chiếu.</div>` : ""}</article>`).join("")}</div>`;
+  suppliersResult.innerHTML = `${flashNote}<div class="supplier-grid">${filteredSuppliers.map((item) => `<article class="supplier-card manage-supplier-card" data-supplier-id="${escapeHtml(item.supplier_id)}"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.contact_name)}</p><div class="supplier-meta"><span>${escapeHtml(item.phone)}</span><span>${escapeHtml(item.email)}</span><span>${escapeHtml(item.address)}</span><span>Rating: ${item.rating}/5</span><span>Lead time: ${item.lead_time_days} ngày</span><span class="tag ${escapeHtml(item.status)}">${formatStatus(item.status)}</span></div>${canManageCatalog() ? `<button type="button" class="ghost-btn danger-btn supplier-delete-btn">Xóa nhà cung cấp</button><div class="staff-action-result muted">Xóa nhà cung cấp sẽ gỡ offer và xóa luôn các sản phẩm chỉ thuộc nhà cung cấp này.</div>` : ""}</article>`).join("")}</div>`;
 }
 
 function renderProductAssignments(assignments) {
@@ -1010,7 +1114,8 @@ function renderProductAssignments(assignments) {
   productAssignmentFlashMessage = "";
   productAssignmentResult.classList.remove("muted");
 
-  if (!assignments.length) {
+  const filteredAssignments = filterAssignmentsBySearch(assignments, assignmentSearchInput.value);
+  if (!filteredAssignments.length) {
     productAssignmentResult.innerHTML = `${flashNote}${isStaffSession()
       ? "Bạn chưa có sản phẩm nào được gán cho các room đang phụ trách."
       : "Chưa có cấu hình gán sản phẩm nào cho các phòng livestream."}`;
@@ -1018,7 +1123,7 @@ function renderProductAssignments(assignments) {
   }
 
   const grouped = new Map();
-  [...assignments]
+  [...filteredAssignments]
     .sort((left, right) => {
       const accountCompare = left.account_name.localeCompare(right.account_name, "vi");
       if (accountCompare !== 0) return accountCompare;
@@ -1075,6 +1180,43 @@ function renderViewerResult(data) {
   viewerResult.innerHTML = `<strong>Tóm tắt:</strong> ${data.summary}<br /><strong>Room ưu tiên nhận viewer:</strong> ${data.recommended_entry_account_id}<h4>Phân bổ đề xuất</h4><ul class="result-list">${allocations}</ul><h4>Kế hoạch điều hướng</h4><ul class="result-list">${transfers}</ul>`;
 }
 
+function renderDashboardViews() {
+  const summary = buildGroupedAccounts(currentAllAccounts).map((group) => group.summary);
+  const visibleAssignments = getVisibleAssignments(currentAssignments, currentAllAccounts);
+  const allAssignmentsByAccount = buildAssignmentsByAccount(currentAssignments);
+  const visibleAssignmentsByAccount = buildAssignmentsByAccount(visibleAssignments);
+  livestreamAccounts = isStaffSession() ? getOwnedAccounts(currentAllAccounts) : currentAllAccounts;
+  const visibleProducts = getVisibleProducts(currentProducts, currentAssignments, currentAllAccounts);
+  const visibleOffers = getVisibleOffers(currentOffers, visibleProducts);
+
+  if (isAdminSession()) {
+    renderPlatformSummary(summary);
+    renderKpis(summary, {
+      supplier_offers: currentOffers,
+      products: currentProducts,
+      livestream_accounts: currentAllAccounts,
+    });
+    renderStaffAssignments(currentUsers, currentAllAccounts, currentAssignments);
+    renderManagedAccounts(currentAllAccounts, allAssignmentsByAccount);
+    renderStaffCredentials(currentUsers);
+    renderSuppliers(currentSuppliers);
+    fillAccountSelectors(currentAllAccounts);
+  } else if (isProductManagerSession()) {
+    renderSuppliers(currentSuppliers);
+  } else {
+    renderStaffOverview(livestreamAccounts, visibleProducts, visibleOffers);
+    renderAccounts(buildGroupedAccounts(livestreamAccounts), visibleAssignmentsByAccount);
+  }
+
+  if (canManageCatalog()) {
+    fillAssignmentSelectors(currentAllAccounts, currentProducts);
+  }
+
+  renderProducts(visibleProducts, visibleAssignments);
+  renderOffers(visibleOffers);
+  renderProductAssignments(visibleAssignments);
+}
+
 async function loadDashboardData() {
   if (!currentSession) {
     resetDashboardState();
@@ -1082,44 +1224,13 @@ async function loadDashboardData() {
   }
 
   const overview = await fetchJson("/api/v1/database-overview");
-  const summary = overview.platform_summaries || [];
-  const allLivestreamAccounts = overview.livestream_accounts || [];
-  const products = overview.products || [];
-  const suppliers = overview.suppliers || [];
-  const offers = overview.supplier_offers || [];
-  const allAssignments = overview.livestream_product_assignments || [];
-  currentAssignments = allAssignments;
-  const visibleAssignments = getVisibleAssignments(allAssignments, allLivestreamAccounts);
-  const allAssignmentsByAccount = buildAssignmentsByAccount(allAssignments);
-  const visibleAssignmentsByAccount = buildAssignmentsByAccount(visibleAssignments);
-
   currentUsers = overview.users || [];
-  livestreamAccounts = isStaffSession() ? getOwnedAccounts(allLivestreamAccounts) : allLivestreamAccounts;
-  const visibleProducts = getVisibleProducts(products, allAssignments, allLivestreamAccounts);
-  const visibleOffers = getVisibleOffers(offers, visibleProducts);
-
-  if (isAdminSession()) {
-    renderPlatformSummary(summary);
-    renderKpis(summary, overview);
-    renderStaffAssignments(currentUsers, allLivestreamAccounts, allAssignments);
-    renderManagedAccounts(allLivestreamAccounts, allAssignmentsByAccount);
-    renderStaffCredentials(currentUsers);
-    renderSuppliers(suppliers);
-    fillAccountSelectors(allLivestreamAccounts);
-  } else if (isProductManagerSession()) {
-    renderSuppliers(suppliers);
-  } else {
-    renderStaffOverview(livestreamAccounts, visibleProducts, visibleOffers);
-    renderAccounts(buildGroupedAccounts(livestreamAccounts), visibleAssignmentsByAccount);
-  }
-
-  if (canManageCatalog()) {
-    fillAssignmentSelectors(allLivestreamAccounts, products);
-  }
-
-  renderProducts(visibleProducts, visibleAssignments);
-  renderOffers(visibleOffers);
-  renderProductAssignments(visibleAssignments);
+  currentAllAccounts = overview.livestream_accounts || [];
+  currentProducts = overview.products || [];
+  currentSuppliers = overview.suppliers || [];
+  currentOffers = overview.supplier_offers || [];
+  currentAssignments = overview.livestream_product_assignments || [];
+  renderDashboardViews();
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -1154,6 +1265,12 @@ loginForm.addEventListener("submit", async (event) => {
 menuCards.forEach((button) => {
   button.addEventListener("click", () => {
     openTab(button.dataset.tab);
+  });
+});
+
+catalogSectionButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setCatalogSection(button.dataset.catalogSection);
   });
 });
 
@@ -1210,6 +1327,36 @@ staffRole.addEventListener("change", () => {
 staffSearchInput.addEventListener("input", () => {
   if (!isAdminSession()) return;
   renderStaffAssignments(currentUsers, livestreamAccounts, currentAssignments);
+});
+
+staffCredentialsSearchInput.addEventListener("input", () => {
+  if (!isAdminSession()) return;
+  renderStaffCredentials(currentUsers);
+});
+
+accountsSearchInput.addEventListener("input", () => {
+  if (!currentSession) return;
+  renderDashboardViews();
+});
+
+productSearchInput.addEventListener("input", () => {
+  if (!currentSession) return;
+  renderDashboardViews();
+});
+
+offerSearchInput.addEventListener("input", () => {
+  if (!currentSession) return;
+  renderDashboardViews();
+});
+
+supplierSearchInput.addEventListener("input", () => {
+  if (!currentSession) return;
+  renderDashboardViews();
+});
+
+assignmentSearchInput.addEventListener("input", () => {
+  if (!currentSession) return;
+  renderDashboardViews();
 });
 
 staffCreateForm.addEventListener("submit", async (event) => {

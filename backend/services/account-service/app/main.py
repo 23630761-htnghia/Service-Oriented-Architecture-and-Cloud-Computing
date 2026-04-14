@@ -205,13 +205,6 @@ def get_user_record(user_id: str) -> dict:
     return user
 
 
-def require_staff_user(user_id: str) -> dict:
-    user = get_user_record(user_id)
-    if user["role"] != "staff":
-        raise HTTPException(status_code=400, detail="Chỉ có thể thao tác trên tài khoản staff.")
-    return user
-
-
 def require_managed_user(user_id: str) -> dict:
     user = get_user_record(user_id)
     if user["role"] not in MANAGED_USER_ROLES:
@@ -224,10 +217,6 @@ def normalize_staff_code(staff_code: str) -> str:
     if len(normalized_code) < 2:
         raise HTTPException(status_code=400, detail="Mã staff phải có ít nhất 2 ký tự hợp lệ.")
     return normalized_code
-
-
-def build_staff_user_id(staff_code: str) -> str:
-    return build_managed_user_id(staff_code)
 
 
 def normalize_reference_code(code: str, label: str) -> str:
@@ -1035,30 +1024,71 @@ def update_supplier(supplier_id: str, payload: SupplierUpdate) -> Supplier:
 @app.delete("/suppliers/{supplier_id}", response_model=SupplierDeleteResponse)
 def delete_supplier(supplier_id: str) -> SupplierDeleteResponse:
     supplier = get_supplier_record(supplier_id)
-    linked_offer = fetch_one(
+    linked_offers = fetch_all(
         """
-        SELECT offer_id
+        SELECT offer_id, product_id
         FROM supplier_offers
         WHERE supplier_id = ?
-        LIMIT 1
         """,
         (supplier_id,),
     )
-    if linked_offer:
-        raise HTTPException(
-            status_code=400,
-            detail="Không thể xóa nhà cung cấp đang có offer gắn với sản phẩm.",
+    product_ids = sorted({offer["product_id"] for offer in linked_offers})
+    removable_product_ids: list[str] = []
+
+    for product_id in product_ids:
+        remaining_supplier = fetch_one(
+            """
+            SELECT supplier_id
+            FROM supplier_offers
+            WHERE product_id = ? AND supplier_id <> ?
+            LIMIT 1
+            """,
+            (product_id, supplier_id),
         )
+        if not remaining_supplier:
+            removable_product_ids.append(product_id)
+
+    removable_assignments = fetch_all(
+        f"""
+        SELECT assignment_id
+        FROM livestream_product_assignments
+        WHERE product_id IN ({", ".join("?" for _ in removable_product_ids)})
+        """
+        if removable_product_ids
+        else "SELECT assignment_id FROM livestream_product_assignments WHERE 1 = 0",
+        tuple(removable_product_ids),
+    )
 
     with get_connection() as connection:
+        if removable_product_ids:
+            connection.execute(
+                f"DELETE FROM products WHERE product_id IN ({', '.join('?' for _ in removable_product_ids)})",
+                tuple(removable_product_ids),
+            )
+        connection.execute(
+            "DELETE FROM supplier_offers WHERE supplier_id = ?",
+            (supplier_id,),
+        )
         connection.execute("DELETE FROM suppliers WHERE supplier_id = ?", (supplier_id,))
         connection.commit()
 
     delete_json_record("suppliers", supplier_id)
+    for offer in linked_offers:
+        delete_json_record("supplier_offers", offer["offer_id"])
+    for product_id in removable_product_ids:
+        delete_json_record("products", product_id)
+    for assignment in removable_assignments:
+        delete_json_record("livestream_product_assignments", assignment["assignment_id"])
+
+    removed_products_total = len(removable_product_ids)
     return SupplierDeleteResponse(
         supplier_id=supplier_id,
         supplier_name=supplier["name"],
-        message="Đã xóa nhà cung cấp khỏi hệ thống.",
+        message=(
+            "Đã xóa nhà cung cấp khỏi hệ thống."
+            if not removed_products_total
+            else f"Đã xóa nhà cung cấp và {removed_products_total} sản phẩm liên quan khỏi hệ thống."
+        ),
     )
 
 

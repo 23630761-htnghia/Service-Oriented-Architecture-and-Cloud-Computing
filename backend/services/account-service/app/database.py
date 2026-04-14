@@ -5,7 +5,8 @@ import sqlite3
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
-DB_PATH = DATA_DIR / "account_management.db"
+LEGACY_DB_PATH = DATA_DIR / "account_management.db"
+DB_PATH = DATA_DIR / "sqlite" / "account_management.db"
 
 TABLE_PRIMARY_KEYS = {
     "users": "user_id",
@@ -17,7 +18,15 @@ TABLE_PRIMARY_KEYS = {
     "livestream_product_assignments": "assignment_id",
 }
 
-TABLE_JSON_DIRS = {table: DATA_DIR / table for table in TABLE_PRIMARY_KEYS}
+TABLE_JSON_DIRS = {
+    "users": DATA_DIR / "identity" / "users",
+    "platforms": DATA_DIR / "livestream" / "platforms",
+    "products": DATA_DIR / "catalog" / "products",
+    "suppliers": DATA_DIR / "catalog" / "suppliers",
+    "livestream_accounts": DATA_DIR / "livestream" / "accounts",
+    "supplier_offers": DATA_DIR / "catalog" / "supplier_offers",
+    "livestream_product_assignments": DATA_DIR / "livestream" / "product_assignments",
+}
 
 TABLE_INSERT_COLUMNS = {
     "users": ["user_id", "staff_code", "email", "password", "full_name", "role", "phone", "department", "status", "created_at", "last_login_at"],
@@ -175,7 +184,9 @@ CREATE TABLE IF NOT EXISTS livestream_product_assignments (
 
 
 def get_connection() -> sqlite3.Connection:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if LEGACY_DB_PATH.exists() and not DB_PATH.exists():
+        LEGACY_DB_PATH.replace(DB_PATH)
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
@@ -263,6 +274,20 @@ def insert_records(connection: sqlite3.Connection, table: str, records: list[dic
     connection.executemany(query, values)
 
 
+def insert_missing_seed_records(connection: sqlite3.Connection, table: str) -> None:
+    primary_key = TABLE_PRIMARY_KEYS[table]
+    existing_ids = {
+        row[0]
+        for row in connection.execute(f"SELECT {primary_key} FROM {table}").fetchall()
+    }
+    missing_records = [
+        record
+        for record in load_json_records(table)
+        if record.get(primary_key) not in existing_ids
+    ]
+    insert_records(connection, table, missing_records)
+
+
 def ensure_schema_migrations(connection: sqlite3.Connection) -> None:
     user_columns = {
         row["name"]
@@ -300,4 +325,6 @@ def initialize_database() -> None:
             for table in TABLE_LOAD_ORDER:
                 if table not in existing_tables:
                     insert_records(connection, table, load_json_records(table))
+                else:
+                    insert_missing_seed_records(connection, table)
         connection.commit()

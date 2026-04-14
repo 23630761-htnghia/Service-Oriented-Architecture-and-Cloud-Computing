@@ -231,6 +231,10 @@
                 <h2>Danh sách room đang quản lý</h2>
                 <p>Admin có thể xem nhanh trạng thái phòng live và xóa những room không còn sử dụng.</p>
               </div>
+              <div class="staff-search-bar">
+                <label for="accounts-search-input">Tìm kiếm phòng livestream</label>
+                <input id="accounts-search-input" type="search" placeholder="Ví dụ: TikTok, FB03, Hà My..." />
+              </div>
               <div id="accounts-result" class="muted">Đăng nhập để xem danh sách tài khoản livestream.</div>
             </section>
 
@@ -249,46 +253,97 @@
                 <button type="submit" class="primary-btn">Tạo tài khoản nội bộ</button>
               </form>
               <div id="staff-create-result" class="result-card muted">Mỗi tài khoản nội bộ cần một mã duy nhất. Nếu mã đã tồn tại, chỉ có thể tạo lại sau khi xóa tài khoản cũ.</div>
+              <div class="staff-search-bar">
+                <label for="staff-credentials-search-input">Tìm kiếm tài khoản nội bộ</label>
+                <input id="staff-credentials-search-input" type="search" placeholder="Ví dụ: product manager, Minh Anh, STF005..." />
+              </div>
               <div id="staff-credentials-result" class="muted">Đăng nhập bằng admin để xem tài khoản nội bộ.</div>
             </section>
           </div>
         </section>
 
         <section id="tab-catalog" class="tab-panel hidden">
-          <div class="content-grid two-wide">
-            <section id="product-management-panel" class="panel">
-              <div class="panel-header"><h2>Thêm sản phẩm</h2><p>Admin và quản lý sản phẩm có thể thêm mặt hàng mới để phân cho các room livestream.</p></div>
-              <form id="product-create-form" class="stack compact-form">
-                <div class="form-grid four-cols">
-                  <label>SKU<input id="product-sku" placeholder="NEW-SKU-001" /></label>
-                  <label>Tên sản phẩm<input id="product-name" placeholder="Tinh chất dưỡng ẩm SmartLive" /></label>
-                  <label>Ngành hàng<input id="product-category" placeholder="Chăm sóc da" /></label>
-                  <label>Thương hiệu<input id="product-brand" placeholder="SmartLive" /></label>
-                  <label>Giá vốn<input id="product-cost-price" type="number" min="0" value="99000" /></label>
-                  <label>Giá bán<input id="product-retail-price" type="number" min="0" value="189000" /></label>
-                  <label>Tồn kho<input id="product-stock-quantity" type="number" min="0" value="120" /></label>
-                  <label>Mức nhập lại<input id="product-reorder-level" type="number" min="0" value="30" /></label>
-                  <label>Đơn vị<input id="product-unit" placeholder="chai" /></label>
-                  <label>Trạng thái<select id="product-is-active"><option value="true">Đang bán</option><option value="false">Ngưng bán</option></select></label>
-                  <label class="panel-span-2">Mô tả<input id="product-description" placeholder="Mô tả ngắn để staff nắm thông tin khi lên live." /></label>
+          <div class="content-grid">
+            <section class="panel panel-span-2 catalog-toolbar-panel">
+              <div class="panel-header split">
+                <div>
+                  <h2>Trung tâm quản lý catalog</h2>
+                  <p>Chuyển nhanh giữa sản phẩm, offer và cấu hình room để thao tác gọn hơn, không phải kéo dài cả trang.</p>
                 </div>
-                <button type="submit" class="primary-btn">Thêm sản phẩm</button>
-              </form>
-              <div id="product-create-result" class="result-card muted">Admin hoặc quản lý sản phẩm có thể thêm mặt hàng mới tại đây.</div>
+                <div class="panel-badge">Catalog workspace</div>
+              </div>
+              <div class="admin-account-switcher catalog-switcher">
+                <button type="button" class="switcher-btn is-active" data-catalog-section="products">Sản phẩm</button>
+                <button type="button" class="switcher-btn" data-catalog-section="offers">Offer</button>
+                <button type="button" class="switcher-btn" data-catalog-section="assignments">Gán cho room</button>
+              </div>
             </section>
-            <section class="panel"><div class="panel-header"><h2>Danh mục hàng hóa</h2><p>Sản phẩm chủ lực theo ngành hàng, giá bán và tồn kho hiện tại.</p></div><div id="products-result" class="muted">Đăng nhập để xem danh mục sản phẩm.</div></section>
-            <section class="panel"><div class="panel-header"><h2>Offer đang chạy</h2><p>Ưu đãi nhập hàng dành cho các room livestream đang hoạt động.</p></div><div id="offers-result" class="muted">Đăng nhập để xem các offer hiện hành.</div></section>
-            <section id="assignment-management-panel" class="panel panel-span-2">
-              <div class="panel-header"><h2>Gán sản phẩm cho phòng livestream</h2><p>Admin và quản lý sản phẩm cấu hình trước danh mục để nhân viên livestream có sẵn thông tin khi giới thiệu hàng.</p></div>
-              <form id="assignment-create-form" class="stack compact-form">
-                <div class="form-grid four-cols">
-                  <label>Phòng livestream<select id="assignment-account-id"></select></label>
-                  <label>Sản phẩm<select id="assignment-product-id"></select></label>
-                </div>
-                <button type="submit" class="primary-btn">Gán sản phẩm cho room</button>
-              </form>
-              <div id="assignment-create-result" class="result-card muted">Admin hoặc quản lý sản phẩm có thể gán sản phẩm cho từng phòng livestream.</div>
-              <div id="product-assignment-result" class="muted">Đăng nhập để xem sản phẩm đã gán cho các phòng livestream.</div>
+
+            <section id="catalog-products-section" class="catalog-section panel-span-2">
+              <div class="content-grid two-wide">
+                <section id="product-management-panel" class="panel">
+                  <div class="panel-header"><h2>Thêm sản phẩm</h2><p>Admin và quản lý sản phẩm có thể thêm mặt hàng mới để phân cho các room livestream.</p></div>
+                  <form id="product-create-form" class="stack compact-form">
+                    <div class="form-grid four-cols">
+                      <label>SKU<input id="product-sku" placeholder="NEW-SKU-001" /></label>
+                      <label>Tên sản phẩm<input id="product-name" placeholder="Tinh chất dưỡng ẩm SmartLive" /></label>
+                      <label>Ngành hàng<input id="product-category" placeholder="Chăm sóc da" /></label>
+                      <label>Thương hiệu<input id="product-brand" placeholder="SmartLive" /></label>
+                      <label>Giá vốn<input id="product-cost-price" type="number" min="0" value="99000" /></label>
+                      <label>Giá bán<input id="product-retail-price" type="number" min="0" value="189000" /></label>
+                      <label>Tồn kho<input id="product-stock-quantity" type="number" min="0" value="120" /></label>
+                      <label>Mức nhập lại<input id="product-reorder-level" type="number" min="0" value="30" /></label>
+                      <label>Đơn vị<input id="product-unit" placeholder="chai" /></label>
+                      <label>Trạng thái<select id="product-is-active"><option value="true">Đang bán</option><option value="false">Ngưng bán</option></select></label>
+                      <label class="panel-span-2">Mô tả<input id="product-description" placeholder="Mô tả ngắn để staff nắm thông tin khi lên live." /></label>
+                    </div>
+                    <button type="submit" class="primary-btn">Thêm sản phẩm</button>
+                  </form>
+                  <div id="product-create-result" class="result-card muted">Admin hoặc quản lý sản phẩm có thể thêm mặt hàng mới tại đây.</div>
+                </section>
+                <section class="panel">
+                  <div class="panel-header"><h2>Danh mục hàng hóa</h2><p>Sản phẩm chủ lực theo ngành hàng, giá bán và tồn kho hiện tại.</p></div>
+                  <div class="staff-search-bar">
+                    <label for="product-search-input">Tìm kiếm sản phẩm</label>
+                    <input id="product-search-input" type="search" placeholder="Ví dụ: serum, SKU, LumiSkin..." />
+                  </div>
+                  <div class="catalog-scroll-card">
+                    <div id="products-result" class="muted">Đăng nhập để xem danh mục sản phẩm.</div>
+                  </div>
+                </section>
+              </div>
+            </section>
+
+            <section id="catalog-offers-section" class="catalog-section panel panel-span-2 hidden">
+              <div class="panel-header"><h2>Offer đang chạy</h2><p>Ưu đãi nhập hàng dành cho các room livestream đang hoạt động, gom trong một khung riêng để tiện theo dõi.</p></div>
+              <div class="staff-search-bar">
+                <label for="offer-search-input">Tìm kiếm offer</label>
+                <input id="offer-search-input" type="search" placeholder="Ví dụ: supplier, sản phẩm, active..." />
+              </div>
+              <div class="catalog-scroll-card catalog-scroll-card-wide">
+                <div id="offers-result" class="muted">Đăng nhập để xem các offer hiện hành.</div>
+              </div>
+            </section>
+
+            <section id="catalog-assignments-section" class="catalog-section panel panel-span-2 hidden">
+              <div id="assignment-management-panel">
+                <div class="panel-header"><h2>Gán sản phẩm cho phòng livestream</h2><p>Admin và quản lý sản phẩm cấu hình trước danh mục để nhân viên livestream có sẵn thông tin khi giới thiệu hàng.</p></div>
+                <form id="assignment-create-form" class="stack compact-form">
+                  <div class="form-grid four-cols">
+                    <label>Phòng livestream<select id="assignment-account-id"></select></label>
+                    <label>Sản phẩm<select id="assignment-product-id"></select></label>
+                  </div>
+                  <button type="submit" class="primary-btn">Gán sản phẩm cho room</button>
+                </form>
+                <div id="assignment-create-result" class="result-card muted">Admin hoặc quản lý sản phẩm có thể gán sản phẩm cho từng phòng livestream.</div>
+              </div>
+              <div class="staff-search-bar">
+                <label for="assignment-search-input">Tìm kiếm cấu hình gán sản phẩm</label>
+                <input id="assignment-search-input" type="search" placeholder="Ví dụ: TikTok, serum, lap-01..." />
+              </div>
+              <div class="catalog-scroll-card catalog-scroll-card-wide">
+                <div id="product-assignment-result" class="muted">Đăng nhập để xem sản phẩm đã gán cho các phòng livestream.</div>
+              </div>
             </section>
           </div>
         </section>
@@ -313,7 +368,14 @@
               </form>
               <div id="supplier-create-result" class="result-card muted">Admin hoặc quản lý sản phẩm có thể thêm nhà cung cấp mới tại đây.</div>
             </section>
-            <section class="panel"><div class="panel-header"><h2>Nhà cung cấp</h2><p>Đánh giá năng lực giao hàng, đầu mối liên hệ và lead time cho từng đối tác.</p></div><div id="suppliers-result" class="muted">Đăng nhập để xem danh sách nhà cung cấp.</div></section>
+            <section class="panel">
+              <div class="panel-header"><h2>Nhà cung cấp</h2><p>Đánh giá năng lực giao hàng, đầu mối liên hệ và lead time cho từng đối tác.</p></div>
+              <div class="staff-search-bar">
+                <label for="supplier-search-input">Tìm kiếm nhà cung cấp</label>
+                <input id="supplier-search-input" type="search" placeholder="Ví dụ: Smart Supply, SUP-NEW-01..." />
+              </div>
+              <div id="suppliers-result" class="muted">Đăng nhập để xem danh sách nhà cung cấp.</div>
+            </section>
           </div>
         </section>
 

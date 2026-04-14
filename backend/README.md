@@ -79,6 +79,6 @@ docker compose up --build
 
 ## Ghi chú
 
-- `account-service` có dữ liệu seed SQLite sẵn trong `services/account-service/app/data/`.
+- `account-service` có dữ liệu seed và SQLite trong `services/account-service/app/data/`, được chia theo từng domain như `identity/`, `catalog/`, `livestream/`, `sqlite/`.
 - `sync-service` hiện chưa có database riêng.
 - `report-service` chỉ tổng hợp từ API nội bộ của các service khác.
