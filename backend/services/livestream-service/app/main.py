@@ -19,6 +19,9 @@ from app.schemas import (
     LivestreamProductAssignment,
     LivestreamProductAssignmentCreate,
     LivestreamProductAssignmentDeleteResponse,
+    LivestreamProductOffer,
+    LivestreamProductOfferDeleteResponse,
+    LivestreamProductOfferUpsert,
     PlatformAccountsGroup,
     PlatformSummary,
 )
@@ -220,6 +223,165 @@ def list_livestream_product_assignments_data(account_id: str | None = None) -> l
     return [LivestreamProductAssignment(**row) for row in rows]
 
 
+def get_product_pricing_record(product_id: str) -> dict:
+    product = fetch_one(
+        """
+        SELECT product_id, sku, name, category, retail_price
+        FROM products
+        WHERE product_id = ?
+        """,
+        (product_id,),
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm trong hệ thống.")
+    return product
+
+
+def get_livestream_product_offer_detail(account_id: str) -> LivestreamProductOffer:
+    offer = fetch_one(
+        """
+        SELECT
+            lpo.live_offer_id,
+            lpo.account_id,
+            la.name AS account_name,
+            la.platform_code AS platform,
+            pf.display_name AS platform_display_name,
+            lpo.product_id,
+            p.name AS product_name,
+            p.sku AS product_sku,
+            p.category AS product_category,
+            lpo.original_price,
+            lpo.live_price,
+            lpo.pinned_by_user_id,
+            u.full_name AS pinned_by_name,
+            lpo.pinned_at
+        FROM livestream_product_offers lpo
+        JOIN livestream_accounts la ON la.account_id = lpo.account_id
+        JOIN platforms pf ON pf.code = la.platform_code
+        JOIN products p ON p.product_id = lpo.product_id
+        LEFT JOIN users u ON u.user_id = lpo.pinned_by_user_id
+        WHERE lpo.account_id = ?
+        """,
+        (account_id,),
+    )
+    if not offer:
+        raise HTTPException(status_code=404, detail="Không tìm thấy live offer cho phiên livestream này.")
+    return LivestreamProductOffer(**offer)
+
+
+def list_livestream_product_offers_data(account_id: str | None = None) -> list[LivestreamProductOffer]:
+    query = """
+        SELECT
+            lpo.live_offer_id,
+            lpo.account_id,
+            la.name AS account_name,
+            la.platform_code AS platform,
+            pf.display_name AS platform_display_name,
+            lpo.product_id,
+            p.name AS product_name,
+            p.sku AS product_sku,
+            p.category AS product_category,
+            lpo.original_price,
+            lpo.live_price,
+            lpo.pinned_by_user_id,
+            u.full_name AS pinned_by_name,
+            lpo.pinned_at
+        FROM livestream_product_offers lpo
+        JOIN livestream_accounts la ON la.account_id = lpo.account_id
+        JOIN platforms pf ON pf.code = la.platform_code
+        JOIN products p ON p.product_id = lpo.product_id
+        LEFT JOIN users u ON u.user_id = lpo.pinned_by_user_id
+    """
+    params: tuple = ()
+    if account_id:
+        query += " WHERE lpo.account_id = ?"
+        params = (account_id,)
+    query += " ORDER BY lpo.pinned_at DESC"
+    rows = fetch_all(query, params)
+    return [LivestreamProductOffer(**row) for row in rows]
+
+
+def upsert_livestream_product_offer(payload: LivestreamProductOfferUpsert) -> LivestreamProductOffer:
+    get_livestream_account_basic_record(payload.account_id)
+    product = get_product_pricing_record(payload.product_id)
+    assignment = fetch_one(
+        """
+        SELECT assignment_id
+        FROM livestream_product_assignments
+        WHERE account_id = ? AND product_id = ?
+        """,
+        (payload.account_id, payload.product_id),
+    )
+    if not assignment:
+        raise HTTPException(status_code=400, detail="Sản phẩm chưa được gán cho phiên livestream đã chọn.")
+    if payload.live_price > product["retail_price"]:
+        raise HTTPException(status_code=400, detail="Giá live không được cao hơn giá gốc.")
+
+    pinned_by_user_id = payload.pinned_by_user_id
+    if pinned_by_user_id:
+        pinned_by_user = get_user_record(pinned_by_user_id)
+        if pinned_by_user["role"] not in {"admin", "staff"}:
+            raise HTTPException(
+                status_code=400,
+                detail="Chỉ admin hoặc staff mới được ghim giá live cho phiên livestream.",
+            )
+
+    with get_connection() as connection:
+        pinned_at = get_current_timestamp(connection)
+        existing_offer = connection.execute(
+            """
+            SELECT live_offer_id
+            FROM livestream_product_offers
+            WHERE account_id = ?
+            """,
+            (payload.account_id,),
+        ).fetchone()
+        if existing_offer:
+            live_offer_id = existing_offer["live_offer_id"]
+            connection.execute(
+                """
+                UPDATE livestream_product_offers
+                SET product_id = ?, original_price = ?, live_price = ?, pinned_by_user_id = ?, pinned_at = ?
+                WHERE account_id = ?
+                """,
+                (
+                    payload.product_id,
+                    product["retail_price"],
+                    payload.live_price,
+                    pinned_by_user_id,
+                    pinned_at,
+                    payload.account_id,
+                ),
+            )
+        else:
+            live_offer_id = f"live-offer-{payload.account_id}"
+            connection.execute(
+                """
+                INSERT INTO livestream_product_offers (
+                    live_offer_id,
+                    account_id,
+                    product_id,
+                    original_price,
+                    live_price,
+                    pinned_by_user_id,
+                    pinned_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    live_offer_id,
+                    payload.account_id,
+                    payload.product_id,
+                    product["retail_price"],
+                    payload.live_price,
+                    pinned_by_user_id,
+                    pinned_at,
+                ),
+            )
+        connection.commit()
+
+    return get_livestream_product_offer_detail(payload.account_id)
+
+
 def build_platform_summary(platform: str, platform_accounts: list[LivestreamAccount]) -> PlatformSummary:
     total_accounts = len(platform_accounts)
     total_viewers = sum(account.current_viewers for account in platform_accounts)
@@ -275,6 +437,7 @@ def root():
             "/livestream-accounts",
             "/platform-summaries",
             "/livestream-product-assignments",
+            "/livestream-product-offers",
         ],
     }
 
@@ -350,6 +513,38 @@ def list_livestream_product_assignments(account_id: str | None = None) -> list[L
     return list_livestream_product_assignments_data(account_id)
 
 
+@app.get("/livestream-product-offers", response_model=list[LivestreamProductOffer])
+def list_livestream_product_offers(account_id: str | None = None) -> list[LivestreamProductOffer]:
+    if account_id:
+        get_livestream_account_basic_record(account_id)
+    return list_livestream_product_offers_data(account_id)
+
+
+@app.post("/livestream-product-offers", response_model=LivestreamProductOffer)
+def create_or_update_livestream_product_offer(payload: LivestreamProductOfferUpsert) -> LivestreamProductOffer:
+    return upsert_livestream_product_offer(payload)
+
+
+@app.delete("/livestream-product-offers/{account_id}", response_model=LivestreamProductOfferDeleteResponse)
+def delete_livestream_product_offer(account_id: str) -> LivestreamProductOfferDeleteResponse:
+    get_livestream_account_basic_record(account_id)
+    with get_connection() as connection:
+        deleted = connection.execute(
+            """
+            DELETE FROM livestream_product_offers
+            WHERE account_id = ?
+            """,
+            (account_id,),
+        )
+        connection.commit()
+        if deleted.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Không tìm thấy live offer để xóa.")
+    return LivestreamProductOfferDeleteResponse(
+        account_id=account_id,
+        message="Đã gỡ live offer khỏi phiên livestream.",
+    )
+
+
 @app.post("/livestream-product-assignments", response_model=LivestreamProductAssignment)
 def create_livestream_product_assignment(payload: LivestreamProductAssignmentCreate) -> LivestreamProductAssignment:
     get_livestream_account_basic_record(payload.account_id)
@@ -419,6 +614,13 @@ def delete_livestream_product_assignment(assignment_id: str) -> LivestreamProduc
     assignment = get_livestream_product_assignment_record(assignment_id)
 
     with get_connection() as connection:
+        connection.execute(
+            """
+            DELETE FROM livestream_product_offers
+            WHERE account_id = ? AND product_id = ?
+            """,
+            (assignment["account_id"], assignment["product_id"]),
+        )
         connection.execute(
             "DELETE FROM livestream_product_assignments WHERE assignment_id = ?",
             (assignment_id,),

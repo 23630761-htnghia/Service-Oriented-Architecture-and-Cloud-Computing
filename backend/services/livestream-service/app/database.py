@@ -182,6 +182,19 @@ CREATE TABLE IF NOT EXISTS livestream_product_assignments (
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
     FOREIGN KEY (assigned_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS livestream_product_offers (
+    live_offer_id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL UNIQUE,
+    product_id TEXT NOT NULL,
+    original_price REAL NOT NULL,
+    live_price REAL NOT NULL,
+    pinned_by_user_id TEXT,
+    pinned_at TEXT NOT NULL,
+    FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+    FOREIGN KEY (pinned_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
 """
 
 

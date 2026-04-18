@@ -233,6 +233,14 @@ textarea:focus {
   transform: translateY(-1px);
 }
 
+.primary-btn:disabled,
+.ghost-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .demo-account-list {
   display: grid;
   gap: 12px;
@@ -307,6 +315,7 @@ textarea:focus {
 .live-room-layout,
 .quick-stats,
 .host-controls,
+.cart-actions,
 .two-col,
 .staff-tools-grid,
 .product-grid,
@@ -454,6 +463,10 @@ textarea:focus {
   margin-top: 18px;
 }
 
+.cart-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .staff-tools-grid,
 .message-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -497,6 +510,7 @@ textarea:focus {
 .product-meta,
 .comment-meta,
 .thread-badges,
+.inline-actions,
 .comment-actions {
   display: flex;
   flex-wrap: wrap;
@@ -629,6 +643,7 @@ textarea:focus {
   .quick-stats,
   .hero-points,
   .host-controls,
+  .cart-actions,
   .two-col,
   .staff-tools-grid,
   .message-layout {

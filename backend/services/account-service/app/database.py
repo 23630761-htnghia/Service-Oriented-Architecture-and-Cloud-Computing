@@ -96,6 +96,18 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at TEXT
 );
 
+CREATE TABLE IF NOT EXISTS customers (
+    customer_id TEXT PRIMARY KEY,
+    phone TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    full_name TEXT NOT NULL,
+    shipping_address TEXT NOT NULL,
+    birth_year INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS platforms (
     platform_id TEXT PRIMARY KEY,
     code TEXT NOT NULL UNIQUE,
@@ -183,6 +195,58 @@ CREATE TABLE IF NOT EXISTS livestream_product_assignments (
     FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
     FOREIGN KEY (assigned_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS livestream_product_offers (
+    live_offer_id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL UNIQUE,
+    product_id TEXT NOT NULL,
+    original_price REAL NOT NULL,
+    live_price REAL NOT NULL,
+    pinned_by_user_id TEXT,
+    pinned_at TEXT NOT NULL,
+    FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+    FOREIGN KEY (pinned_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS customer_cart_items (
+    cart_item_id TEXT PRIMARY KEY,
+    customer_id TEXT NOT NULL,
+    account_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    unit_price REAL NOT NULL,
+    original_price REAL NOT NULL,
+    added_at TEXT NOT NULL,
+    UNIQUE(customer_id, account_id, product_id),
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
+    FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS customer_orders (
+    order_id TEXT PRIMARY KEY,
+    customer_id TEXT NOT NULL,
+    account_id TEXT NOT NULL,
+    total_amount REAL NOT NULL,
+    shipping_address TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
+    FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS customer_order_items (
+    order_item_id TEXT PRIMARY KEY,
+    order_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    product_name TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    unit_price REAL NOT NULL,
+    original_price REAL NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES customer_orders(order_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 """
 

@@ -36,12 +36,12 @@
         <div class="section-head">
           <p class="eyebrow">Dang nhap</p>
           <h2>Chon tai khoan demo</h2>
-          <p class="muted">Ban co the vao bang tai khoan nhan vien live hoac tai khoan khach hang.</p>
+          <p class="muted">Nhan vien live dang nhap bang email do admin cap. Khach hang dang nhap bang so dien thoai hoac email da dang ky.</p>
         </div>
 
         <form id="login-form" class="stack">
-          <label>Email
-            <input id="login-email" type="email" value="staff@smartlive.vn" autocomplete="username" />
+          <label>Email nhan vien hoac so dien thoai khach hang
+            <input id="login-email" type="text" value="staff@smartlive.vn" autocomplete="username" />
           </label>
           <label>Mat khau
             <input id="login-password" type="password" value="staff01" autocomplete="current-password" />
@@ -50,19 +50,64 @@
         </form>
 
         <div class="demo-account-list">
-          <button type="button" class="demo-account-btn" data-email="staff@smartlive.vn" data-password="staff01">
-            <strong>Nhan vien live</strong>
-            <span>staff@smartlive.vn</span>
-            <small>Dieu khien phien live, quan sat comment, chan khach va nhan tin voi nguoi mua</small>
+          <button type="button" class="demo-account-btn" data-email="product.manager@smartlive.vn" data-password="pm001">
+            <strong>Quan ly san pham</strong>
+            <span>product.manager@smartlive.vn</span>
+            <small>Quan ly danh muc san pham, ton kho va gan san pham vao cac phien live truoc khi ban</small>
           </button>
-          <button type="button" class="demo-account-btn" data-email="linh.nguyen@gmail.com" data-password="123456">
-            <strong>Khach Linh</strong>
-            <span>linh.nguyen@gmail.com</span>
-            <small>Tim live skincare, hoi gia serum va nhan tin voi shop</small>
+          <button type="button" class="demo-account-btn" data-email="staff@smartlive.vn" data-password="staff01">
+            <strong>Nhan vien live 1</strong>
+            <span>staff@smartlive.vn</span>
+            <small>Duoc admin cap tai khoan, co quyen dieu khien phien live va ghim san pham</small>
+          </button>
+          <button type="button" class="demo-account-btn" data-email="staff02@smartlive.vn" data-password="staff02">
+            <strong>Nhan vien live 2</strong>
+            <span>staff02@smartlive.vn</span>
+            <small>Duoc admin cap tai khoan, co the thay phien va xu ly khach dang live</small>
+          </button>
+          <button type="button" class="demo-account-btn" data-email="0901234567" data-password="123456">
+            <strong>Khach Hang 1</strong>
+            <span>0901234567</span>
+            <small>Dang nhap bang so dien thoai, co gio hang va co the mua trong live</small>
+          </button>
+          <button type="button" class="demo-account-btn" data-email="0912345678" data-password="123456">
+            <strong>Khach Hang 2</strong>
+            <span>0912345678</span>
+            <small>Khach demo thu hai de test comment, nhan tin va mua hang</small>
           </button>
         </div>
 
         <div id="login-result" class="message-box muted">Trang thai dang nhap se hien thi tai day.</div>
+
+        <div class="section-head section-gap">
+          <p class="eyebrow">Dang ky khach hang</p>
+          <h3>Khach hang tu tao tai khoan</h3>
+          <p class="muted">So dien thoai la khoa chinh. Khach phai tu 18 tuoi tro len moi duoc tao tai khoan.</p>
+        </div>
+
+        <form id="register-form" class="stack">
+          <label>So dien thoai
+            <input id="register-phone" type="tel" placeholder="Nhap so dien thoai 10 so" autocomplete="tel" />
+          </label>
+          <label>Ho va ten
+            <input id="register-full-name" type="text" placeholder="Nguyen Van A" autocomplete="name" />
+          </label>
+          <label>Email
+            <input id="register-email" type="email" placeholder="ban@email.com" autocomplete="email" />
+          </label>
+          <label>Dia diem giao hang
+            <input id="register-location" type="text" placeholder="Quan 7, TP.HCM" autocomplete="street-address" />
+          </label>
+          <label>Nam sinh
+            <input id="register-birth-year" type="number" min="1900" max="2026" placeholder="2000" />
+          </label>
+          <label>Mat khau
+            <input id="register-password" type="password" placeholder="Toi thieu 6 ky tu" autocomplete="new-password" />
+          </label>
+          <button type="submit" class="primary-btn">Tao tai khoan khach hang</button>
+        </form>
+
+        <div id="register-result" class="message-box muted">Thong tin dang ky khach hang se hien thi tai day.</div>
       </div>
     </section>
 
@@ -136,7 +181,7 @@
           <div class="section-head">
             <p class="eyebrow">Nhan vien live</p>
             <h3>Dieu khien phien live va xu ly khach</h3>
-            <p class="muted">Nhan vien co the bat dau, ket thuc live, dieu khien camera, micro va chan khach trong phien.</p>
+            <p class="muted">Nhan vien co the bat dau, ket thuc live, dieu khien camera, micro, nhap gia live giam truoc khi ghim san pham va chan khach trong phien.</p>
           </div>
 
           <div class="host-controls">
@@ -156,7 +201,7 @@
             <div class="tool-panel">
               <div class="section-head">
                 <p class="eyebrow">Quan ly live</p>
-                <h3>Chon san pham ghim</h3>
+                <h3>Chon san pham ghim va gia live</h3>
               </div>
               <div id="staff-product-list" class="product-grid"></div>
             </div>
@@ -192,6 +237,87 @@
             <h3>Noi dung de xuat cho ban</h3>
           </div>
           <div id="recommendation-list" class="recommendation-list"></div>
+
+          <div class="section-head section-gap">
+            <p class="eyebrow">Gio hang</p>
+            <h3>San pham khach hang da chon</h3>
+          </div>
+          <div id="cart-result" class="message-box muted">Khach hang co the them san pham vao gio, xoa san pham va mua ngay trong live.</div>
+          <div id="customer-cart-list" class="product-grid"></div>
+          <div class="cart-actions">
+            <button id="clear-cart-btn" type="button" class="ghost-btn">Xoa gio hang</button>
+            <button id="checkout-btn" type="button" class="primary-btn">Mua ngay</button>
+          </div>
+        </section>
+
+        <section id="product-manager-view" class="panel panel-span-2 hidden">
+          <div class="section-head">
+            <p class="eyebrow">Quan ly san pham</p>
+            <h3>Danh muc san pham va cau hinh truoc phien live</h3>
+            <p class="muted">Nhan vien quan ly san pham co quyen them bot san pham, tang ton kho va gan san pham vao tung phien live truoc khi nhan vien ban hang len song.</p>
+          </div>
+
+          <div class="staff-tools-grid">
+            <div class="tool-panel">
+              <div class="section-head">
+                <p class="eyebrow">Tao san pham</p>
+                <h3>Them san pham moi</h3>
+              </div>
+              <form id="product-form" class="stack">
+                <label>Ten san pham
+                  <input id="product-name-input" type="text" placeholder="Serum moi" />
+                </label>
+                <label>Danh muc
+                  <input id="product-category-input" type="text" placeholder="Skincare" />
+                </label>
+                <label>Gia goc
+                  <input id="product-price-input" type="number" min="1000" step="1000" placeholder="329000" />
+                </label>
+                <label>So luong ton kho
+                  <input id="product-stock-input" type="number" min="1" step="1" placeholder="50" />
+                </label>
+                <label>Thong tin san pham
+                  <textarea id="product-highlight-input" rows="3" placeholder="Mo ta ngan ve san pham..."></textarea>
+                </label>
+                <button type="submit" class="primary-btn">Them san pham</button>
+              </form>
+            </div>
+
+            <div class="tool-panel">
+              <div class="section-head">
+                <p class="eyebrow">Gan vao live</p>
+                <h3>Cap cho nhan vien ban hang truoc phien live</h3>
+              </div>
+              <form id="live-assignment-form" class="stack">
+                <label>Phien live
+                  <select id="assignment-live-select"></select>
+                </label>
+                <label>San pham
+                  <select id="assignment-product-select"></select>
+                </label>
+                <button type="submit" class="primary-btn">Gan san pham vao phien live</button>
+              </form>
+              <div id="product-manager-result" class="message-box muted">Trang thai quan ly san pham se hien thi tai day.</div>
+            </div>
+          </div>
+
+          <div class="staff-tools-grid">
+            <div class="tool-panel">
+              <div class="section-head">
+                <p class="eyebrow">Danh muc hien tai</p>
+                <h3>San pham va ton kho</h3>
+              </div>
+              <div id="product-manager-list" class="product-grid"></div>
+            </div>
+
+            <div class="tool-panel">
+              <div class="section-head">
+                <p class="eyebrow">Gan san pham</p>
+                <h3>San pham trong tung phien live</h3>
+              </div>
+              <div id="live-assignment-list" class="product-grid"></div>
+            </div>
+          </div>
         </section>
 
         <section class="panel">

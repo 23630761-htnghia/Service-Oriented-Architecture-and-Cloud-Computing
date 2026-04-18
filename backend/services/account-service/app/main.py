@@ -1,11 +1,24 @@
 from __future__ import annotations
 
+from datetime import datetime
 import re
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 
 from app.database import delete_json_record, get_connection, initialize_database, save_json_record
 from app.schemas import (
+    CartItemCreateRequest,
+    CartItemResponse,
+    CartMutationResponse,
+    CheckoutResponse,
+    CustomerOrder,
+    CustomerOrderItem,
+    CustomerProfile,
+    CustomerRegisterRequest,
+    DemoLoginRequest,
+    DemoLoginResponse,
+    DemoUserProfile,
     HealthResponse,
     ManagedUserCreate,
     StaffUserCreate,
@@ -164,6 +177,564 @@ def list_users_data() -> list[UserAccount]:
     return [UserAccount(**row) for row in rows]
 
 
+def normalize_phone(phone: str) -> str:
+    normalized_phone = re.sub(r"\D", "", phone or "")
+    if len(normalized_phone) < 8:
+        raise HTTPException(status_code=400, detail="Số điện thoại không hợp lệ.")
+    return normalized_phone
+
+
+def normalize_email(email: str) -> str:
+    normalized_email = email.strip().lower()
+    if "@" not in normalized_email:
+        raise HTTPException(status_code=400, detail="Email không hợp lệ.")
+    return normalized_email
+
+
+def validate_customer_birth_year(birth_year: int) -> int:
+    current_year = datetime.now().year
+    age = current_year - birth_year
+    if age < 18:
+        raise HTTPException(status_code=400, detail="Khách hàng phải từ 18 tuổi trở lên.")
+    return birth_year
+
+
+def build_customer_id(phone: str) -> str:
+    return f"customer-{phone}"
+
+
+def build_demo_user_profile_from_internal(user: dict) -> DemoUserProfile:
+    return DemoUserProfile(
+        id=user["user_id"],
+        role=user["role"],
+        name=user["full_name"],
+        email=user["email"],
+        phone=user["phone"],
+        department=user["department"],
+        shipping_address=None,
+        birth_year=None,
+        status=user["status"],
+    )
+
+
+def build_demo_user_profile_from_customer(customer: dict) -> DemoUserProfile:
+    return DemoUserProfile(
+        id=customer["customer_id"],
+        role="customer",
+        name=customer["full_name"],
+        email=customer["email"],
+        phone=customer["phone"],
+        department=None,
+        shipping_address=customer["shipping_address"],
+        birth_year=customer["birth_year"],
+        status=customer["status"],
+    )
+
+
+def get_customer_record(customer_id: str) -> dict:
+    customer = fetch_one(
+        """
+        SELECT customer_id, phone, email, password, full_name, shipping_address, birth_year, status, created_at
+        FROM customers
+        WHERE customer_id = ?
+        """,
+        (customer_id,),
+    )
+    if not customer:
+        raise HTTPException(status_code=404, detail="Không tìm thấy khách hàng trong hệ thống.")
+    return customer
+
+
+def list_customers_data() -> list[CustomerProfile]:
+    rows = fetch_all(
+        """
+        SELECT customer_id, phone, email, full_name, shipping_address, birth_year, status, created_at
+        FROM customers
+        ORDER BY created_at DESC, full_name ASC
+        """
+    )
+    return [CustomerProfile(**row) for row in rows]
+
+
+def create_customer_account(payload: CustomerRegisterRequest) -> CustomerProfile:
+    normalized_phone = normalize_phone(payload.phone)
+    normalized_email = normalize_email(payload.email)
+    validate_customer_birth_year(payload.birth_year)
+    customer_id = build_customer_id(normalized_phone)
+
+    if fetch_one("SELECT customer_id FROM customers WHERE phone = ?", (normalized_phone,)):
+        raise HTTPException(status_code=409, detail="Số điện thoại này đã tồn tại trong hệ thống.")
+    if fetch_one("SELECT customer_id FROM customers WHERE email = ?", (normalized_email,)):
+        raise HTTPException(status_code=409, detail="Email này đã tồn tại trong hệ thống khách hàng.")
+
+    with get_connection() as connection:
+        created_at = get_current_timestamp(connection)
+        connection.execute(
+            """
+            INSERT INTO customers (
+                customer_id,
+                phone,
+                email,
+                password,
+                full_name,
+                shipping_address,
+                birth_year,
+                status,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                customer_id,
+                normalized_phone,
+                normalized_email,
+                payload.password,
+                payload.full_name.strip(),
+                payload.shipping_address.strip(),
+                payload.birth_year,
+                "active",
+                created_at,
+            ),
+        )
+        connection.commit()
+
+    return CustomerProfile(
+        customer_id=customer_id,
+        phone=normalized_phone,
+        email=normalized_email,
+        full_name=payload.full_name.strip(),
+        shipping_address=payload.shipping_address.strip(),
+        birth_year=payload.birth_year,
+        status="active",
+        created_at=created_at,
+    )
+
+
+def demo_login_user(payload: DemoLoginRequest) -> DemoLoginResponse:
+    normalized_identifier = payload.identifier.strip().lower()
+    normalized_phone = re.sub(r"\D", "", payload.identifier or "")
+
+    internal_user = fetch_one(
+        """
+        SELECT user_id, email, password, full_name, role, phone, department, status
+        FROM users
+        WHERE lower(email) = ?
+        """,
+        (normalized_identifier,),
+    )
+    if internal_user and internal_user["password"] == payload.password:
+        return DemoLoginResponse(user=build_demo_user_profile_from_internal(internal_user))
+
+    customer = fetch_one(
+        """
+        SELECT customer_id, phone, email, password, full_name, shipping_address, birth_year, status
+        FROM customers
+        WHERE phone = ? OR lower(email) = ?
+        """,
+        (normalized_phone, normalized_identifier),
+    )
+    if customer and customer["password"] == payload.password:
+        return DemoLoginResponse(user=build_demo_user_profile_from_customer(customer))
+
+    raise HTTPException(status_code=401, detail="Thông tin đăng nhập không đúng.")
+
+
+def require_customer(customer_id: str) -> dict:
+    return get_customer_record(customer_id)
+
+
+def get_cart_rows(customer_id: str) -> list[dict]:
+    require_customer(customer_id)
+    return fetch_all(
+        """
+        SELECT
+            cci.cart_item_id,
+            cci.customer_id,
+            cci.account_id,
+            la.name AS account_name,
+            la.platform_code AS platform,
+            pf.display_name AS platform_display_name,
+            cci.product_id,
+            p.name AS product_name,
+            p.sku AS product_sku,
+            p.category AS product_category,
+            cci.quantity,
+            cci.unit_price,
+            cci.original_price,
+            cci.added_at
+        FROM customer_cart_items cci
+        JOIN livestream_accounts la ON la.account_id = cci.account_id
+        JOIN platforms pf ON pf.code = la.platform_code
+        JOIN products p ON p.product_id = cci.product_id
+        WHERE cci.customer_id = ?
+        ORDER BY cci.added_at DESC
+        """,
+        (customer_id,),
+    )
+
+
+def list_cart_items_data(customer_id: str) -> list[CartItemResponse]:
+    rows = get_cart_rows(customer_id)
+    return [
+        CartItemResponse(
+            **row,
+            line_total=round(row["quantity"] * row["unit_price"], 2),
+        )
+        for row in rows
+    ]
+
+
+def resolve_product_live_price(connection, account_id: str, product_id: str) -> tuple[float, float]:
+    assignment = connection.execute(
+        """
+        SELECT assignment_id
+        FROM livestream_product_assignments
+        WHERE account_id = ? AND product_id = ?
+        """,
+        (account_id, product_id),
+    ).fetchone()
+    if not assignment:
+        raise HTTPException(status_code=400, detail="Sản phẩm chưa được gán cho phiên live đã chọn.")
+
+    product = connection.execute(
+        """
+        SELECT product_id, retail_price, stock_quantity
+        FROM products
+        WHERE product_id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+    if not product:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm trong hệ thống.")
+
+    live_offer = connection.execute(
+        """
+        SELECT live_price, original_price
+        FROM livestream_product_offers
+        WHERE account_id = ? AND product_id = ?
+        """,
+        (account_id, product_id),
+    ).fetchone()
+    if live_offer:
+        return float(live_offer["live_price"]), float(live_offer["original_price"])
+    return float(product["retail_price"]), float(product["retail_price"])
+
+
+def upsert_cart_item(customer_id: str, payload: CartItemCreateRequest) -> CartMutationResponse:
+    require_customer(customer_id)
+    with get_connection() as connection:
+        account = connection.execute(
+            """
+            SELECT account_id
+            FROM livestream_accounts
+            WHERE account_id = ?
+            """,
+            (payload.account_id,),
+        ).fetchone()
+        if not account:
+            raise HTTPException(status_code=404, detail="Không tìm thấy phiên live đã chọn.")
+
+        unit_price, original_price = resolve_product_live_price(connection, payload.account_id, payload.product_id)
+        existing = connection.execute(
+            """
+            SELECT cart_item_id, quantity
+            FROM customer_cart_items
+            WHERE customer_id = ? AND account_id = ? AND product_id = ?
+            """,
+            (customer_id, payload.account_id, payload.product_id),
+        ).fetchone()
+        added_at = get_current_timestamp(connection)
+        if existing:
+            connection.execute(
+                """
+                UPDATE customer_cart_items
+                SET quantity = ?, unit_price = ?, original_price = ?, added_at = ?
+                WHERE cart_item_id = ?
+                """,
+                (
+                    existing["quantity"] + payload.quantity,
+                    unit_price,
+                    original_price,
+                    added_at,
+                    existing["cart_item_id"],
+                ),
+            )
+        else:
+            connection.execute(
+                """
+                INSERT INTO customer_cart_items (
+                    cart_item_id,
+                    customer_id,
+                    account_id,
+                    product_id,
+                    quantity,
+                    unit_price,
+                    original_price,
+                    added_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    f"cart-item-{uuid4().hex[:12]}",
+                    customer_id,
+                    payload.account_id,
+                    payload.product_id,
+                    payload.quantity,
+                    unit_price,
+                    original_price,
+                    added_at,
+                ),
+            )
+        connection.commit()
+
+    return CartMutationResponse(
+        message="Đã cập nhật giỏ hàng của khách hàng.",
+        items=list_cart_items_data(customer_id),
+    )
+
+
+def delete_cart_item(customer_id: str, cart_item_id: str) -> CartMutationResponse:
+    require_customer(customer_id)
+    with get_connection() as connection:
+        deleted = connection.execute(
+            """
+            DELETE FROM customer_cart_items
+            WHERE customer_id = ? AND cart_item_id = ?
+            """,
+            (customer_id, cart_item_id),
+        )
+        connection.commit()
+        if deleted.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm trong giỏ hàng.")
+
+    return CartMutationResponse(
+        message="Đã xóa sản phẩm khỏi giỏ hàng.",
+        items=list_cart_items_data(customer_id),
+    )
+
+
+def clear_cart(customer_id: str) -> CartMutationResponse:
+    require_customer(customer_id)
+    with get_connection() as connection:
+        connection.execute(
+            "DELETE FROM customer_cart_items WHERE customer_id = ?",
+            (customer_id,),
+        )
+        connection.commit()
+
+    return CartMutationResponse(
+        message="Đã xóa toàn bộ giỏ hàng của khách hàng.",
+        items=[],
+    )
+
+
+def build_order_response(connection, order_id: str) -> CustomerOrder:
+    order = connection.execute(
+        """
+        SELECT
+            co.order_id,
+            co.customer_id,
+            co.account_id,
+            la.name AS account_name,
+            la.platform_code AS platform,
+            pf.display_name AS platform_display_name,
+            co.total_amount,
+            co.shipping_address,
+            co.status,
+            co.created_at
+        FROM customer_orders co
+        JOIN livestream_accounts la ON la.account_id = co.account_id
+        JOIN platforms pf ON pf.code = la.platform_code
+        WHERE co.order_id = ?
+        """,
+        (order_id,),
+    ).fetchone()
+    if not order:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng sau khi checkout.")
+
+    items = connection.execute(
+        """
+        SELECT
+            order_item_id,
+            product_id,
+            product_name,
+            quantity,
+            unit_price,
+            original_price
+        FROM customer_order_items
+        WHERE order_id = ?
+        ORDER BY order_item_id ASC
+        """,
+        (order_id,),
+    ).fetchall()
+    return CustomerOrder(
+        **dict(order),
+        items=[
+            CustomerOrderItem(
+                **dict(item),
+                line_total=round(item["quantity"] * item["unit_price"], 2),
+            )
+            for item in items
+        ],
+    )
+
+
+def checkout_customer_cart(customer_id: str) -> CheckoutResponse:
+    customer = require_customer(customer_id)
+    with get_connection() as connection:
+        cart_rows = connection.execute(
+            """
+            SELECT
+                cci.cart_item_id,
+                cci.customer_id,
+                cci.account_id,
+                cci.product_id,
+                cci.quantity,
+                cci.unit_price,
+                cci.original_price,
+                p.name AS product_name,
+                p.stock_quantity,
+                p.sku,
+                p.category,
+                p.brand,
+                p.cost_price,
+                p.retail_price,
+                p.reorder_level,
+                p.unit,
+                p.description,
+                p.is_active
+            FROM customer_cart_items cci
+            JOIN products p ON p.product_id = cci.product_id
+            WHERE cci.customer_id = ?
+            ORDER BY cci.account_id ASC, cci.added_at ASC
+            """,
+            (customer_id,),
+        ).fetchall()
+        if not cart_rows:
+            raise HTTPException(status_code=400, detail="Giỏ hàng đang trống nên chưa thể checkout.")
+
+        for cart_row in cart_rows:
+            if cart_row["stock_quantity"] < cart_row["quantity"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Sản phẩm {cart_row['product_name']} không đủ tồn kho để checkout.",
+                )
+
+        grouped_rows: dict[str, list[dict]] = {}
+        for cart_row in cart_rows:
+            grouped_rows.setdefault(cart_row["account_id"], []).append(dict(cart_row))
+
+        created_order_ids: list[str] = []
+        for account_id, items in grouped_rows.items():
+            created_at = get_current_timestamp(connection)
+            order_id = f"order-{uuid4().hex[:12]}"
+            total_amount = round(sum(item["quantity"] * item["unit_price"] for item in items), 2)
+            connection.execute(
+                """
+                INSERT INTO customer_orders (
+                    order_id,
+                    customer_id,
+                    account_id,
+                    total_amount,
+                    shipping_address,
+                    status,
+                    created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    order_id,
+                    customer_id,
+                    account_id,
+                    total_amount,
+                    customer["shipping_address"],
+                    "confirmed",
+                    created_at,
+                ),
+            )
+            created_order_ids.append(order_id)
+
+            for item in items:
+                connection.execute(
+                    """
+                    INSERT INTO customer_order_items (
+                        order_item_id,
+                        order_id,
+                        product_id,
+                        product_name,
+                        quantity,
+                        unit_price,
+                        original_price
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        f"order-item-{uuid4().hex[:12]}",
+                        order_id,
+                        item["product_id"],
+                        item["product_name"],
+                        item["quantity"],
+                        item["unit_price"],
+                        item["original_price"],
+                    ),
+                )
+                connection.execute(
+                    """
+                    UPDATE products
+                    SET stock_quantity = stock_quantity - ?
+                    WHERE product_id = ?
+                    """,
+                    (item["quantity"], item["product_id"]),
+                )
+
+                updated_product = connection.execute(
+                    """
+                    SELECT
+                        product_id,
+                        sku,
+                        name,
+                        category,
+                        brand,
+                        cost_price,
+                        retail_price,
+                        stock_quantity,
+                        reorder_level,
+                        unit,
+                        description,
+                        is_active
+                    FROM products
+                    WHERE product_id = ?
+                    """,
+                    (item["product_id"],),
+                ).fetchone()
+                if updated_product:
+                    save_json_record("products", dict(updated_product))
+
+        connection.execute(
+            "DELETE FROM customer_cart_items WHERE customer_id = ?",
+            (customer_id,),
+        )
+        connection.commit()
+
+        orders = [build_order_response(connection, order_id) for order_id in created_order_ids]
+
+    return CheckoutResponse(
+        message="Đã checkout thành công và đồng bộ đơn hàng vào database.",
+        orders=orders,
+    )
+
+
+def list_customer_orders(customer_id: str) -> list[CustomerOrder]:
+    require_customer(customer_id)
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT order_id
+            FROM customer_orders
+            WHERE customer_id = ?
+            ORDER BY created_at DESC
+            """,
+            (customer_id,),
+        ).fetchall()
+        return [build_order_response(connection, row["order_id"]) for row in rows]
+
+
 @app.get("/")
 def root():
     return {
@@ -177,6 +748,9 @@ def root():
             "/users",
             "/users/staff",
             "/users/managed",
+            "/demo/login",
+            "/customers/register",
+            "/customers",
         ],
     }
 
@@ -189,6 +763,51 @@ def health_check() -> HealthResponse:
 @app.get("/users", response_model=list[UserAccount])
 def list_users() -> list[UserAccount]:
     return list_users_data()
+
+
+@app.post("/demo/login", response_model=DemoLoginResponse)
+def demo_login(payload: DemoLoginRequest) -> DemoLoginResponse:
+    return demo_login_user(payload)
+
+
+@app.get("/customers", response_model=list[CustomerProfile])
+def list_customers() -> list[CustomerProfile]:
+    return list_customers_data()
+
+
+@app.post("/customers/register", response_model=CustomerProfile)
+def register_customer(payload: CustomerRegisterRequest) -> CustomerProfile:
+    return create_customer_account(payload)
+
+
+@app.get("/customers/{customer_id}/cart", response_model=list[CartItemResponse])
+def list_customer_cart(customer_id: str) -> list[CartItemResponse]:
+    return list_cart_items_data(customer_id)
+
+
+@app.post("/customers/{customer_id}/cart/items", response_model=CartMutationResponse)
+def add_customer_cart_item(customer_id: str, payload: CartItemCreateRequest) -> CartMutationResponse:
+    return upsert_cart_item(customer_id, payload)
+
+
+@app.delete("/customers/{customer_id}/cart/items/{cart_item_id}", response_model=CartMutationResponse)
+def remove_customer_cart_item(customer_id: str, cart_item_id: str) -> CartMutationResponse:
+    return delete_cart_item(customer_id, cart_item_id)
+
+
+@app.delete("/customers/{customer_id}/cart", response_model=CartMutationResponse)
+def clear_customer_cart(customer_id: str) -> CartMutationResponse:
+    return clear_cart(customer_id)
+
+
+@app.post("/customers/{customer_id}/checkout", response_model=CheckoutResponse)
+def checkout_customer(customer_id: str) -> CheckoutResponse:
+    return checkout_customer_cart(customer_id)
+
+
+@app.get("/customers/{customer_id}/orders", response_model=list[CustomerOrder])
+def list_orders(customer_id: str) -> list[CustomerOrder]:
+    return list_customer_orders(customer_id)
 
 
 @app.post("/users/managed", response_model=UserAccount)

@@ -89,6 +89,8 @@ async def root():
         "main_routes": [
             "/api/v1/auth/captcha",
             "/api/v1/livestream-accounts",
+            "/api/v1/demo/login",
+            "/api/v1/customers",
             "/api/v1/comments/analyze",
             "/api/v1/sync/summary",
             "/api/v1/reports/kpis/overview",
@@ -137,6 +139,11 @@ async def login(payload: dict):
     return await forward_post(settings.auth_service_url, "/login", payload)
 
 
+@app.post("/api/v1/demo/login")
+async def demo_login(payload: dict):
+    return await forward_post(settings.account_service_url, "/demo/login", payload)
+
+
 @app.get("/api/v1/auth/captcha")
 async def get_captcha():
     return await forward_get(settings.auth_service_url, "/captcha")
@@ -150,6 +157,46 @@ async def me():
 @app.get("/api/v1/users")
 async def list_users():
     return await forward_get(settings.account_service_url, "/users")
+
+
+@app.get("/api/v1/customers")
+async def list_customers():
+    return await forward_get(settings.account_service_url, "/customers")
+
+
+@app.post("/api/v1/customers/register")
+async def register_customer(payload: dict):
+    return await forward_post(settings.account_service_url, "/customers/register", payload)
+
+
+@app.get("/api/v1/customers/{customer_id}/cart")
+async def list_customer_cart(customer_id: str):
+    return await forward_get(settings.account_service_url, f"/customers/{customer_id}/cart")
+
+
+@app.post("/api/v1/customers/{customer_id}/cart/items")
+async def add_customer_cart_item(customer_id: str, payload: dict):
+    return await forward_post(settings.account_service_url, f"/customers/{customer_id}/cart/items", payload)
+
+
+@app.delete("/api/v1/customers/{customer_id}/cart/items/{cart_item_id}")
+async def delete_customer_cart_item(customer_id: str, cart_item_id: str):
+    return await forward_delete(settings.account_service_url, f"/customers/{customer_id}/cart/items/{cart_item_id}")
+
+
+@app.delete("/api/v1/customers/{customer_id}/cart")
+async def clear_customer_cart(customer_id: str):
+    return await forward_delete(settings.account_service_url, f"/customers/{customer_id}/cart")
+
+
+@app.post("/api/v1/customers/{customer_id}/checkout")
+async def checkout_customer(customer_id: str):
+    return await forward_post(settings.account_service_url, f"/customers/{customer_id}/checkout", {})
+
+
+@app.get("/api/v1/customers/{customer_id}/orders")
+async def list_customer_orders(customer_id: str):
+    return await forward_get(settings.account_service_url, f"/customers/{customer_id}/orders")
 
 
 @app.post("/api/v1/users/staff")
@@ -205,6 +252,21 @@ async def list_products():
 @app.get("/api/v1/livestream-product-assignments")
 async def list_livestream_product_assignments():
     return await forward_get(settings.livestream_service_url, "/livestream-product-assignments")
+
+
+@app.get("/api/v1/livestream-product-offers")
+async def list_livestream_product_offers():
+    return await forward_get(settings.livestream_service_url, "/livestream-product-offers")
+
+
+@app.post("/api/v1/livestream-product-offers")
+async def create_livestream_product_offer(payload: dict):
+    return await forward_post(settings.livestream_service_url, "/livestream-product-offers", payload)
+
+
+@app.delete("/api/v1/livestream-product-offers/{account_id}")
+async def delete_livestream_product_offer(account_id: str):
+    return await forward_delete(settings.livestream_service_url, f"/livestream-product-offers/{account_id}")
 
 
 @app.post("/api/v1/livestream-product-assignments")

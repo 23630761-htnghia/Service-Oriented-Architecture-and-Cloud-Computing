@@ -84,6 +84,35 @@ class LivestreamProductAssignmentDeleteResponse(BaseModel):
     message: str = Field(..., min_length=1)
 
 
+class LivestreamProductOffer(BaseModel):
+    live_offer_id: str = Field(..., min_length=1)
+    account_id: str = Field(..., min_length=1)
+    account_name: str = Field(..., min_length=1)
+    platform: str = Field(..., min_length=1)
+    platform_display_name: str = Field(..., min_length=1)
+    product_id: str = Field(..., min_length=1)
+    product_name: str = Field(..., min_length=1)
+    product_sku: str = Field(..., min_length=1)
+    product_category: str = Field(..., min_length=1)
+    original_price: float = Field(..., ge=0)
+    live_price: float = Field(..., ge=0)
+    pinned_by_user_id: str | None = None
+    pinned_by_name: str | None = None
+    pinned_at: str = Field(..., min_length=1)
+
+
+class LivestreamProductOfferUpsert(BaseModel):
+    account_id: str = Field(..., min_length=1)
+    product_id: str = Field(..., min_length=1)
+    live_price: float = Field(..., gt=0)
+    pinned_by_user_id: str | None = None
+
+
+class LivestreamProductOfferDeleteResponse(BaseModel):
+    account_id: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1)
+
+
 class PlatformSummary(BaseModel):
     platform: str
     display_name: str
