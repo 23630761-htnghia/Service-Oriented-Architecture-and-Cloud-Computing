@@ -1,215 +1,122 @@
-# Smart Livestream Management Platform
+# Báo Cáo Project
 
-Nền tảng quản lý vận hành livestream đa nền tảng theo kiến trúc `Service-Oriented Architecture`, phục vụ các nhu cầu nội bộ như quản lý tài khoản live, nhân sự, sản phẩm, nhà cung cấp, phân tích comment bằng AI và tổng hợp KPI vận hành.
+## Smart Livestream Management Platform
 
-## Tổng quan
+## 1. Giới thiệu
 
-## App demo livestream
+`Smart Livestream Management Platform` là project xây dựng một nền tảng hỗ trợ quản lý và vận hành hoạt động livestream bán hàng theo hướng `Service-Oriented Architecture (SOA)` và triển khai bằng các service độc lập. Hệ thống tập trung giải quyết các bài toán thực tế như quản lý tài khoản live, quản lý nhân sự, quản lý sản phẩm, hỗ trợ bán hàng trong phiên live, phân tích bình luận bằng AI và tổng hợp báo cáo vận hành.
 
-App demo livestream n?m t?i:
+Project gồm hai ứng dụng giao diện:
 
-- `apps/demo-app/`
+- `frontend/`: dashboard quản lý dành cho admin, nhân viên bán hàng và quản lý sản phẩm.
+- `apps/demo-app/`: ứng dụng mô phỏng phiên livestream, khách hàng, giỏ hàng, bình luận và hội thoại trong lúc live.
 
-File ch?nh:
+Phần backend được tách thành nhiều microservice `FastAPI`, giao tiếp thông qua `API Gateway`.
 
-- `apps/demo-app/index.html`
-- `apps/demo-app/app.js`
-- `apps/demo-app/styles.css`
+## 2. Mục tiêu của project
 
-Ch?y nhanh:
+Project được xây dựng với các mục tiêu chính:
 
-```bash
-cd apps/demo-app
-python -m http.server 3010
-```
+- Mô phỏng mô hình hệ thống livestream bán hàng theo kiến trúc dịch vụ.
+- Tách biệt các nghiệp vụ chính thành các service độc lập để dễ mở rộng và bảo trì.
+- Đồng bộ dữ liệu dùng chung giữa các ứng dụng quản lý và ứng dụng demo.
+- Ứng dụng AI để phân tích mức độ quan tâm của khách hàng thông qua bình luận trong phiên live.
+- Hỗ trợ theo dõi hoạt động vận hành và tổng hợp chỉ số báo cáo.
 
-M? tr?nh duy?t t?i:
+## 3. Phạm vi chức năng
 
-- `http://localhost:3010`
+Ở phiên bản hiện tại, hệ thống hỗ trợ các nhóm chức năng sau:
 
-Project gồm 4 phần chính:
+- Quản lý tài khoản nội bộ với các vai trò `admin`, `staff`, `product_manager`.
+- Quản lý khách hàng, đăng ký tài khoản khách hàng theo số điện thoại.
+- Quản lý danh mục sản phẩm, nhà cung cấp và offer nhập hàng.
+- Gán sản phẩm cho từng phòng livestream trước khi bán.
+- Ghim sản phẩm đang bán trong phiên live với giá live riêng.
+- Hỗ trợ khách hàng thêm sản phẩm vào giỏ hàng, xóa giỏ hàng, checkout và lưu đơn hàng.
+- Ghi nhận bình luận trong phiên livestream.
+- AI chủ động mở hội thoại với khách hàng khi phát hiện bình luận có tín hiệu quan tâm.
+- Nhân viên bán hàng tiếp tục trả lời khách hàng trong hội thoại sau khi AI mở đầu.
+- Tổng hợp KPI và dữ liệu vận hành từ nhiều service.
 
-- `frontend`: app quản lý livestream cho admin, staff và quản lý sản phẩm
-- `apps/demo-app`: app demo riêng để mô phỏng phiên live khi không thể trình diễn trực tiếp trên Facebook hoặc TikTok
-- `backend`: cụm microservice `FastAPI`
-- `ml`: dữ liệu và model phục vụ phân tích comment
+## 4. Kiến trúc hệ thống
 
-Các nghiệp vụ chính đang hỗ trợ:
+Hệ thống được tổ chức theo mô hình nhiều service độc lập:
 
-- Quản lý user nội bộ với các role `admin`, `staff`, `product_manager`
-- Quản lý tài khoản livestream theo nền tảng
-- Quản lý sản phẩm, nhà cung cấp và offer
-- Gán sản phẩm cho từng phòng livestream để staff có dữ liệu giới thiệu khi lên live
-- Phân tích comment theo `intent`, `sentiment`, `lead_score`, `priority`
-- Gợi ý cân bằng viewer giữa các room livestream
-- Đồng bộ comment qua `sync-service`
-- Tổng hợp KPI và báo cáo qua `report-service`
+- `api-gateway`: cổng vào thống nhất cho frontend và demo app.
+- `auth-service`: xử lý CAPTCHA và đăng nhập.
+- `account-service`: quản lý người dùng nội bộ, khách hàng, giỏ hàng, đơn hàng, bình luận và hội thoại.
+- `catalog-service`: quản lý sản phẩm, nhà cung cấp và bảng giá nhà cung cấp.
+- `livestream-service`: quản lý nền tảng, phòng livestream, gán sản phẩm và live offer.
+- `ai-service`: phân tích bình luận và hỗ trợ cân bằng viewer.
+- `sync-service`: đồng bộ comment và làm giàu dữ liệu qua AI.
+- `report-service`: tổng hợp dữ liệu và KPI từ các service khác.
 
-## Kiến trúc hệ thống
+Ba service `account-service`, `catalog-service` và `livestream-service` đang dùng chung dữ liệu trên `SQLite`, kết hợp với các file JSON seed để khởi tạo dữ liệu mẫu. Kiến trúc này phù hợp với mục tiêu học tập và mô phỏng, đồng thời vẫn thể hiện được cách tổ chức hệ thống theo hướng SOA/microservices.
 
-### Backend services
+## 5. Công nghệ sử dụng
 
-- `api-gateway`: cổng vào thống nhất cho frontend và client
-- `auth-service`: CAPTCHA và đăng nhập
-- `account-service`: quản lý identity, user nội bộ và phân quyền
-- `catalog-service`: quản lý sản phẩm, nhà cung cấp và offer
-- `livestream-service`: quản lý nền tảng, phòng livestream và gán sản phẩm cho room
-- `ai-service`: phân tích comment và cân bằng viewer
-- `sync-service`: nhận comment, enrich dữ liệu AI, lưu lịch sử sync
-- `report-service`: tổng hợp KPI và báo cáo từ các service khác
+- Backend: `Python`, `FastAPI`
+- Frontend: `HTML`, `CSS`, `JavaScript`
+- Cơ sở dữ liệu: `SQLite`
+- AI/ML: `scikit-learn`
+- Đóng gói và triển khai: `Docker`, `Docker Compose`
 
-### Frontend
+## 6. Luồng nghiệp vụ chính
 
-- Dashboard tĩnh viết bằng `HTML`, `CSS`, `JavaScript`
-- Gọi API thông qua `api-gateway`
+### 6.1. Quản lý và bán hàng trong phiên livestream
 
-### AI và dữ liệu
+1. Quản lý sản phẩm tạo và cập nhật sản phẩm trong hệ thống.
+2. Sản phẩm được gán cho từng phòng livestream trước khi lên live.
+3. Nhân viên bán hàng chọn sản phẩm đã được gán và ghim lên phiên live với giá giảm riêng.
+4. Khách hàng xem sản phẩm, thêm vào giỏ hàng và thực hiện mua hàng.
+5. Đơn hàng và tồn kho được lưu đồng bộ vào database dùng chung.
 
-- `account-service`, `catalog-service`, `livestream-service` cùng dùng `SQLite` chung ở giai đoạn hiện tại
-- JSON seed được dùng để khởi tạo dữ liệu mẫu
-- `ai-service` dùng model `scikit-learn`, có fallback rule-based khi chưa có model
+### 6.2. Tương tác khách hàng và hỗ trợ bằng AI
 
-## Công dụng của từng service
+1. Khách hàng để lại bình luận trong phiên livestream.
+2. `account-service` gửi nội dung bình luận sang `ai-service` để phân tích.
+3. Nếu AI phát hiện tín hiệu quan tâm, hệ thống tự động mở hội thoại với khách hàng.
+4. Nhân viên bán hàng tiếp tục trả lời trong cùng hội thoại để tư vấn và chốt đơn.
 
-### Sơ đồ service
+### 6.3. Báo cáo và giám sát
 
-```mermaid
-flowchart LR
-    FE[Frontend Dashboard] --> GW[API Gateway]
+1. `report-service` gọi dữ liệu từ `account-service`, `catalog-service`, `livestream-service` và `sync-service`.
+2. Hệ thống tổng hợp các chỉ số như số tài khoản live, số sản phẩm, số khách hàng, số comment đồng bộ và KPI vận hành.
 
-    GW --> AUTH[Auth Service]
-    GW --> ID[Account Service / Identity]
-    GW --> CAT[Catalog Service]
-    GW --> LIVE[Livestream Service]
-    GW --> AI[AI Service]
-    GW --> SYNC[Sync Service]
-    GW --> REP[Report Service]
-
-    AUTH --> ID
-    SYNC --> AI
-    REP --> ID
-    REP --> CAT
-    REP --> LIVE
-    REP --> SYNC
-
-    ID <--> DB[(SQLite + JSON Seed)]
-    CAT <--> DB
-    LIVE <--> DB
-```
-
-### Danh sách service
-
-- `api-gateway`:
-  - Là cổng vào duy nhất của hệ thống cho frontend.
-  - Nhận request từ giao diện và chuyển tiếp đến đúng service phía sau.
-  - Giúp frontend không phải gọi trực tiếp từng service riêng lẻ.
-- `auth-service`:
-  - Tạo CAPTCHA cho màn hình đăng nhập.
-  - Kiểm tra email, mật khẩu và xác thực người dùng.
-  - Trả thông tin user sau khi đăng nhập thành công.
-- `account-service`:
-  - Quản lý tài khoản nội bộ như `admin`, `staff`, `product_manager`.
-  - Lưu thông tin nhân sự, vai trò và mật khẩu đăng nhập.
-  - Hỗ trợ tạo mới, đổi mật khẩu và xóa tài khoản nội bộ.
-- `catalog-service`:
-  - Quản lý danh mục sản phẩm bán trong livestream.
-  - Quản lý thông tin nhà cung cấp.
-  - Quản lý các offer/bảng giá từ nhà cung cấp cho từng sản phẩm.
-  - Hỗ trợ thêm, sửa, xóa sản phẩm và nhà cung cấp.
-- `livestream-service`:
-  - Quản lý nền tảng livestream như TikTok, Facebook.
-  - Quản lý tài khoản/phòng livestream đang vận hành.
-  - Quản lý danh sách sản phẩm được gán cho từng room để nhân viên có dữ liệu lên live giới thiệu.
-  - Tổng hợp số liệu theo nền tảng như số room, tổng viewers, trạng thái hoạt động.
-- `ai-service`:
-  - Phân tích nội dung comment của khách hàng.
-  - Xác định `intent`, `sentiment`, `lead_score`, `priority`.
-  - Hỗ trợ bài toán cân bằng viewer giữa các room livestream.
-- `sync-service`:
-  - Nhận dữ liệu comment từ các nguồn đồng bộ.
-  - Gọi `ai-service` để enrich dữ liệu comment bằng kết quả phân tích.
-  - Lưu lịch sử các lần sync và danh sách comment đã xử lý.
-- `report-service`:
-  - Lấy dữ liệu từ `account-service`, `catalog-service`, `livestream-service`, `sync-service`.
-  - Tổng hợp dữ liệu để tạo `database overview`.
-  - Sinh KPI tổng quan và báo cáo vận hành cho dashboard quản trị.
-
-### Ghi chú kỹ thuật hiện tại
-
-Ở thời điểm hiện tại, `account-service`, `catalog-service`, `livestream-service` vẫn đang dùng chung:
-
-- dữ liệu seed JSON
-- SQLite database
-
-## Công nghệ sử dụng
-
-- Python `3.11`
-- FastAPI
-- Uvicorn
-- Pydantic
-- SQLite
-- HTML, CSS, JavaScript
-- scikit-learn
-- pandas
-- Docker Compose
-
-## Cấu trúc thư mục
+## 7. Cấu trúc thư mục chính
 
 ```text
-frontend/                               Dashboard tĩnh
+frontend/                               Dashboard quản lý chính
 apps/
-  demo-app/                            App demo riêng cho khách hàng và người bán
+  demo-app/                             Ứng dụng demo livestream
 backend/
   services/                             Các microservice FastAPI
-  docker-compose.yml                    Chạy riêng backend
+  docker-compose.yml                    Chạy cụm backend
 infra/docker/
   docker-compose.yml                    Chạy toàn bộ hệ thống
 ml/                                     Dữ liệu huấn luyện và model AI
-docs/                                   Tài liệu hệ thống
+docs/                                   Tài liệu kiến trúc và mô tả hệ thống
 ```
 
-Ghi chú:
+## 8. Cách chạy hệ thống
 
-- `frontend/` là app quản lý livestream chính.
-- `apps/demo-app/` là app demo mô phỏng khách hàng và người bán cho phần thuyết trình.
-
-Dữ liệu dùng chung cho `identity`, `catalog`, `livestream` được chia theo domain để dễ quản lý:
-
-```text
-backend/services/account-service/app/data/
-  sqlite/
-    account_management.db
-  identity/
-    users/
-  catalog/
-    products/
-    suppliers/
-    supplier_offers/
-  livestream/
-    platforms/
-    accounts/
-    product_assignments/
-```
-
-## Cách chạy
-
-Project hiện được tối ưu để chạy bằng Docker Compose cho toàn bộ hệ thống:
+Chạy toàn bộ hệ thống bằng Docker:
 
 ```bash
 cd infra/docker
 docker compose up --build
 ```
 
-Chạy app demo livestream riêng:
+Chạy riêng ứng dụng demo:
 
 ```bash
 cd apps/demo-app
 python -m http.server 3010
 ```
 
-Các URL public mặc định:
+Các địa chỉ mặc định:
 
-- Frontend: `http://localhost:3000`
+- Frontend dashboard: `http://localhost:3000`
 - Demo app: `http://localhost:3010`
 - API Gateway: `http://localhost:8000`
 - AI Service: `http://localhost:8001`
@@ -220,91 +127,40 @@ Các URL public mặc định:
 - Catalog Service: `http://localhost:8006`
 - Livestream Service: `http://localhost:8007`
 
-Dừng hệ thống:
-
-```bash
-cd infra/docker
-docker compose down
-```
-
-## Tài khoản mẫu
+## 9. Tài khoản mẫu
 
 - Admin: `admin@smartlive.vn` / `123456`
-- Staff: `staff@smartlive.vn` / `staff01`
-- Product manager: `product.manager@smartlive.vn` / `pm001`
+- Nhân viên bán hàng: `staff@smartlive.vn` / `staff01`
+- Quản lý sản phẩm: `product.manager@smartlive.vn` / `pm001`
 
-## API chính qua gateway
+## 10. Kết quả đạt được
 
-### Health
+Sau quá trình xây dựng và hoàn thiện, project đã đạt được một số kết quả chính:
 
-- `GET /health`
+- Xây dựng được mô hình hệ thống chia service theo nghiệp vụ rõ ràng.
+- Đồng bộ dữ liệu chính giữa các app thông qua backend và database dùng chung.
+- Mô phỏng được luồng bán hàng cơ bản trong livestream: gán sản phẩm, ghim sản phẩm, thêm giỏ hàng, mua hàng.
+- Mô phỏng được luồng AI hỗ trợ bán hàng thông qua phân tích bình luận và mở hội thoại với khách hàng.
+- Cung cấp được dashboard quản trị và demo app để kiểm thử nhiều vai trò sử dụng.
 
-### Auth
+## 11. Hạn chế hiện tại
 
-- `GET /api/v1/auth/captcha`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/auth/me`
+Project vẫn còn một số giới hạn:
 
-### Account và catalog
+- Dữ liệu thời gian thực hiện vẫn chủ yếu theo hướng đồng bộ API, chưa hoàn chỉnh theo mô hình realtime đầy đủ như WebSocket.
+- Hệ thống hiện phù hợp cho mục tiêu học tập, mô phỏng nghiệp vụ và demo kiến trúc hơn là triển khai production.
+- Một số thành phần AI hiện đang ở mức mô phỏng và fallback rule-based khi chưa có model phù hợp.
 
-- `GET /api/v1/users`
-- `POST /api/v1/users/managed`
-- `POST /api/v1/users/staff`
-- `PATCH /api/v1/users/{user_id}/password`
-- `DELETE /api/v1/users/{user_id}`
-- `GET /api/v1/products`
-- `POST /api/v1/products`
-- `PATCH /api/v1/products/{product_id}`
-- `DELETE /api/v1/products/{product_id}`
-- `GET /api/v1/suppliers`
-- `POST /api/v1/suppliers`
-- `PATCH /api/v1/suppliers/{supplier_id}`
-- `DELETE /api/v1/suppliers/{supplier_id}`
-- `GET /api/v1/supplier-offers`
+## 12. Hướng phát triển
 
-### Livestream
+Trong các bước tiếp theo, hệ thống có thể được mở rộng theo các hướng:
 
-- `GET /api/v1/livestream-accounts`
-- `GET /api/v1/livestream-accounts/grouped`
-- `POST /api/v1/livestream-accounts`
-- `DELETE /api/v1/livestream-accounts/{account_id}`
-- `GET /api/v1/platform-summaries`
-- `GET /api/v1/platforms/{platform}/accounts`
-- `GET /api/v1/livestream-product-assignments`
-- `POST /api/v1/livestream-product-assignments`
-- `DELETE /api/v1/livestream-product-assignments/{assignment_id}`
-- `GET /api/v1/database-overview`
+- Bổ sung đồng bộ realtime giữa các ứng dụng bằng WebSocket hoặc message broker.
+- Hoàn thiện cơ chế theo dõi viewer và trạng thái live theo thời gian thực.
+- Nâng cấp AI theo hướng gợi ý phản hồi tốt hơn và hỗ trợ chốt đơn thông minh hơn.
+- Tách cơ sở dữ liệu theo từng service đúng hơn với kiến trúc microservices production.
+- Bổ sung logging, monitoring và bảo mật ở mức triển khai thực tế.
 
-### AI
+## 13. Kết luận
 
-- `POST /api/v1/comments/analyze`
-- `POST /api/v1/comments/analyze-batch`
-- `POST /api/v1/streams/balance-viewers`
-- `POST /api/v1/streams/session-optimizer`
-
-### Sync
-
-- `GET /api/v1/sync/jobs`
-- `GET /api/v1/sync/summary`
-- `GET /api/v1/sync/records`
-- `GET /api/v1/sync/records/export`
-- `POST /api/v1/sync/comments`
-- `POST /api/v1/sync/comments/batch`
-
-### Reports
-
-- `GET /api/v1/reports/kpis/overview`
-- `GET /api/v1/reports/operations`
-
-## Train lại model AI
-
-```bash
-pip install -r backend/services/ai-service/requirements.txt
-python ml/training/train_comment_models.py
-```
-
-Model sau khi train sẽ nằm tại:
-
-- `ml/models/intent_model.joblib`
-- `ml/models/sentiment_model.joblib`
-- `ml/models/metrics.json`
+Project `Smart Livestream Management Platform` đã thể hiện được ý tưởng xây dựng một nền tảng quản lý livestream bán hàng theo kiến trúc hướng dịch vụ, trong đó mỗi service đảm nhiệm một vai trò riêng nhưng vẫn liên kết thành một hệ thống thống nhất. Dù còn ở mức mô phỏng và học thuật, project đã bao quát được nhiều thành phần quan trọng của một hệ thống thực tế như quản lý tài khoản, quản lý sản phẩm, xử lý tương tác khách hàng, hỗ trợ AI và báo cáo vận hành.

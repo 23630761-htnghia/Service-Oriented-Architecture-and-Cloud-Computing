@@ -132,6 +132,9 @@ CREATE TABLE IF NOT EXISTS livestream_accounts (
     engagement_rate REAL NOT NULL,
     lag_signal REAL NOT NULL,
     status TEXT NOT NULL,
+    broadcast_status TEXT NOT NULL DEFAULT 'offline',
+    live_started_at TEXT,
+    last_heartbeat_at TEXT,
     stream_url TEXT NOT NULL,
     warehouse_location TEXT NOT NULL,
     shift_label TEXT NOT NULL,
@@ -248,6 +251,61 @@ CREATE TABLE IF NOT EXISTS customer_order_items (
     FOREIGN KEY (order_id) REFERENCES customer_orders(order_id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS livestream_viewer_presence (
+    presence_id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL,
+    viewer_id TEXT NOT NULL,
+    viewer_role TEXT NOT NULL,
+    viewer_name TEXT NOT NULL,
+    is_host INTEGER NOT NULL DEFAULT 0,
+    is_live INTEGER NOT NULL DEFAULT 0,
+    last_seen_at TEXT NOT NULL,
+    UNIQUE(account_id, viewer_id),
+    FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_livestream_viewer_presence_account_id
+ON livestream_viewer_presence(account_id);
+
+CREATE INDEX IF NOT EXISTS idx_livestream_viewer_presence_last_seen
+ON livestream_viewer_presence(last_seen_at);
+
+CREATE TABLE IF NOT EXISTS livestream_comments (
+    comment_id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL,
+    customer_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    intent TEXT NOT NULL,
+    sentiment TEXT NOT NULL,
+    priority TEXT NOT NULL,
+    should_auto_message INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_livestream_comments_account_created
+ON livestream_comments(account_id, created_at);
+
+CREATE TABLE IF NOT EXISTS conversation_messages (
+    message_id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL,
+    customer_id TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    sender_role TEXT NOT NULL,
+    sender_name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    source TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversation_messages_account_customer_created
+ON conversation_messages(account_id, customer_id, created_at);
 """
 
 
@@ -381,6 +439,14 @@ def ensure_schema_migrations(connection: sqlite3.Connection) -> None:
         connection.execute(
             "ALTER TABLE livestream_accounts ADD COLUMN password TEXT NOT NULL DEFAULT 'live123'"
         )
+    if "broadcast_status" not in livestream_columns:
+        connection.execute(
+            "ALTER TABLE livestream_accounts ADD COLUMN broadcast_status TEXT NOT NULL DEFAULT 'offline'"
+        )
+    if "live_started_at" not in livestream_columns:
+        connection.execute("ALTER TABLE livestream_accounts ADD COLUMN live_started_at TEXT")
+    if "last_heartbeat_at" not in livestream_columns:
+        connection.execute("ALTER TABLE livestream_accounts ADD COLUMN last_heartbeat_at TEXT")
 
 
 def initialize_database() -> None:

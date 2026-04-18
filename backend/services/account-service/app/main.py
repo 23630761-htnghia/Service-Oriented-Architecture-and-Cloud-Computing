@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+import os
 import re
 from uuid import uuid4
 
+import httpx
 from fastapi import FastAPI, HTTPException
 
 from app.database import delete_json_record, get_connection, initialize_database, save_json_record
@@ -16,6 +18,11 @@ from app.schemas import (
     CustomerOrderItem,
     CustomerProfile,
     CustomerRegisterRequest,
+    LivestreamComment,
+    LivestreamCommentCreateRequest,
+    LivestreamCommentCreateResponse,
+    LivestreamMessage,
+    LivestreamMessageCreateRequest,
     DemoLoginRequest,
     DemoLoginResponse,
     DemoUserProfile,
@@ -34,6 +41,8 @@ app = FastAPI(
 )
 
 MANAGED_USER_ROLES = {"staff", "product_manager"}
+STAFF_REPLY_ROLES = {"admin", "staff"}
+AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://localhost:8001")
 
 
 @app.on_event("startup")
@@ -735,6 +744,355 @@ def list_customer_orders(customer_id: str) -> list[CustomerOrder]:
         return [build_order_response(connection, row["order_id"]) for row in rows]
 
 
+def get_livestream_account_record(account_id: str) -> dict:
+    account = fetch_one(
+        """
+        SELECT account_id, name, owner_user_id, owner_name
+        FROM livestream_accounts
+        WHERE account_id = ?
+        """,
+        (account_id,),
+    )
+    if not account:
+        raise HTTPException(status_code=404, detail="Không tìm thấy phòng livestream đã chọn.")
+    return account
+
+
+def get_product_basic_record(product_id: str) -> dict:
+    product = fetch_one(
+        """
+        SELECT product_id, name
+        FROM products
+        WHERE product_id = ?
+        """,
+        (product_id,),
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm trong hệ thống.")
+    return product
+
+
+def normalize_comment_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value.strip().lower())
+
+
+def fallback_comment_analysis(comment: str) -> dict:
+    normalized = normalize_comment_text(comment)
+    buying_keywords = ["chốt", "mua", "lấy", "đặt", "inbox", "ship", "bao nhiêu", "giá"]
+    consult_keywords = ["tư vấn", "phù hợp", "thành phần", "da dầu", "da nhạy cảm"]
+    if any(keyword in normalized for keyword in buying_keywords):
+        intent = "buying_intent"
+        priority = "high"
+        should_auto_message = True
+    elif any(keyword in normalized for keyword in consult_keywords):
+        intent = "consult_request"
+        priority = "medium"
+        should_auto_message = True
+    else:
+        intent = "other"
+        priority = "low"
+        should_auto_message = False
+    return {
+        "intent": intent,
+        "sentiment": "positive" if should_auto_message else "neutral",
+        "priority": priority,
+        "should_auto_message": should_auto_message,
+        "auto_message": None,
+    }
+
+
+def analyze_comment_with_ai(comment: str, customer_name: str, account_id: str) -> dict:
+    payload = {
+        "comment": comment,
+        "username": customer_name,
+        "account_id": account_id,
+    }
+    try:
+        response = httpx.post(f"{AI_SERVICE_URL}/analyze-comment", json=payload, timeout=5.0)
+        response.raise_for_status()
+        data = response.json()
+        return {
+            "intent": data.get("intent", "other"),
+            "sentiment": data.get("sentiment", "neutral"),
+            "priority": data.get("priority", "low"),
+            "should_auto_message": bool(data.get("should_auto_message")),
+            "auto_message": data.get("auto_message"),
+        }
+    except httpx.HTTPError:
+        return fallback_comment_analysis(comment)
+
+
+def get_livestream_comment_detail(comment_id: str) -> LivestreamComment:
+    row = fetch_one(
+        """
+        SELECT
+            lc.comment_id,
+            lc.account_id,
+            la.name AS account_name,
+            lc.customer_id,
+            c.full_name AS customer_name,
+            c.phone AS customer_phone,
+            lc.product_id,
+            p.name AS product_name,
+            lc.content,
+            lc.intent,
+            lc.sentiment,
+            lc.priority,
+            lc.should_auto_message,
+            lc.created_at
+        FROM livestream_comments lc
+        JOIN livestream_accounts la ON la.account_id = lc.account_id
+        JOIN customers c ON c.customer_id = lc.customer_id
+        JOIN products p ON p.product_id = lc.product_id
+        WHERE lc.comment_id = ?
+        """,
+        (comment_id,),
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bình luận trong phiên live.")
+    return LivestreamComment(**{**row, "should_auto_message": bool(row["should_auto_message"])})
+
+
+def list_livestream_comments_data(account_id: str) -> list[LivestreamComment]:
+    get_livestream_account_record(account_id)
+    rows = fetch_all(
+        """
+        SELECT
+            lc.comment_id,
+            lc.account_id,
+            la.name AS account_name,
+            lc.customer_id,
+            c.full_name AS customer_name,
+            c.phone AS customer_phone,
+            lc.product_id,
+            p.name AS product_name,
+            lc.content,
+            lc.intent,
+            lc.sentiment,
+            lc.priority,
+            lc.should_auto_message,
+            lc.created_at
+        FROM livestream_comments lc
+        JOIN livestream_accounts la ON la.account_id = lc.account_id
+        JOIN customers c ON c.customer_id = lc.customer_id
+        JOIN products p ON p.product_id = lc.product_id
+        WHERE lc.account_id = ?
+        ORDER BY lc.created_at DESC
+        """,
+        (account_id,),
+    )
+    return [LivestreamComment(**{**row, "should_auto_message": bool(row["should_auto_message"])}) for row in rows]
+
+
+def get_livestream_message_detail(message_id: str) -> LivestreamMessage:
+    row = fetch_one(
+        """
+        SELECT
+            cm.message_id,
+            cm.account_id,
+            la.name AS account_name,
+            cm.customer_id,
+            c.full_name AS customer_name,
+            c.phone AS customer_phone,
+            cm.sender_id,
+            cm.sender_role,
+            cm.sender_name,
+            cm.content,
+            cm.source,
+            cm.created_at
+        FROM conversation_messages cm
+        JOIN livestream_accounts la ON la.account_id = cm.account_id
+        JOIN customers c ON c.customer_id = cm.customer_id
+        WHERE cm.message_id = ?
+        """,
+        (message_id,),
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tin nhắn trong hội thoại.")
+    return LivestreamMessage(**row)
+
+
+def list_livestream_messages_data(account_id: str, customer_id: str | None = None) -> list[LivestreamMessage]:
+    get_livestream_account_record(account_id)
+    params: tuple = (account_id,)
+    query = """
+        SELECT
+            cm.message_id,
+            cm.account_id,
+            la.name AS account_name,
+            cm.customer_id,
+            c.full_name AS customer_name,
+            c.phone AS customer_phone,
+            cm.sender_id,
+            cm.sender_role,
+            cm.sender_name,
+            cm.content,
+            cm.source,
+            cm.created_at
+        FROM conversation_messages cm
+        JOIN livestream_accounts la ON la.account_id = cm.account_id
+        JOIN customers c ON c.customer_id = cm.customer_id
+        WHERE cm.account_id = ?
+    """
+    if customer_id:
+        require_customer(customer_id)
+        query += " AND cm.customer_id = ?"
+        params = (account_id, customer_id)
+    query += " ORDER BY cm.created_at ASC"
+    rows = fetch_all(query, params)
+    return [LivestreamMessage(**row) for row in rows]
+
+
+def maybe_create_ai_outreach_message(connection, account_id: str, customer: dict, analysis: dict) -> str | None:
+    if not analysis.get("should_auto_message"):
+        return None
+
+    existing_ai_message = connection.execute(
+        """
+        SELECT message_id
+        FROM conversation_messages
+        WHERE account_id = ? AND customer_id = ? AND source = 'ai'
+        LIMIT 1
+        """,
+        (account_id, customer["customer_id"]),
+    ).fetchone()
+    if existing_ai_message:
+        return None
+
+    message_id = f"msg-{uuid4().hex[:12]}"
+    default_message = (
+        f"Chào {customer['full_name']}, SmartLive thấy bạn đang quan tâm sản phẩm trong live. "
+        "Shop đã mở hội thoại để nhân viên hỗ trợ bạn chốt đơn nhanh hơn."
+    )
+    connection.execute(
+        """
+        INSERT INTO conversation_messages (
+            message_id,
+            account_id,
+            customer_id,
+            sender_id,
+            sender_role,
+            sender_name,
+            content,
+            source,
+            created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            message_id,
+            account_id,
+            customer["customer_id"],
+            "ai-assistant",
+            "ai",
+            "SmartLive AI",
+            analysis.get("auto_message") or default_message,
+            "ai",
+            get_current_timestamp(connection),
+        ),
+    )
+    return message_id
+
+
+def create_livestream_comment(payload: LivestreamCommentCreateRequest) -> LivestreamCommentCreateResponse:
+    customer = require_customer(payload.customer_id)
+    get_livestream_account_record(payload.account_id)
+    get_product_basic_record(payload.product_id)
+    analysis = analyze_comment_with_ai(payload.content, customer["full_name"], payload.account_id)
+
+    with get_connection() as connection:
+        comment_id = f"comment-{uuid4().hex[:12]}"
+        created_at = get_current_timestamp(connection)
+        connection.execute(
+            """
+            INSERT INTO livestream_comments (
+                comment_id,
+                account_id,
+                customer_id,
+                product_id,
+                content,
+                intent,
+                sentiment,
+                priority,
+                should_auto_message,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                comment_id,
+                payload.account_id,
+                payload.customer_id,
+                payload.product_id,
+                payload.content.strip(),
+                analysis["intent"],
+                analysis["sentiment"],
+                analysis["priority"],
+                int(bool(analysis["should_auto_message"])),
+                created_at,
+            ),
+        )
+        ai_message_id = maybe_create_ai_outreach_message(connection, payload.account_id, customer, analysis)
+        connection.commit()
+
+    ai_message = get_livestream_message_detail(ai_message_id) if ai_message_id else None
+
+    return LivestreamCommentCreateResponse(
+        message="Đã ghi nhận bình luận của khách hàng trong phiên live.",
+        comment=get_livestream_comment_detail(comment_id),
+        auto_message_sent=bool(ai_message),
+        auto_message_preview=ai_message.content if ai_message else None,
+    )
+
+
+def create_livestream_message(payload: LivestreamMessageCreateRequest) -> LivestreamMessage:
+    get_livestream_account_record(payload.account_id)
+    customer = require_customer(payload.customer_id)
+    sender_role = payload.sender_role.strip().lower()
+
+    if sender_role == "customer":
+        if payload.sender_id != payload.customer_id:
+            raise HTTPException(status_code=400, detail="Khách hàng chỉ được trả lời trong chính hội thoại của mình.")
+        sender_name = customer["full_name"]
+    elif sender_role in STAFF_REPLY_ROLES:
+        user = get_user_record(payload.sender_id)
+        if user["role"] not in STAFF_REPLY_ROLES:
+            raise HTTPException(status_code=400, detail="Chỉ nhân viên bán hàng hoặc admin mới được trả lời khách.")
+        sender_name = user["full_name"]
+    else:
+        raise HTTPException(status_code=400, detail="Vai trò gửi tin nhắn không hợp lệ cho hội thoại live.")
+
+    with get_connection() as connection:
+        message_id = f"msg-{uuid4().hex[:12]}"
+        connection.execute(
+            """
+            INSERT INTO conversation_messages (
+                message_id,
+                account_id,
+                customer_id,
+                sender_id,
+                sender_role,
+                sender_name,
+                content,
+                source,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                message_id,
+                payload.account_id,
+                payload.customer_id,
+                payload.sender_id,
+                sender_role,
+                sender_name,
+                payload.content.strip(),
+                payload.source.strip().lower(),
+                get_current_timestamp(connection),
+            ),
+        )
+        connection.commit()
+
+    return get_livestream_message_detail(message_id)
+
+
 @app.get("/")
 def root():
     return {
@@ -751,6 +1109,8 @@ def root():
             "/demo/login",
             "/customers/register",
             "/customers",
+            "/livestream-comments",
+            "/livestream-messages",
         ],
     }
 
@@ -808,6 +1168,26 @@ def checkout_customer(customer_id: str) -> CheckoutResponse:
 @app.get("/customers/{customer_id}/orders", response_model=list[CustomerOrder])
 def list_orders(customer_id: str) -> list[CustomerOrder]:
     return list_customer_orders(customer_id)
+
+
+@app.get("/livestream-accounts/{account_id}/comments", response_model=list[LivestreamComment])
+def list_livestream_comments(account_id: str) -> list[LivestreamComment]:
+    return list_livestream_comments_data(account_id)
+
+
+@app.post("/livestream-comments", response_model=LivestreamCommentCreateResponse)
+def create_comment(payload: LivestreamCommentCreateRequest) -> LivestreamCommentCreateResponse:
+    return create_livestream_comment(payload)
+
+
+@app.get("/livestream-accounts/{account_id}/messages", response_model=list[LivestreamMessage])
+def list_livestream_messages(account_id: str, customer_id: str | None = None) -> list[LivestreamMessage]:
+    return list_livestream_messages_data(account_id, customer_id)
+
+
+@app.post("/livestream-messages", response_model=LivestreamMessage)
+def create_message(payload: LivestreamMessageCreateRequest) -> LivestreamMessage:
+    return create_livestream_message(payload)
 
 
 @app.post("/users/managed", response_model=UserAccount)

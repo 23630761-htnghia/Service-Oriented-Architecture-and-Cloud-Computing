@@ -42,6 +42,18 @@ def fetch_one(query: str, params: tuple = ()) -> dict | None:
     return dict(row) if row else None
 
 
+def table_exists(table_name: str) -> bool:
+    row = fetch_one(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table' AND name = ?
+        """,
+        (table_name,),
+    )
+    return row is not None
+
+
 def normalize_reference_code(code: str, label: str) -> str:
     normalized_code = re.sub(r"[^A-Z0-9-]", "", code.strip().upper())
     if len(normalized_code) < 2:
@@ -140,6 +152,76 @@ def get_supplier_record(supplier_id: str) -> dict:
     if not supplier:
         raise HTTPException(status_code=404, detail="Không tìm thấy nhà cung cấp trong hệ thống.")
     return supplier
+
+
+def ensure_product_can_be_deleted(product_id: str) -> None:
+    dependency_checks = [
+        (
+            "supplier_offers",
+            """
+            SELECT 1
+            FROM supplier_offers
+            WHERE product_id = ?
+            LIMIT 1
+            """,
+            "KhĂ´ng thá»ƒ xĂ³a sáº£n pháº©m Ä‘ang Ä‘Æ°á»£c tham chiáº¿u trong báº£ng giĂ¡ nhĂ  cung cáº¥p.",
+        ),
+        (
+            "livestream_product_assignments",
+            """
+            SELECT 1
+            FROM livestream_product_assignments
+            WHERE product_id = ?
+            LIMIT 1
+            """,
+            "KhĂ´ng thá»ƒ xĂ³a sáº£n pháº©m Ä‘ang Ä‘Æ°á»£c gĂ¡n cho phiĂªn livestream.",
+        ),
+        (
+            "livestream_product_offers",
+            """
+            SELECT 1
+            FROM livestream_product_offers
+            WHERE product_id = ?
+            LIMIT 1
+            """,
+            "KhĂ´ng thá»ƒ xĂ³a sáº£n pháº©m Ä‘ang Ä‘Æ°á»£c ghim lĂ m live offer.",
+        ),
+        (
+            "customer_cart_items",
+            """
+            SELECT 1
+            FROM customer_cart_items
+            WHERE product_id = ?
+            LIMIT 1
+            """,
+            "KhĂ´ng thá»ƒ xĂ³a sáº£n pháº©m Ä‘ang cĂ³ trong giá» hĂ ng cá»§a khĂ¡ch.",
+        ),
+        (
+            "customer_order_items",
+            """
+            SELECT 1
+            FROM customer_order_items
+            WHERE product_id = ?
+            LIMIT 1
+            """,
+            "KhĂ´ng thá»ƒ xĂ³a sáº£n pháº©m Ä‘Ă£ cĂ³ trong lá»‹ch sá»­ Ä‘Æ¡n hĂ ng.",
+        ),
+        (
+            "livestream_comments",
+            """
+            SELECT 1
+            FROM livestream_comments
+            WHERE product_id = ?
+            LIMIT 1
+            """,
+            "KhĂ´ng thá»ƒ xĂ³a sáº£n pháº©m Ä‘Ă£ phĂ¡t sinh bĂ¬nh luáº­n trong phiĂªn live.",
+        ),
+    ]
+    for table_name, query, detail in dependency_checks:
+        if not table_exists(table_name):
+            continue
+        if fetch_one(query, (product_id,)):
+            raise HTTPException(status_code=400, detail=detail)
 
 
 def list_supplier_offers_data() -> list[SupplierOffer]:
@@ -282,36 +364,13 @@ def update_product(product_id: str, payload: ProductUpdate) -> ProductItem:
 @app.delete("/products/{product_id}", response_model=ProductDeleteResponse)
 def delete_product(product_id: str) -> ProductDeleteResponse:
     product = get_product_record(product_id)
-    linked_offer = fetch_one(
-        """
-        SELECT offer_id
-        FROM supplier_offers
-        WHERE product_id = ?
-        LIMIT 1
-        """,
-        (product_id,),
-    )
-    if linked_offer:
-        raise HTTPException(
-            status_code=400,
-            detail="Không thể xóa sản phẩm đang được tham chiếu trong bảng giá nhà cung cấp.",
-        )
-    linked_assignments = fetch_all(
-        """
-        SELECT assignment_id
-        FROM livestream_product_assignments
-        WHERE product_id = ?
-        """,
-        (product_id,),
-    )
+    ensure_product_can_be_deleted(product_id)
 
     with get_connection() as connection:
         connection.execute("DELETE FROM products WHERE product_id = ?", (product_id,))
         connection.commit()
 
     delete_json_record("products", product_id)
-    for assignment in linked_assignments:
-        delete_json_record("livestream_product_assignments", assignment["assignment_id"])
     return ProductDeleteResponse(
         product_id=product_id,
         product_name=product["name"],
@@ -417,60 +476,21 @@ def delete_supplier(supplier_id: str) -> SupplierDeleteResponse:
         """,
         (supplier_id,),
     )
-    product_ids = sorted({offer["product_id"] for offer in linked_offers})
-    removable_product_ids: list[str] = []
-
-    for product_id in product_ids:
-        remaining_supplier = fetch_one(
-            """
-            SELECT supplier_id
-            FROM supplier_offers
-            WHERE product_id = ? AND supplier_id <> ?
-            LIMIT 1
-            """,
-            (product_id, supplier_id),
+    if linked_offers:
+        raise HTTPException(
+            status_code=400,
+            detail="Không thể xóa nhà cung cấp đang có bảng giá. Hãy gỡ các offer trước khi xóa.",
         )
-        if not remaining_supplier:
-            removable_product_ids.append(product_id)
-
-    removable_assignments = fetch_all(
-        f"""
-        SELECT assignment_id
-        FROM livestream_product_assignments
-        WHERE product_id IN ({", ".join("?" for _ in removable_product_ids)})
-        """
-        if removable_product_ids
-        else "SELECT assignment_id FROM livestream_product_assignments WHERE 1 = 0",
-        tuple(removable_product_ids),
-    )
 
     with get_connection() as connection:
-        if removable_product_ids:
-            connection.execute(
-                f"DELETE FROM products WHERE product_id IN ({', '.join('?' for _ in removable_product_ids)})",
-                tuple(removable_product_ids),
-            )
-        connection.execute("DELETE FROM supplier_offers WHERE supplier_id = ?", (supplier_id,))
         connection.execute("DELETE FROM suppliers WHERE supplier_id = ?", (supplier_id,))
         connection.commit()
 
     delete_json_record("suppliers", supplier_id)
-    for offer in linked_offers:
-        delete_json_record("supplier_offers", offer["offer_id"])
-    for product_id in removable_product_ids:
-        delete_json_record("products", product_id)
-    for assignment in removable_assignments:
-        delete_json_record("livestream_product_assignments", assignment["assignment_id"])
-
-    removed_products_total = len(removable_product_ids)
     return SupplierDeleteResponse(
         supplier_id=supplier_id,
         supplier_name=supplier["name"],
-        message=(
-            "Đã xóa nhà cung cấp khỏi hệ thống."
-            if not removed_products_total
-            else f"Đã xóa nhà cung cấp và {removed_products_total} sản phẩm liên quan khỏi hệ thống."
-        ),
+        message="Đã xóa nhà cung cấp khỏi hệ thống.",
     )
 
 

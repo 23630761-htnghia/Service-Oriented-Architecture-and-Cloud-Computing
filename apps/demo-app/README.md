@@ -1,31 +1,33 @@
 # Demo App
 
-Day la app demo livestream rieng, tach khoi app SmartLive chinh.
+Đây là app demo livestream riêng, tách khỏi app SmartLive chính.
 
-Muc dich:
+## Mục đích
 
-- Mo phong buoi live khi khong the demo truc tiep tren Facebook hoac TikTok.
-- Co 2 vai tro: `nhan vien live` va `khach hang` 
-- Nhan vien live co the bat dau, ket thuc phien, bat camera, micro, ghim san pham va chan khach trong live.
-- Khach hang co the tim phien live, tim san pham, xem goi y noi dung lien quan, comment va nhan tin voi shop.
-- Phan nhan tin duoc ho tro boi ML theo kịch ban demo: khach co y dinh mua se duoc shop chu dong nhan tin mot lan trong moi phien live.
+- Mô phỏng buổi live khi không thể demo trực tiếp trên Facebook hoặc TikTok.
+- Có 3 vai trò chính: `nhân viên live`, `khách hàng`, `quản lý sản phẩm`.
+- Nhân viên live có thể bắt đầu, kết thúc phiên, bật camera, micro, ghim sản phẩm và xử lý hội thoại với khách.
+- Khách hàng có thể tìm phiên live, tìm sản phẩm, xem gợi ý nội dung liên quan, bình luận và nhắn tin với shop.
+- Quản lý sản phẩm có thể thêm sản phẩm, tăng tồn kho và gán sản phẩm vào từng phiên live trước khi bán.
 
-Cau truc:
+## Vị trí trong project
 
-- `frontend/`: app SmartLive quan ly livestream chinh.
-- `apps/demo-app/`: app demo livestream de thuyet trinh.
+- `frontend/`: app SmartLive quản lý livestream chính.
+- `apps/demo-app/`: app demo livestream để thuyết trình và mô phỏng luồng thực tế.
 
-Cach chay nhanh:
+## Chạy nhanh
 
 ```bash
 cd apps/demo-app
 python -m http.server 3010
 ```
 
-Sau do mo `http://localhost:3010`.
+Sau đó mở:
 
-De demo 2 luong song song:
+- `http://localhost:3010`
 
-- Mo 2 tab hoac 2 cua so trinh duyet cung luc.
-- Dang nhap 1 ben bang tai khoan `nhan vien live`, 1 ben bang tai khoan `khach hang`.
-- Moi tab giu session rieng, nhung du lieu comment, chat, block va trang thai live se dong bo qua lai theo thoi gian thuc.
+## Cách demo song song
+
+- Mở 2 tab hoặc 2 cửa sổ trình duyệt cùng lúc.
+- Đăng nhập một bên bằng tài khoản `nhân viên live`, một bên bằng tài khoản `khách hàng`.
+- Mỗi tab giữ session riêng, nhưng dữ liệu bình luận, hội thoại, giỏ hàng và trạng thái live sẽ đồng bộ qua backend.

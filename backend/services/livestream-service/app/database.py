@@ -118,6 +118,9 @@ CREATE TABLE IF NOT EXISTS livestream_accounts (
     engagement_rate REAL NOT NULL,
     lag_signal REAL NOT NULL,
     status TEXT NOT NULL,
+    broadcast_status TEXT NOT NULL DEFAULT 'offline',
+    live_started_at TEXT,
+    last_heartbeat_at TEXT,
     stream_url TEXT NOT NULL,
     warehouse_location TEXT NOT NULL,
     shift_label TEXT NOT NULL,
@@ -195,6 +198,25 @@ CREATE TABLE IF NOT EXISTS livestream_product_offers (
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
     FOREIGN KEY (pinned_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
+
+CREATE TABLE IF NOT EXISTS livestream_viewer_presence (
+    presence_id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL,
+    viewer_id TEXT NOT NULL,
+    viewer_role TEXT NOT NULL,
+    viewer_name TEXT NOT NULL,
+    is_host INTEGER NOT NULL DEFAULT 0,
+    is_live INTEGER NOT NULL DEFAULT 0,
+    last_seen_at TEXT NOT NULL,
+    UNIQUE(account_id, viewer_id),
+    FOREIGN KEY (account_id) REFERENCES livestream_accounts(account_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_livestream_viewer_presence_account_id
+ON livestream_viewer_presence(account_id);
+
+CREATE INDEX IF NOT EXISTS idx_livestream_viewer_presence_last_seen
+ON livestream_viewer_presence(last_seen_at);
 """
 
 
@@ -284,7 +306,9 @@ def insert_records(connection: sqlite3.Connection, table: str, records: list[dic
         return
     columns = TABLE_INSERT_COLUMNS[table]
     placeholders = ", ".join("?" for _ in columns)
-    query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+    # Shared seed data may be inserted by multiple services against the same SQLite file,
+    # so startup inserts must be idempotent to avoid crashing on duplicate unique values.
+    query = f"INSERT OR IGNORE INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
     values = [tuple(record.get(column) for column in columns) for record in valid_records]
     connection.executemany(query, values)
 
@@ -326,6 +350,14 @@ def ensure_schema_migrations(connection: sqlite3.Connection) -> None:
         connection.execute(
             "ALTER TABLE livestream_accounts ADD COLUMN password TEXT NOT NULL DEFAULT 'live123'"
         )
+    if "broadcast_status" not in livestream_columns:
+        connection.execute(
+            "ALTER TABLE livestream_accounts ADD COLUMN broadcast_status TEXT NOT NULL DEFAULT 'offline'"
+        )
+    if "live_started_at" not in livestream_columns:
+        connection.execute("ALTER TABLE livestream_accounts ADD COLUMN live_started_at TEXT")
+    if "last_heartbeat_at" not in livestream_columns:
+        connection.execute("ALTER TABLE livestream_accounts ADD COLUMN last_heartbeat_at TEXT")
 
 
 def initialize_database() -> None:

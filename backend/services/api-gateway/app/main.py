@@ -27,7 +27,7 @@ app.add_middleware(
 SERVICE_URLS = {
     "ai_service": lambda: settings.ai_service_url,
     "auth_service": lambda: settings.auth_service_url,
-    "identity_service": lambda: settings.account_service_url,
+    "account_service": lambda: settings.account_service_url,
     "catalog_service": lambda: settings.catalog_service_url,
     "livestream_service": lambda: settings.livestream_service_url,
     "sync_service": lambda: settings.sync_service_url,
@@ -91,6 +91,8 @@ async def root():
             "/api/v1/livestream-accounts",
             "/api/v1/demo/login",
             "/api/v1/customers",
+            "/api/v1/livestream-comments",
+            "/api/v1/livestream-messages",
             "/api/v1/comments/analyze",
             "/api/v1/sync/summary",
             "/api/v1/reports/kpis/overview",
@@ -197,6 +199,29 @@ async def checkout_customer(customer_id: str):
 @app.get("/api/v1/customers/{customer_id}/orders")
 async def list_customer_orders(customer_id: str):
     return await forward_get(settings.account_service_url, f"/customers/{customer_id}/orders")
+
+
+@app.get("/api/v1/livestream-accounts/{account_id}/comments")
+async def list_livestream_comments(account_id: str):
+    return await forward_get(settings.account_service_url, f"/livestream-accounts/{account_id}/comments")
+
+
+@app.post("/api/v1/livestream-comments")
+async def create_livestream_comment(payload: dict):
+    return await forward_post(settings.account_service_url, "/livestream-comments", payload)
+
+
+@app.get("/api/v1/livestream-accounts/{account_id}/messages")
+async def list_livestream_messages(account_id: str, customer_id: str | None = None):
+    path = f"/livestream-accounts/{account_id}/messages"
+    if customer_id:
+        path = f"{path}?customer_id={customer_id}"
+    return await forward_get(settings.account_service_url, path)
+
+
+@app.post("/api/v1/livestream-messages")
+async def create_livestream_message(payload: dict):
+    return await forward_post(settings.account_service_url, "/livestream-messages", payload)
 
 
 @app.post("/api/v1/users/staff")

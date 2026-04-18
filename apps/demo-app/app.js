@@ -1,6 +1,7 @@
 const API_BASE = "http://localhost:8000";
 const SESSION_KEY = "smartlive-demo-session-v6";
 const LOCAL_STATE_KEY = "smartlive-demo-local-v6";
+const REALTIME_REFRESH_MS = 3000;
 
 const loginScreen = document.getElementById("login-screen");
 const appScreen = document.getElementById("app-screen");
@@ -91,10 +92,7 @@ const messageInput = document.getElementById("message-input");
 const messageResult = document.getElementById("message-result");
 
 const INITIAL_LOCAL_STATE = {
-  comments: [],
-  conversations: {},
   blockedUsers: {},
-  mlReplyRegistry: {},
 };
 
 let currentUser = null;
@@ -107,12 +105,16 @@ let backendState = {
   customers: [],
   cartItems: [],
   orders: [],
+  comments: [],
+  messages: [],
 };
 let selectedAccountId = null;
 let selectedConversationCustomerId = null;
 let mediaStream = null;
 let cameraEnabled = true;
 let micEnabled = true;
+let realtimeRefreshTimer = null;
+let realtimeRefreshInFlight = false;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -194,10 +196,7 @@ function applyLocalState(nextState) {
   demoState = {
     ...structuredClone(INITIAL_LOCAL_STATE),
     ...(nextState || {}),
-    comments: (nextState || {}).comments || [],
-    conversations: (nextState || {}).conversations || {},
     blockedUsers: (nextState || {}).blockedUsers || {},
-    mlReplyRegistry: (nextState || {}).mlReplyRegistry || {},
   };
 }
 
@@ -296,23 +295,9 @@ function getConversationCustomerIds() {
     return currentUser ? [currentUser.id] : [];
   }
   if (currentUser?.role === "staff") {
-    return getAllCustomers().map((customer) => customer.customer_id);
+    return [...new Set((backendState.messages || []).map((message) => message.customer_id))];
   }
   return [];
-}
-
-function ensureConversation(customerId) {
-  if (!demoState.conversations[customerId]) {
-    demoState.conversations[customerId] = [];
-  }
-  return demoState.conversations[customerId];
-}
-
-function appendMessage(customerId, payload) {
-  ensureConversation(customerId).push({
-    id: `msg-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
-    ...payload,
-  });
 }
 
 function buildBlockKey(accountId, customerId) {
@@ -321,17 +306,6 @@ function buildBlockKey(accountId, customerId) {
 
 function isBlocked(accountId, customerId) {
   return Boolean(demoState.blockedUsers[buildBlockKey(accountId, customerId)]);
-}
-
-function isAutoMessaged(accountId, customerId) {
-  return Boolean(demoState.mlReplyRegistry[buildBlockKey(accountId, customerId)]);
-}
-
-function markAutoMessaged(accountId, customerId, sourceId) {
-  demoState.mlReplyRegistry[buildBlockKey(accountId, customerId)] = {
-    sourceId,
-    createdAt: new Date().toISOString(),
-  };
 }
 
 function analyzeBuyingIntent(text) {
@@ -345,37 +319,11 @@ function analyzeBuyingIntent(text) {
   return "other";
 }
 
-function createMlAutoMessage(customerId, accountId, sourceText, sourceId) {
-  if (isAutoMessaged(accountId, customerId)) {
-    return;
-  }
-  const customer = getAllCustomers().find((item) => item.customer_id === customerId);
-  const normalized = normalizeText(sourceText);
-  let offerLine = "shop da nhan duoc nhu cau mua hang cua ban va se ho tro chot don ngay trong live.";
-  if (normalized.includes("serum")) {
-    offerLine = "shop da thay ban quan tam serum, minh co the giu hang va xac nhan so luong ngay bay gio.";
-  } else if (normalized.includes("combo")) {
-    offerLine = "shop da thay ban quan tam combo, minh se gui nhanh thong tin uu dai va cach chot don cho ban.";
-  }
-
-  appendMessage(customerId, {
-    senderId: getSelectedAccount()?.owner_user_id || currentUser?.id || "staff",
-    receiverId: customerId,
-    accountId,
-    direction: "outbound",
-    source: "ml",
-    content: `Chao ${customer?.full_name || "ban"}, ${offerLine}`,
-    createdAt: new Date().toISOString(),
-  });
-  markAutoMessaged(accountId, customerId, sourceId);
-  saveLocalState();
-}
-
 function getVisibleComments() {
-  return demoState.comments
-    .filter((comment) => comment.accountId === selectedAccountId)
-    .filter((comment) => !isBlocked(comment.accountId, comment.userId))
-    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
+  return (backendState.comments || [])
+    .filter((comment) => comment.account_id === selectedAccountId)
+    .filter((comment) => !isBlocked(comment.account_id, comment.customer_id))
+    .sort((left, right) => new Date(right.created_at) - new Date(left.created_at));
 }
 
 async function loadBackendData() {
@@ -406,6 +354,22 @@ async function loadBackendData() {
   if (customerIds.length && !customerIds.includes(selectedConversationCustomerId)) {
     selectedConversationCustomerId = customerIds[0];
   }
+
+  if (selectedAccountId) {
+    backendState.comments = await fetchJson(`/api/v1/livestream-accounts/${selectedAccountId}/comments`);
+    const messagePath = currentUser?.role === "customer"
+      ? `/api/v1/livestream-accounts/${selectedAccountId}/messages?customer_id=${currentUser.id}`
+      : `/api/v1/livestream-accounts/${selectedAccountId}/messages`;
+    backendState.messages = await fetchJson(messagePath);
+  } else {
+    backendState.comments = [];
+    backendState.messages = [];
+  }
+
+  const nextConversationCustomerIds = getConversationCustomerIds();
+  if (nextConversationCustomerIds.length && !nextConversationCustomerIds.includes(selectedConversationCustomerId)) {
+    selectedConversationCustomerId = nextConversationCustomerIds[0];
+  }
   saveSession();
 }
 
@@ -414,13 +378,35 @@ async function refreshDataAndRender() {
   renderLayout();
 }
 
+function stopRealtimeRefresh() {
+  if (!realtimeRefreshTimer) return;
+  clearInterval(realtimeRefreshTimer);
+  realtimeRefreshTimer = null;
+}
+
+function startRealtimeRefresh() {
+  stopRealtimeRefresh();
+  if (!currentUser) return;
+  realtimeRefreshTimer = setInterval(async () => {
+    if (!currentUser || realtimeRefreshInFlight) return;
+    try {
+      realtimeRefreshInFlight = true;
+      await refreshDataAndRender();
+    } catch (_error) {
+      // Keep the current UI and retry on the next interval.
+    } finally {
+      realtimeRefreshInFlight = false;
+    }
+  }, REALTIME_REFRESH_MS);
+}
+
 function renderLiveSummary() {
   const account = getSelectedAccount();
   if (!account) {
-    topbarTitle.textContent = "Chua co phong live";
-    liveRoomTitle.textContent = "Chua co phong live";
-    sessionCard.innerHTML = '<p class="muted">He thong chua co phong live nao trong database.</p>';
-    pinnedProductCard.innerHTML = '<p class="muted">Chua co san pham ghim cho phien live nay.</p>';
+    topbarTitle.textContent = "Chưa có phòng live";
+    liveRoomTitle.textContent = "Chưa có phòng live";
+    sessionCard.innerHTML = '<p class="muted">Hệ thống chưa có phòng live nào trong database.</p>';
+    pinnedProductCard.innerHTML = '<p class="muted">Chưa có sản phẩm ghim cho phiên live này.</p>';
     metricLiveStatus.textContent = "Trong";
     metricViewers.textContent = "0";
     metricComments.textContent = "0";
@@ -452,17 +438,17 @@ function renderLiveSummary() {
       <h4>${escapeHtml(pinnedProduct.name)}</h4>
       <p>${escapeHtml(pinnedProduct.description)}</p>
       <div class="product-meta">
-        <span class="badge">Gia goc ${escapeHtml(formatCurrency(liveOffer.original_price))}</span>
+        <span class="badge">Giá gốc ${escapeHtml(formatCurrency(liveOffer.original_price))}</span>
         <span class="badge live-badge">Gia live ${escapeHtml(formatCurrency(liveOffer.live_price))}</span>
-        <span class="badge">Ton ${escapeHtml(pinnedProduct.stock_quantity)}</span>
+        <span class="badge">Tồn ${escapeHtml(pinnedProduct.stock_quantity)}</span>
       </div>
-      ${currentUser?.role === "customer" ? `<button type="button" class="primary-btn add-to-cart-btn" data-product-id="${pinnedProduct.product_id}">Them vao gio hang</button>` : ""}
+      ${currentUser?.role === "customer" ? `<button type="button" class="primary-btn add-to-cart-btn" data-product-id="${pinnedProduct.product_id}">Thêm vào giỏ hàng</button>` : ""}
     `;
   } else {
-    pinnedProductCard.innerHTML = '<p class="muted">Chua co san pham ghim cho phien live nay.</p>';
+    pinnedProductCard.innerHTML = '<p class="muted">Chưa có sản phẩm ghim cho phiên live này.</p>';
   }
 
-  metricLiveStatus.textContent = account.status === "active" ? "Dang san sang" : account.status;
+  metricLiveStatus.textContent = account.status === "active" ? "Đang sẵn sàng" : account.status;
   metricViewers.textContent = String(account.current_viewers);
   metricComments.textContent = String(visibleComments.length);
   metricBlocked.textContent = String(blockedCount);
@@ -475,25 +461,25 @@ function renderLiveSummary() {
     videoOverlay.classList.remove("hidden");
     if (currentUser?.role === "staff") {
       videoOverlayText.textContent = mediaStream
-        ? "Camera dang tat. Ban co the bat lai camera de tiep tuc demo."
-        : "Nhan vien ban hang co the cap quyen camera va micro de bat dau demo.";
+        ? "Camera đang tắt. Bạn có thể bật lại camera để tiếp tục demo."
+        : "Nhân viên bán hàng có thể cấp quyền camera và micro để bắt đầu demo.";
     } else if (currentUser?.role === "product_manager") {
-      videoOverlayText.textContent = "Vai tro nay cau hinh san pham, ton kho va cap san pham vao phong live tu database.";
+      videoOverlayText.textContent = "Vai trò này cấu hình sản phẩm, tồn kho và cấp sản phẩm vào phòng live từ database.";
     } else {
-      videoOverlayText.textContent = "Khach hang dang xem phong live duoc dong bo tu backend va co the mua hang bang gio hang that.";
+      videoOverlayText.textContent = "Khách hàng đang xem phòng live được đồng bộ từ backend và có thể mua hàng bằng giỏ hàng thật.";
     }
   }
 
   if (currentUser?.role === "staff") {
-    topbarSubtitle.textContent = "Nhan vien ban hang dang doc phong live va san pham duoc cap tu database.";
-    liveRoomDescription.textContent = "Gia live chi co hieu luc sau khi nhan vien ban hang ghim san pham cho phong live nay.";
+    topbarSubtitle.textContent = "Nhân viên bán hàng đang đọc phòng live và sản phẩm được cấp từ database.";
+    liveRoomDescription.textContent = "Giá live chỉ có hiệu lực sau khi nhân viên bán hàng ghim sản phẩm cho phòng live này.";
   } else if (currentUser?.role === "product_manager") {
-    topbarSubtitle.textContent = "Nhan vien quan ly san pham dang thao tac tren danh muc dung chung giua frontend chinh va demo app.";
-    liveRoomDescription.textContent = "Moi thay doi san pham, ton kho va gan phong live deu duoc ghi xuong database.";
+    topbarSubtitle.textContent = "Nhân viên quản lý sản phẩm đang thao tác trên danh mục dùng chung giữa frontend chính và demo app.";
+    liveRoomDescription.textContent = "Mọi thay đổi sản phẩm, tồn kho và gán phòng live đều được ghi xuống database.";
   } else {
     const customer = getCurrentCustomer();
-    topbarSubtitle.textContent = "Khach hang dang xem san pham tu phong live that va mua hang qua gio hang duoc dong bo database.";
-    liveRoomDescription.textContent = `Dia chi giao hang hien tai: ${customer?.shipping_address || currentUser?.shipping_address || "Chua cap nhat"}.`;
+    topbarSubtitle.textContent = "Khách hàng đang xem sản phẩm từ phòng live thật và mua hàng qua giỏ hàng được đồng bộ database.";
+    liveRoomDescription.textContent = `Địa chỉ giao hàng hiện tại: ${customer?.shipping_address || currentUser?.shipping_address || "Chưa cập nhật"}.`;
   }
 }
 
@@ -513,14 +499,14 @@ function renderStaffProductList() {
 
   const account = getSelectedAccount();
   if (!account) {
-    staffProductList.innerHTML = '<div class="message-box muted">Chua co phong live nao de thao tac.</div>';
+    staffProductList.innerHTML = '<div class="message-box muted">Chưa có phòng live nao de thao tac.</div>';
     return;
   }
 
   const liveOffer = getLiveOffer(account.account_id);
   const products = getAssignedProducts(account.account_id);
   if (!products.length) {
-    staffProductList.innerHTML = '<div class="message-box muted">Chua co san pham nao duoc gan cho phong live nay trong database.</div>';
+    staffProductList.innerHTML = '<div class="message-box muted">Chưa có sản phẩm nào được gán cho phòng live này trong database.</div>';
     return;
   }
 
@@ -535,17 +521,17 @@ function renderStaffProductList() {
             <h4>${escapeHtml(product.name)}</h4>
             <p>${escapeHtml(product.description)}</p>
           </div>
-          ${liveOffer?.product_id === product.product_id ? '<span class="badge live-badge">Dang ghim</span>' : ""}
+          ${liveOffer?.product_id === product.product_id ? '<span class="badge live-badge">Đang ghim</span>' : ""}
         </div>
         <div class="product-meta">
           <span class="badge">${escapeHtml(product.category)}</span>
-          <span class="badge">Gia goc ${escapeHtml(formatCurrency(product.retail_price))}</span>
-          <span class="badge">Ton ${escapeHtml(product.stock_quantity)}</span>
+          <span class="badge">Giá gốc ${escapeHtml(formatCurrency(product.retail_price))}</span>
+          <span class="badge">Tồn ${escapeHtml(product.stock_quantity)}</span>
         </div>
-        <label>Gia live truoc khi ghim
+        <label>Giá live trước khi ghim
           <input type="number" class="live-price-input" min="1000" max="${product.retail_price}" step="1000" value="${suggestedPrice}" />
         </label>
-        <button type="button" class="ghost-btn pin-product-btn" data-product-id="${product.product_id}">${liveOffer?.product_id === product.product_id ? "Cap nhat gia live" : "Ghim len live"}</button>
+        <button type="button" class="ghost-btn pin-product-btn" data-product-id="${product.product_id}">${liveOffer?.product_id === product.product_id ? "Cập nhật giá live" : "Ghim lên live"}</button>
       </article>
     `;
   }).join("");
@@ -564,9 +550,9 @@ function renderViewerManagement() {
   }
 
   viewerManagementList.innerHTML = getAllCustomers().map((customer) => {
-    const lastComment = demoState.comments
-      .filter((comment) => comment.accountId === account.account_id && comment.userId === customer.customer_id)
-      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0];
+    const lastComment = (backendState.comments || [])
+      .filter((comment) => comment.account_id === account.account_id && comment.customer_id === customer.customer_id)
+      .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))[0];
     const blocked = isBlocked(account.account_id, customer.customer_id);
     return `
       <article class="viewer-card">
@@ -576,7 +562,7 @@ function renderViewerManagement() {
           <small>${escapeHtml(lastComment?.content || customer.shipping_address)}</small>
         </div>
         <button type="button" class="${blocked ? "primary-btn" : "ghost-btn"} viewer-block-btn" data-account-id="${account.account_id}" data-user-id="${customer.customer_id}">
-          ${blocked ? "Bo chan" : "Chan khach"}
+          ${blocked ? "Bỏ chặn" : "Chặn khách"}
         </button>
       </article>
     `;
@@ -610,14 +596,14 @@ function renderProductManagerControls() {
       <div class="product-meta">
         <span class="badge">SKU ${escapeHtml(product.sku)}</span>
         <span class="badge">Gia ${escapeHtml(formatCurrency(product.retail_price))}</span>
-        <span class="badge">Ton ${escapeHtml(product.stock_quantity)}</span>
+        <span class="badge">Tồn ${escapeHtml(product.stock_quantity)}</span>
       </div>
       <label>Cong them ton kho
         <input type="number" class="stock-adjust-input" min="1" step="1" value="10" />
       </label>
       <div class="inline-actions">
         <button type="button" class="ghost-btn restock-product-btn" data-product-id="${product.product_id}">Cong ton</button>
-        <button type="button" class="ghost-btn remove-product-btn" data-product-id="${product.product_id}">Xoa san pham</button>
+        <button type="button" class="ghost-btn remove-product-btn" data-product-id="${product.product_id}">Xóa sản phẩm</button>
       </div>
     </article>
   `).join("");
@@ -642,7 +628,7 @@ function renderProductManagerControls() {
               </div>
               <button type="button" class="ghost-btn unassign-product-btn" data-assignment-id="${assignment.assignment_id}">Go khoi live</button>
             </div>
-          `).join("") : '<div class="message-box muted">Chua co san pham nao duoc cap cho phong live nay.</div>'}
+          `).join("") : '<div class="message-box muted">Chưa có sản phẩm nào được cấp cho phòng live này.</div>'}
         </div>
       </article>
     `;
@@ -692,8 +678,8 @@ function renderCustomerSearchAndRecommendations(query = "") {
   const { liveMatches, productMatches } = searchContent(query);
   searchResult.classList.remove("muted");
   searchResult.textContent = query
-    ? `Tim thay ${liveMatches.length} phong live va ${productMatches.length} san pham lien quan trong database.`
-    : "Dang hien thi phong live va san pham duoc cap tu backend de ban thao tac nhanh.";
+    ? `Tìm thấy ${liveMatches.length} phòng live và ${productMatches.length} sản phẩm liên quan trong database.`
+    : "Đang hiển thị phòng live và sản phẩm được cấp từ backend để bạn thao tác nhanh.";
 
   searchList.innerHTML = `
     ${liveMatches.map((account) => `
@@ -719,11 +705,11 @@ function renderCustomerSearchAndRecommendations(query = "") {
           <div class="product-meta">
             <span class="badge">${escapeHtml(product.category)}</span>
             <span class="badge">${escapeHtml(formatCurrency(product.retail_price))}</span>
-            <span class="badge">Ton ${escapeHtml(product.stock_quantity)}</span>
+            <span class="badge">Tồn ${escapeHtml(product.stock_quantity)}</span>
           </div>
         </div>
         <div class="inline-actions">
-          <button type="button" class="ghost-btn focus-product-btn" data-product-id="${product.product_id}">Chon san pham</button>
+          <button type="button" class="ghost-btn focus-product-btn" data-product-id="${product.product_id}">Chọn sản phẩm</button>
           <button type="button" class="primary-btn add-to-cart-btn" data-product-id="${product.product_id}">Them vao gio</button>
         </div>
       </article>
@@ -734,12 +720,12 @@ function renderCustomerSearchAndRecommendations(query = "") {
   recommendationList.innerHTML = `
     ${recommendations.products.map((product) => `
       <article class="recommendation-card">
-        <p class="eyebrow">De xuat san pham</p>
+        <p class="eyebrow">Đề xuất sản phẩm</p>
         <h4>${escapeHtml(product.name)}</h4>
         <p>${escapeHtml(product.description)}</p>
         <div class="product-meta">
           <span class="badge">${escapeHtml(formatCurrency(getEffectivePrice(selectedAccountId, product.product_id)))}</span>
-          <span class="badge">Ton ${escapeHtml(product.stock_quantity)}</span>
+          <span class="badge">Tồn ${escapeHtml(product.stock_quantity)}</span>
         </div>
         <button type="button" class="primary-btn add-to-cart-btn" data-product-id="${product.product_id}">Them vao gio</button>
       </article>
@@ -762,7 +748,7 @@ function renderCustomerCart() {
   }
 
   if (!backendState.cartItems.length) {
-    customerCartList.innerHTML = '<div class="message-box muted">Gio hang dang trong. Ban co the them san pham tu phong live duoc dong bo tu backend.</div>';
+    customerCartList.innerHTML = '<div class="message-box muted">Giỏ hàng đang trống. Bạn có thể thêm sản phẩm từ phòng live được đồng bộ từ backend.</div>';
     checkoutBtn.disabled = true;
     clearCartBtn.disabled = true;
     return;
@@ -780,7 +766,7 @@ function renderCustomerCart() {
         <span class="badge">SL ${escapeHtml(item.quantity)}</span>
       </div>
       <div class="product-meta">
-        <span class="badge">Gia goc ${escapeHtml(formatCurrency(item.original_price))}</span>
+        <span class="badge">Giá gốc ${escapeHtml(formatCurrency(item.original_price))}</span>
         <span class="badge live-badge">Gia live ${escapeHtml(formatCurrency(item.unit_price))}</span>
         <span class="badge">Tam tinh ${escapeHtml(formatCurrency(item.line_total))}</span>
       </div>
@@ -791,34 +777,32 @@ function renderCustomerCart() {
   `).join("");
 
   const total = backendState.cartItems.reduce((sum, item) => sum + item.line_total, 0);
-  setCartMessage(`Gio hang hien co ${backendState.cartItems.length} dong san pham, tong tam tinh ${formatCurrency(total)}.`, false);
+  setCartMessage(`Giỏ hàng hiện có ${backendState.cartItems.length} dòng sản phẩm, tổng tạm tính ${formatCurrency(total)}.`, false);
 }
 
 function renderComments() {
   const comments = getVisibleComments();
   commentList.innerHTML = comments.map((comment) => {
-    const customer = getAllCustomers().find((item) => item.customer_id === comment.userId);
-    const product = backendState.products.find((item) => item.product_id === comment.productId);
     const isStaff = currentUser?.role === "staff";
     return `
       <article class="comment-card">
         <div class="comment-header">
           <div>
-            <h4>${escapeHtml(customer?.full_name || "Khach hang")}</h4>
+            <h4>${escapeHtml(comment.customer_name || "Khách hàng")}</h4>
             <p>${escapeHtml(comment.content)}</p>
           </div>
-          <span class="badge">${escapeHtml(formatDateTime(comment.createdAt))}</span>
+          <span class="badge">${escapeHtml(formatDateTime(comment.created_at))}</span>
         </div>
         <div class="comment-meta">
-          <span class="badge">${escapeHtml(product?.name || "San pham")}</span>
+          <span class="badge">${escapeHtml(comment.product_name || "San pham")}</span>
           <span class="badge">${escapeHtml(comment.intent)}</span>
-          <span class="badge">${escapeHtml(customer?.shipping_address || "Online")}</span>
+          <span class="badge">${escapeHtml(comment.customer_phone || "Online")}</span>
         </div>
         ${isStaff ? `
           <div class="comment-actions">
-            <button type="button" class="ghost-btn quick-message-btn" data-user-id="${comment.userId}">Mo nhan tin</button>
-            <button type="button" class="ghost-btn viewer-block-btn" data-account-id="${comment.accountId}" data-user-id="${comment.userId}">
-              ${isBlocked(comment.accountId, comment.userId) ? "Bo chan" : "Chan khach"}
+            <button type="button" class="ghost-btn quick-message-btn" data-user-id="${comment.customer_id}">Mo nhan tin</button>
+            <button type="button" class="ghost-btn viewer-block-btn" data-account-id="${comment.account_id}" data-user-id="${comment.customer_id}">
+              ${isBlocked(comment.account_id, comment.customer_id) ? "Bỏ chặn" : "Chặn khách"}
             </button>
           </div>
         ` : ""}
@@ -830,9 +814,9 @@ function renderComments() {
 function renderConversations() {
   const customerIds = getConversationCustomerIds();
   if (!customerIds.length) {
-    conversationList.innerHTML = '<div class="message-box muted">Vai tro hien tai khong dung hoi thoai nay.</div>';
+    conversationList.innerHTML = '<div class="message-box muted">Vai trò hiện tại không dùng hội thoại này.</div>';
     threadHeader.innerHTML = "";
-    messageThread.innerHTML = '<div class="message-box muted">Chua co hoi thoai nao.</div>';
+    messageThread.innerHTML = '<div class="message-box muted">Chưa có hội thoại nào.</div>';
     return;
   }
 
@@ -842,52 +826,47 @@ function renderConversations() {
 
   conversationList.innerHTML = customerIds.map((customerId) => {
     const customer = getAllCustomers().find((item) => item.customer_id === customerId);
-    const thread = ensureConversation(customerId);
-    const lastMessage = [...thread].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))[0];
+    const thread = (backendState.messages || []).filter((message) => message.customer_id === customerId);
+    const lastMessage = [...thread].sort((left, right) => new Date(right.created_at) - new Date(left.created_at))[0];
     return `
       <button type="button" class="conversation-item ${customerId === selectedConversationCustomerId ? "active" : ""}" data-customer-id="${customerId}">
-        <strong>${escapeHtml(customer?.full_name || "Khach hang")}</strong>
-        <span>${escapeHtml(lastMessage?.content || "Chua co tin nhan")}</span>
+        <strong>${escapeHtml(customer?.full_name || "Khách hàng")}</strong>
+        <span>${escapeHtml(lastMessage?.content || "Chưa có tin nhắn")}</span>
         <small>${escapeHtml(customer?.phone || customer?.shipping_address || "Online")}</small>
       </button>
     `;
   }).join("");
 
   const selectedCustomer = getAllCustomers().find((item) => item.customer_id === selectedConversationCustomerId);
-  const thread = ensureConversation(selectedConversationCustomerId).slice().sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt));
+  const thread = (backendState.messages || [])
+    .filter((message) => message.customer_id === selectedConversationCustomerId)
+    .slice()
+    .sort((left, right) => new Date(left.created_at) - new Date(right.created_at));
   const account = getSelectedAccount();
-  const autoMessaged = account ? isAutoMessaged(account.account_id, selectedConversationCustomerId) : false;
+  const autoMessaged = thread.some((message) => message.source === "ai");
 
   threadHeader.innerHTML = `
     <div>
-      <strong>${escapeHtml(selectedCustomer?.full_name || "Khach hang")}</strong>
+      <strong>${escapeHtml(selectedCustomer?.full_name || "Khách hàng")}</strong>
       <span>${escapeHtml(selectedCustomer?.shipping_address || "")}</span>
     </div>
     <div class="thread-badges">
       ${account ? `<span class="badge">${escapeHtml(account.name)}</span>` : ""}
       ${selectedCustomer?.phone ? `<span class="badge">${escapeHtml(selectedCustomer.phone)}</span>` : ""}
-      ${autoMessaged ? '<span class="badge live-badge">ML da mo dau hoi thoai</span>' : ""}
+      ${autoMessaged ? '<span class="badge live-badge">AI đã mở đầu hội thoại</span>' : ""}
     </div>
   `;
 
   messageThread.innerHTML = thread.length ? thread.map((message) => `
-    <article class="message-bubble ${message.senderId === selectedConversationCustomerId ? "inbound" : "outbound"}">
+    <article class="message-bubble ${message.sender_role === "customer" ? "inbound" : "outbound"}">
       <div class="message-meta">
-        <strong>${escapeHtml(resolveMessageSenderName(message.senderId))}</strong>
-        <span>${escapeHtml(formatDateTime(message.createdAt))}</span>
+        <strong>${escapeHtml(message.sender_name)}</strong>
+        <span>${escapeHtml(formatDateTime(message.created_at))}</span>
       </div>
       <p>${escapeHtml(message.content)}</p>
-      <small>${escapeHtml(message.source === "ml" ? "Tin nhan ho tro boi ML" : "Tin nhan thu cong")}</small>
+      <small>${escapeHtml(message.source === "ai" ? "Tin nhắn mở đầu bởi AI" : "Tin nhắn thủ công")}</small>
     </article>
-  `).join("") : '<div class="message-box muted">Chua co tin nhan nao trong hoi thoai nay.</div>';
-}
-
-function resolveMessageSenderName(senderId) {
-  const internal = backendState.accounts.find((account) => account.owner_user_id === senderId);
-  if (internal?.owner_name) return internal.owner_name;
-  if (currentUser?.id === senderId) return currentUser.name;
-  const customer = getAllCustomers().find((item) => item.customer_id === senderId);
-  return customer?.full_name || "SmartLive";
+  `).join("") : '<div class="message-box muted">Chưa có tin nhắn nao trong hoi thoai nay.</div>';
 }
 
 function renderLayout() {
@@ -899,10 +878,10 @@ function renderLayout() {
 
   currentUserName.textContent = currentUser.name;
   currentUserRole.textContent = currentUser.role === "product_manager"
-    ? "Nhan vien quan ly san pham"
+    ? "Nhân viên quản lý sản phẩm"
     : currentUser.role === "staff"
-      ? "Nhan vien ban hang"
-      : "Khach hang";
+      ? "Nhân viên bán hàng"
+      : "Khách hàng";
 
   staffView.classList.toggle("hidden", currentUser.role !== "staff");
   customerView.classList.toggle("hidden", currentUser.role !== "customer");
@@ -932,7 +911,7 @@ function renderLayout() {
 async function connectMediaDevices() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     setDeviceStatus("Trinh duyet hien tai khong ho tro truy cap camera va micro.", false);
-    setStaffAction("Khong the demo camera va micro tren trinh duyet nay.", false);
+    setStaffAction("Không thể demo camera và micro trên trình duyệt này.", false);
     return;
   }
 
@@ -943,11 +922,11 @@ async function connectMediaDevices() {
     cameraEnabled = true;
     micEnabled = true;
     setDeviceStatus("Da cap quyen camera va micro thanh cong.", false);
-    setStaffAction("Preview da san sang. Ban co the tiep tuc demo.", false);
+    setStaffAction("Preview đã sẵn sàng. Bạn có thể tiếp tục demo.", false);
     renderLayout();
   } catch (_error) {
-    setDeviceStatus("Khong mo duoc camera hoac micro. Hay kiem tra quyen truy cap cua trinh duyet.", false);
-    setStaffAction("Thiet bi chua san sang de demo live.", false);
+    setDeviceStatus("Không mở được camera hoặc micro. Hãy kiểm tra quyền truy cập của trình duyệt.", false);
+    setStaffAction("Thiết bị chưa sẵn sàng để demo live.", false);
   }
 }
 
@@ -960,13 +939,13 @@ function stopMediaStream() {
 
 function toggleTrack(kind) {
   if (!mediaStream) {
-    setStaffAction("Can cap quyen camera va micro truoc khi dieu khien thiet bi.", false);
+    setStaffAction("Cần cấp quyền camera và micro trước khi điều khiển thiết bị.", false);
     return;
   }
 
   const tracks = kind === "video" ? mediaStream.getVideoTracks() : mediaStream.getAudioTracks();
   if (!tracks.length) {
-    setStaffAction(`Khong tim thay ${kind === "video" ? "camera" : "micro"} tren may nay.`, false);
+    setStaffAction(`Không tìm thấy ${kind === "video" ? "camera" : "micro"} tren may nay.`, false);
     return;
   }
 
@@ -977,10 +956,10 @@ function toggleTrack(kind) {
 
   if (kind === "video") {
     cameraEnabled = nextEnabled;
-    setStaffAction(nextEnabled ? "Da bat lai camera." : "Da tat camera.", false);
+    setStaffAction(nextEnabled ? "Đã bật lại camera." : "Đã tắt camera.", false);
   } else {
     micEnabled = nextEnabled;
-    setStaffAction(nextEnabled ? "Da bat lai micro." : "Da tat micro.", false);
+    setStaffAction(nextEnabled ? "Đã bật lại micro." : "Đã tắt micro.", false);
   }
   renderLayout();
 }
@@ -988,7 +967,7 @@ function toggleTrack(kind) {
 async function handleLogin(event) {
   event.preventDefault();
   loginResult.classList.remove("muted");
-  loginResult.textContent = "Dang xac thuc tai khoan voi backend...";
+  loginResult.textContent = "Đang xác thực tài khoản với backend...";
   try {
     const data = await fetchJson("/api/v1/demo/login", {
       method: "POST",
@@ -1000,7 +979,7 @@ async function handleLogin(event) {
     });
     currentUser = data.user;
     await refreshDataAndRender();
-    loginResult.textContent = `Dang nhap thanh cong voi vai tro ${currentUser.role}.`;
+    loginResult.textContent = `Đăng nhập thành công với vai trò ${currentUser.role}.`;
   } catch (error) {
     loginResult.textContent = error.message;
   }
@@ -1009,7 +988,7 @@ async function handleLogin(event) {
 async function handleRegister(event) {
   event.preventDefault();
   registerResult.classList.remove("muted");
-  registerResult.textContent = "Dang tao tai khoan khach hang trong database...";
+  registerResult.textContent = "Đang tạo tài khoản khách hàng trong database...";
   try {
     const customer = await fetchJson("/api/v1/customers/register", {
       method: "POST",
@@ -1023,7 +1002,7 @@ async function handleRegister(event) {
         birth_year: Number(registerBirthYear.value),
       }),
     });
-    registerResult.textContent = `Da tao tai khoan cho ${customer.full_name}. Du lieu da duoc dong bo vao database.`;
+    registerResult.textContent = `Đã tạo tài khoản cho ${customer.full_name}. Dữ liệu đã được đồng bộ vào database.`;
     loginEmail.value = customer.phone;
     loginPassword.value = registerPassword.value;
     registerForm.reset();
@@ -1044,7 +1023,7 @@ async function handleRegister(event) {
 
 async function handleProductCreate(event) {
   event.preventDefault();
-  setProductManagerMessage("Dang tao san pham moi trong catalog service...", false);
+  setProductManagerMessage("Đang tạo sản phẩm mới trong catalog service...", false);
   try {
     const name = productNameInput.value.trim();
     const category = productCategoryInput.value.trim();
@@ -1072,7 +1051,7 @@ async function handleProductCreate(event) {
     });
     productForm.reset();
     await refreshDataAndRender();
-    setProductManagerMessage("Da them san pham moi va dong bo vao database.", false);
+    setProductManagerMessage("Đã thêm sản phẩm mới và đồng bộ vào database.", false);
   } catch (error) {
     setProductManagerMessage(error.message, false);
   }
@@ -1080,7 +1059,7 @@ async function handleProductCreate(event) {
 
 async function handleAssignmentCreate(event) {
   event.preventDefault();
-  setProductManagerMessage("Dang gan san pham vao phong live...", false);
+  setProductManagerMessage("Đang gán sản phẩm vào phòng live...", false);
   try {
     await fetchJson("/api/v1/livestream-product-assignments", {
       method: "POST",
@@ -1092,7 +1071,7 @@ async function handleAssignmentCreate(event) {
       }),
     });
     await refreshDataAndRender();
-    setProductManagerMessage("Da gan san pham vao phong live va dong bo vao database.", false);
+    setProductManagerMessage("Đã gán sản phẩm vào phòng live và đồng bộ vào database.", false);
   } catch (error) {
     setProductManagerMessage(error.message, false);
   }
@@ -1154,7 +1133,7 @@ async function addToCart(productId) {
     }),
   });
   await refreshDataAndRender();
-  setCartMessage("Da them san pham vao gio hang va dong bo len database.", false);
+  setCartMessage("Đã thêm sản phẩm vào giỏ hàng và đồng bộ lên database.", false);
 }
 
 async function removeCartItem(cartItemId) {
@@ -1163,14 +1142,14 @@ async function removeCartItem(cartItemId) {
     method: "DELETE",
   });
   await refreshDataAndRender();
-  setCartMessage("Da xoa san pham khoi gio hang trong database.", false);
+  setCartMessage("Đã xóa sản phẩm khỏi giỏ hàng trong database.", false);
 }
 
 async function clearCustomerCart() {
   if (currentUser?.role !== "customer") return;
   await fetchJson(`/api/v1/customers/${currentUser.id}/cart`, { method: "DELETE" });
   await refreshDataAndRender();
-  setCartMessage("Da xoa toan bo gio hang trong database.", false);
+  setCartMessage("Đã xóa toàn bộ giỏ hàng trong database.", false);
 }
 
 async function checkoutCustomerCart() {
@@ -1182,7 +1161,7 @@ async function checkoutCustomerCart() {
   });
   await refreshDataAndRender();
   const orderSummary = data.orders.map((order) => `${order.account_name}: ${formatCurrency(order.total_amount)}`).join(", ");
-  setCartMessage(`Checkout thanh cong. ${orderSummary}`, false);
+  setCartMessage(`Checkout thành công. ${orderSummary}`, false);
 }
 
 function handleCommentSubmit(event) {
@@ -1191,14 +1170,14 @@ function handleCommentSubmit(event) {
   if (!selectedAccountId) return;
   if (isBlocked(selectedAccountId, currentUser.id)) {
     commentResult.classList.remove("muted");
-    commentResult.textContent = "Ban dang bi chan trong phong live nay nen khong the gui comment.";
+    commentResult.textContent = "Bạn đang bị chặn trong phòng live này nên không thể gửi bình luận.";
     return;
   }
 
   const content = commentInput.value.trim();
   if (!content) {
     commentResult.classList.remove("muted");
-    commentResult.textContent = "Vui long nhap noi dung binh luan truoc khi gui.";
+    commentResult.textContent = "Vui lòng nhập nội dung bình luận trước khi gửi.";
     return;
   }
 
@@ -1218,7 +1197,7 @@ function handleCommentSubmit(event) {
   commentInput.value = "";
   saveLocalState();
   commentResult.classList.remove("muted");
-  commentResult.textContent = "Comment da duoc dua vao live feed demo.";
+  commentResult.textContent = "Bình luận đã được đưa vào live feed demo.";
   renderLayout();
 }
 
@@ -1228,7 +1207,7 @@ function handleMessageSubmit(event) {
   const content = messageInput.value.trim();
   if (!content) {
     messageResult.classList.remove("muted");
-    messageResult.textContent = "Vui long nhap noi dung tin nhan truoc khi gui.";
+    messageResult.textContent = "Vui lòng nhập nội dung tin nhắn trước khi gửi.";
     return;
   }
 
@@ -1260,7 +1239,7 @@ function handleMessageSubmit(event) {
   messageInput.value = "";
   saveLocalState();
   messageResult.classList.remove("muted");
-  messageResult.textContent = "Tin nhan demo da duoc gui.";
+  messageResult.textContent = "Tin nhắn demo đã được gửi.";
   renderLayout();
 }
 
@@ -1297,8 +1276,8 @@ function attachEventListeners() {
   resetDemoBtn.addEventListener("click", () => {
     demoState = structuredClone(INITIAL_LOCAL_STATE);
     saveLocalState();
-    setStaffAction("Da reset phan state demo cuc bo. Du lieu trong database van duoc giu nguyen.", false);
-    setCartMessage("Da reset comment, tin nhan va block local. Du lieu backend van duoc giu nguyen.", false);
+    setStaffAction("Đã reset phần state demo cục bộ. Dữ liệu trong database vẫn được giữ nguyên.", false);
+    setCartMessage("Đã reset comment, tin nhắn và block local. Dữ liệu backend vẫn được giữ nguyên.", false);
     renderLayout();
   });
 
@@ -1307,7 +1286,7 @@ function attachEventListeners() {
   });
   toggleCameraBtn.addEventListener("click", () => toggleTrack("video"));
   toggleMicBtn.addEventListener("click", () => toggleTrack("audio"));
-  startLiveBtn.addEventListener("click", () => setStaffAction("Demo camera da san sang cho phong live nay.", false));
+  startLiveBtn.addEventListener("click", () => setStaffAction("Demo camera đã sẵn sàng cho phòng live này.", false));
   endLiveBtn.addEventListener("click", () => setStaffAction("Da ket thuc preview demo tren trinh duyet nay.", false));
   clearCartBtn.addEventListener("click", async () => {
     try {
@@ -1378,7 +1357,7 @@ function attachEventListeners() {
       try {
         await pinProductForLive(pinButton.dataset.productId, Number(livePriceInput?.value));
         await refreshDataAndRender();
-        setStaffAction("Da ghim san pham va dong bo gia live vao database.", false);
+        setStaffAction("Đã ghim sản phẩm và đồng bộ giá live vào database.", false);
       } catch (error) {
         setStaffAction(error.message, false);
       }
@@ -1404,7 +1383,7 @@ function attachEventListeners() {
       try {
         await fetchJson(`/api/v1/products/${removeProductButton.dataset.productId}`, { method: "DELETE" });
         await refreshDataAndRender();
-        setProductManagerMessage("Da xoa san pham khoi catalog service.", false);
+        setProductManagerMessage("Đã xóa sản phẩm khỏi catalog service.", false);
       } catch (error) {
         setProductManagerMessage(error.message, false);
       }
@@ -1418,7 +1397,7 @@ function attachEventListeners() {
           method: "DELETE",
         });
         await refreshDataAndRender();
-        setProductManagerMessage("Da go san pham khoi phong live trong database.", false);
+        setProductManagerMessage("Đã gỡ sản phẩm khỏi phòng live trong database.", false);
       } catch (error) {
         setProductManagerMessage(error.message, false);
       }
@@ -1471,10 +1450,10 @@ async function bootstrap() {
   loadSession();
   loadLocalState();
   attachEventListeners();
-  setDeviceStatus("Chua cap quyen camera va micro.", true);
-  setStaffAction("App demo da san sang cho du lieu backend.", true);
-  setCartMessage("Khach hang co the them san pham vao gio va mua ngay voi du lieu duoc dong bo database.", true);
-  setProductManagerMessage("Quan ly san pham thao tac tren catalog, assignment va gia live thong qua backend that.", true);
+  setDeviceStatus("Chưa cấp quyền camera và micro.", true);
+  setStaffAction("App demo đã sẵn sàng cho dữ liệu backend.", true);
+  setCartMessage("Khách hàng có thể thêm sản phẩm vào giỏ và mua ngay với dữ liệu được đồng bộ database.", true);
+  setProductManagerMessage("Quản lý sản phẩm thao tác trên catalog, assignment và giá live thông qua backend thật.", true);
 
   if (currentUser) {
     try {

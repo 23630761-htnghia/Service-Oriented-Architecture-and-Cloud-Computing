@@ -50,6 +50,18 @@ def fetch_one(query: str, params: tuple = ()) -> dict | None:
     return dict(row) if row else None
 
 
+def table_exists(table_name: str) -> bool:
+    row = fetch_one(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table' AND name = ?
+        """,
+        (table_name,),
+    )
+    return row is not None
+
+
 def get_current_timestamp(connection) -> str:
     return connection.execute("SELECT datetime('now')").fetchone()[0]
 
@@ -89,6 +101,9 @@ def list_livestream_accounts_data(platform: str | None = None) -> list[Livestrea
             la.engagement_rate,
             la.lag_signal,
             la.status,
+            la.broadcast_status,
+            la.live_started_at,
+            la.last_heartbeat_at,
             la.stream_url,
             la.warehouse_location,
             la.shift_label,
@@ -161,6 +176,76 @@ def get_livestream_product_assignment_record(assignment_id: str) -> dict:
     if not assignment:
         raise HTTPException(status_code=404, detail="Không tìm thấy cấu hình sản phẩm cho phòng livestream.")
     return assignment
+
+
+def ensure_livestream_account_can_be_deleted(account_id: str) -> None:
+    dependency_checks = [
+        (
+            "livestream_product_assignments",
+            """
+            SELECT 1
+            FROM livestream_product_assignments
+            WHERE account_id = ?
+            LIMIT 1
+            """,
+            "Không thể xóa phòng livestream đang có sản phẩm được gán.",
+        ),
+        (
+            "livestream_product_offers",
+            """
+            SELECT 1
+            FROM livestream_product_offers
+            WHERE account_id = ?
+            LIMIT 1
+            """,
+            "Không thể xóa phòng livestream đang có sản phẩm ghim live.",
+        ),
+        (
+            "customer_cart_items",
+            """
+            SELECT 1
+            FROM customer_cart_items
+            WHERE account_id = ?
+            LIMIT 1
+            """,
+            "Không thể xóa phòng livestream đang có sản phẩm trong giỏ hàng của khách.",
+        ),
+        (
+            "customer_orders",
+            """
+            SELECT 1
+            FROM customer_orders
+            WHERE account_id = ?
+            LIMIT 1
+            """,
+            "Không thể xóa phòng livestream đã phát sinh đơn hàng.",
+        ),
+        (
+            "livestream_comments",
+            """
+            SELECT 1
+            FROM livestream_comments
+            WHERE account_id = ?
+            LIMIT 1
+            """,
+            "Không thể xóa phòng livestream đã phát sinh bình luận.",
+        ),
+        (
+            "conversation_messages",
+            """
+            SELECT 1
+            FROM conversation_messages
+            WHERE account_id = ?
+            LIMIT 1
+            """,
+            "Không thể xóa phòng livestream đã phát sinh hội thoại với khách hàng.",
+        ),
+    ]
+    for table_name, query, detail in dependency_checks:
+        if not table_exists(table_name):
+            continue
+        if fetch_one(query, (account_id,)):
+            raise HTTPException(status_code=400, detail=detail)
 
 
 def get_livestream_product_assignment_detail(assignment_id: str) -> LivestreamProductAssignment:
@@ -387,6 +472,7 @@ def build_platform_summary(platform: str, platform_accounts: list[LivestreamAcco
     total_viewers = sum(account.current_viewers for account in platform_accounts)
     total_capacity = sum(account.max_capacity for account in platform_accounts)
     active_accounts = sum(1 for account in platform_accounts if account.status in {"active", "stable", "warning"})
+    live_accounts = sum(1 for account in platform_accounts if account.broadcast_status == "live")
     average_lag_signal = 0.0
     if total_accounts:
         average_lag_signal = round(
@@ -399,6 +485,7 @@ def build_platform_summary(platform: str, platform_accounts: list[LivestreamAcco
         display_name=platform_accounts[0].platform_display_name,
         total_accounts=total_accounts,
         active_accounts=active_accounts,
+        live_accounts=live_accounts,
         total_viewers=total_viewers,
         total_capacity=total_capacity,
         average_lag_signal=average_lag_signal,
@@ -459,22 +546,13 @@ def delete_livestream_account(account_id: str) -> LivestreamAccountDeleteRespons
     )
     if not account:
         raise HTTPException(status_code=404, detail="Không tìm thấy phòng livestream trong hệ thống.")
-    linked_assignments = fetch_all(
-        """
-        SELECT assignment_id
-        FROM livestream_product_assignments
-        WHERE account_id = ?
-        """,
-        (account_id,),
-    )
+    ensure_livestream_account_can_be_deleted(account_id)
 
     with get_connection() as connection:
         connection.execute("DELETE FROM livestream_accounts WHERE account_id = ?", (account_id,))
         connection.commit()
 
     delete_json_record("livestream_accounts", account_id)
-    for assignment in linked_assignments:
-        delete_json_record("livestream_product_assignments", assignment["assignment_id"])
     return LivestreamAccountDeleteResponse(
         account_id=account["account_id"],
         account_name=account["name"],
@@ -758,6 +836,9 @@ def create_livestream_account(payload: LivestreamAccountCreate) -> LivestreamAcc
             la.engagement_rate,
             la.lag_signal,
             la.status,
+            la.broadcast_status,
+            la.live_started_at,
+            la.last_heartbeat_at,
             la.stream_url,
             la.warehouse_location,
             la.shift_label,

@@ -54,6 +54,10 @@ services:
     build:
       context: ../../backend/services/sync-service
     container_name: sync-service
+    environment:
+      AI_SERVICE_URL: http://ai-service:8001
+    depends_on:
+      - ai-service
     ports:
       - "8004:8004"
 

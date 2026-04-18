@@ -144,3 +144,58 @@ class CustomerOrder(BaseModel):
 class CheckoutResponse(BaseModel):
     message: str = Field(..., min_length=1)
     orders: list[CustomerOrder]
+
+
+class LivestreamCommentCreateRequest(BaseModel):
+    account_id: str = Field(..., min_length=1)
+    customer_id: str = Field(..., min_length=1)
+    product_id: str = Field(..., min_length=1)
+    content: str = Field(..., min_length=1, max_length=1000)
+
+
+class LivestreamComment(BaseModel):
+    comment_id: str = Field(..., min_length=1)
+    account_id: str = Field(..., min_length=1)
+    account_name: str = Field(..., min_length=1)
+    customer_id: str = Field(..., min_length=1)
+    customer_name: str = Field(..., min_length=1)
+    customer_phone: str = Field(..., min_length=1)
+    product_id: str = Field(..., min_length=1)
+    product_name: str = Field(..., min_length=1)
+    content: str = Field(..., min_length=1)
+    intent: str = Field(..., min_length=1)
+    sentiment: str = Field(..., min_length=1)
+    priority: str = Field(..., min_length=1)
+    should_auto_message: bool
+    created_at: str = Field(..., min_length=1)
+
+
+class LivestreamCommentCreateResponse(BaseModel):
+    message: str = Field(..., min_length=1)
+    comment: LivestreamComment
+    auto_message_sent: bool = False
+    auto_message_preview: str | None = None
+
+
+class LivestreamMessageCreateRequest(BaseModel):
+    account_id: str = Field(..., min_length=1)
+    customer_id: str = Field(..., min_length=1)
+    sender_id: str = Field(..., min_length=1)
+    sender_role: str = Field(..., min_length=1)
+    content: str = Field(..., min_length=1, max_length=2000)
+    source: str = Field(default="manual", min_length=1)
+
+
+class LivestreamMessage(BaseModel):
+    message_id: str = Field(..., min_length=1)
+    account_id: str = Field(..., min_length=1)
+    account_name: str = Field(..., min_length=1)
+    customer_id: str = Field(..., min_length=1)
+    customer_name: str = Field(..., min_length=1)
+    customer_phone: str = Field(..., min_length=1)
+    sender_id: str = Field(..., min_length=1)
+    sender_role: str = Field(..., min_length=1)
+    sender_name: str = Field(..., min_length=1)
+    content: str = Field(..., min_length=1)
+    source: str = Field(..., min_length=1)
+    created_at: str = Field(..., min_length=1)

@@ -10,6 +10,8 @@ services:
     build:
       context: ./services/auth-service
     container_name: auth-service
+    environment:
+      ACCOUNT_SERVICE_URL: http://account-service:8003
     depends_on:
       - account-service
     ports:
@@ -52,6 +54,10 @@ services:
     build:
       context: ./services/sync-service
     container_name: sync-service
+    environment:
+      AI_SERVICE_URL: http://ai-service:8001
+    depends_on:
+      - ai-service
     ports:
       - "8004:8004"
 

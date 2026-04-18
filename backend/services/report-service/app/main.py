@@ -82,10 +82,22 @@ async def build_report_payload() -> tuple[KpiOverview, list[PlatformSyncMetric],
 
 
 async def build_database_overview() -> dict:
-    users, platform_summaries, livestream_accounts, products, suppliers, supplier_offers, assignments = await asyncio.gather(
+    (
+        users,
+        customers,
+        platform_summaries,
+        livestream_accounts,
+        live_offers,
+        products,
+        suppliers,
+        supplier_offers,
+        assignments,
+    ) = await asyncio.gather(
         fetch_json(ACCOUNT_SERVICE_URL, "/users"),
+        fetch_json(ACCOUNT_SERVICE_URL, "/customers"),
         fetch_json(LIVESTREAM_SERVICE_URL, "/platform-summaries"),
         fetch_json(LIVESTREAM_SERVICE_URL, "/livestream-accounts"),
+        fetch_json(LIVESTREAM_SERVICE_URL, "/livestream-product-offers"),
         fetch_json(CATALOG_SERVICE_URL, "/products"),
         fetch_json(CATALOG_SERVICE_URL, "/suppliers"),
         fetch_json(CATALOG_SERVICE_URL, "/supplier-offers"),
@@ -93,8 +105,10 @@ async def build_database_overview() -> dict:
     )
     return {
         "users": users,
+        "customers": customers,
         "platform_summaries": platform_summaries,
         "livestream_accounts": livestream_accounts,
+        "livestream_product_offers": live_offers,
         "products": products,
         "suppliers": suppliers,
         "supplier_offers": supplier_offers,

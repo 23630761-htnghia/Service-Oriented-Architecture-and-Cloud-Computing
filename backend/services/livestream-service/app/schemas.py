@@ -26,6 +26,9 @@ class LivestreamAccount(BaseModel):
     engagement_rate: float = Field(..., ge=0, le=1)
     lag_signal: float = Field(..., ge=0, le=1)
     status: str = Field(..., min_length=1)
+    broadcast_status: str = Field(..., min_length=1)
+    live_started_at: str | None = None
+    last_heartbeat_at: str | None = None
     stream_url: str = Field(..., min_length=1)
     warehouse_location: str = Field(..., min_length=1)
     shift_label: str = Field(..., min_length=1)
@@ -53,6 +56,20 @@ class LivestreamAccountCreate(BaseModel):
 class LivestreamAccountDeleteResponse(BaseModel):
     account_id: str = Field(..., min_length=1)
     account_name: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1)
+
+
+class LivestreamPresenceHeartbeat(BaseModel):
+    viewer_id: str = Field(..., min_length=1)
+    viewer_role: str = Field(..., min_length=1)
+    viewer_name: str = Field(..., min_length=1)
+    is_host: bool = False
+    is_live: bool = False
+
+
+class LivestreamPresenceDeleteResponse(BaseModel):
+    account_id: str = Field(..., min_length=1)
+    viewer_id: str = Field(..., min_length=1)
     message: str = Field(..., min_length=1)
 
 
@@ -118,6 +135,7 @@ class PlatformSummary(BaseModel):
     display_name: str
     total_accounts: int = Field(..., ge=0)
     active_accounts: int = Field(..., ge=0)
+    live_accounts: int = Field(..., ge=0)
     total_viewers: int = Field(..., ge=0)
     total_capacity: int = Field(..., ge=0)
     average_lag_signal: float = Field(..., ge=0, le=1)
