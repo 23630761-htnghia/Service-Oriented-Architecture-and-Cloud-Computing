@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartLive Demo</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <section id="login-screen" class="login-screen">
+      <div class="hero-card">
+        <p class="eyebrow">Demo Livestream App</p>
+        <h1>App demo livestream tach rieng de trinh bay ca phia nhan vien live va khach hang.</h1>
+        <p class="hero-copy">
+          SmartLive van la noi quan ly nghiep vu va cac tinh nang thong minh. App demo nay mo phong buoi live
+          thuc te voi camera, micro, comment, tim kiem, goi y noi dung va nhan tin giua shop voi khach.
+        </p>
+        <div class="hero-points">
+          <article>
+            <strong>Nhan vien live</strong>
+            <span>Bat dau, ket thuc live, xem comment hien tai va chan khach ngay trong phien.</span>
+          </article>
+          <article>
+            <strong>Khach hang</strong>
+            <span>Tim phien live, tim san pham, nhan goi y lien quan va tham gia binh luan.</span>
+          </article>
+          <article>
+            <strong>Nhan tin co ho tro ML</strong>
+            <span>Khach co nhu cau mua se duoc shop chu dong nhan tin va khong bi lap lai trong cung phien live.</span>
+          </article>
+        </div>
+      </div>
+
+      <div class="login-card">
+        <div class="section-head">
+          <p class="eyebrow">Dang nhap</p>
+          <h2>Chon tai khoan demo</h2>
+          <p class="muted">Ban co the vao bang tai khoan nhan vien live hoac tai khoan khach hang.</p>
+        </div>
+
+        <form id="login-form" class="stack">
+          <label>Email
+            <input id="login-email" type="email" value="staff.live@smartlive.vn" autocomplete="username" />
+          </label>
+          <label>Mat khau
+            <input id="login-password" type="password" value="123456" autocomplete="current-password" />
+          </label>
+          <button type="submit" class="primary-btn">Vao app livestream demo</button>
+        </form>
+
+        <div class="demo-account-list">
+          <button type="button" class="demo-account-btn" data-email="staff.live@smartlive.vn" data-password="123456">
+            <strong>Nhan vien live</strong>
+            <span>staff.live@smartlive.vn</span>
+            <small>Dieu khien phien live, quan sat comment, chan khach va nhan tin voi nguoi mua</small>
+          </button>
+          <button type="button" class="demo-account-btn" data-email="linh.nguyen@gmail.com" data-password="123456">
+            <strong>Khach Linh</strong>
+            <span>linh.nguyen@gmail.com</span>
+            <small>Tim live skincare, hoi gia serum va nhan tin voi shop</small>
+          </button>
+          <button type="button" class="demo-account-btn" data-email="thao.tran@gmail.com" data-password="123456">
+            <strong>Khach Thao</strong>
+            <span>thao.tran@gmail.com</span>
+            <small>Tim san pham cho da nhay cam va theo doi noi dung lien quan</small>
+          </button>
+          <button type="button" class="demo-account-btn" data-email="minh.anh@gmail.com" data-password="123456">
+            <strong>Khach Minh Anh</strong>
+            <span>minh.anh@gmail.com</span>
+            <small>Khach quay lai, san combo va uu dai trong live</small>
+          </button>
+        </div>
+
+        <div id="login-result" class="message-box muted">Trang thai dang nhap se hien thi tai day.</div>
+      </div>
+    </section>
+
+    <section id="app-screen" class="app-screen hidden">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">SmartLive Demo</p>
+          <h2 id="topbar-title">Phong live demo</h2>
+          <p id="topbar-subtitle" class="muted"></p>
+        </div>
+        <div class="topbar-actions">
+          <div class="profile-pill">
+            <strong id="current-user-name"></strong>
+            <span id="current-user-role"></span>
+          </div>
+          <button id="reset-demo-btn" type="button" class="ghost-btn">Reset du lieu demo</button>
+          <button id="logout-btn" type="button" class="ghost-btn">Dang xuat</button>
+        </div>
+      </header>
+
+      <main class="dashboard-grid">
+        <section class="panel panel-span-2 hero-panel">
+          <div class="section-head">
+            <p class="eyebrow">Live Room</p>
+            <h3 id="live-room-title">GlowHouse - Livestream skincare toi nay</h3>
+            <p id="live-room-description" class="muted"></p>
+          </div>
+
+          <div class="live-room-layout">
+            <div class="video-stage">
+              <div class="video-frame">
+                <video id="live-preview" autoplay playsinline muted></video>
+                <div id="video-overlay" class="video-overlay">
+                  <span id="live-status-pill" class="status-pill offline">Offline</span>
+                  <p id="video-overlay-text">Nhan vien live co the cap quyen camera va micro de bat dau demo.</p>
+                </div>
+              </div>
+
+              <div class="quick-stats">
+                <article class="metric-card">
+                  <span>Trang thai</span>
+                  <strong id="metric-live-status">San sang</strong>
+                </article>
+                <article class="metric-card">
+                  <span>Viewer</span>
+                  <strong id="metric-viewers">128</strong>
+                </article>
+                <article class="metric-card">
+                  <span>Comment</span>
+                  <strong id="metric-comments">0</strong>
+                </article>
+                <article class="metric-card">
+                  <span>Khach bi chan</span>
+                  <strong id="metric-blocked">0</strong>
+                </article>
+              </div>
+            </div>
+
+            <aside class="panel side-panel">
+              <div class="section-head">
+                <p class="eyebrow">Thong tin phong live</p>
+                <h3>Session dang chon</h3>
+              </div>
+              <div id="session-card" class="session-card"></div>
+              <div id="pinned-product-card" class="pinned-product-card"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="staff-view" class="panel panel-span-2 hidden">
+          <div class="section-head">
+            <p class="eyebrow">Nhan vien live</p>
+            <h3>Dieu khien phien live va xu ly khach</h3>
+            <p class="muted">Nhan vien co the bat dau, ket thuc live, dieu khien camera, micro va chan khach trong phien.</p>
+          </div>
+
+          <div class="host-controls">
+            <button id="connect-media-btn" type="button" class="primary-btn">Cap quyen camera va micro</button>
+            <button id="toggle-camera-btn" type="button" class="ghost-btn">Tat camera</button>
+            <button id="toggle-mic-btn" type="button" class="ghost-btn">Tat micro</button>
+            <button id="start-live-btn" type="button" class="primary-btn">Bat dau live</button>
+            <button id="end-live-btn" type="button" class="ghost-btn">Ket thuc live</button>
+          </div>
+
+          <div class="two-col">
+            <div id="device-status" class="message-box muted">Chua cap quyen camera va micro.</div>
+            <div id="staff-action-result" class="message-box muted">Trang thai thao tac cua nhan vien se hien thi tai day.</div>
+          </div>
+
+          <div class="staff-tools-grid">
+            <div class="tool-panel">
+              <div class="section-head">
+                <p class="eyebrow">Quan ly live</p>
+                <h3>Chon san pham ghim</h3>
+              </div>
+              <div id="staff-product-list" class="product-grid"></div>
+            </div>
+
+            <div class="tool-panel">
+              <div class="section-head">
+                <p class="eyebrow">Chan khach</p>
+                <h3>Khach dang tham gia</h3>
+              </div>
+              <div id="viewer-management-list" class="viewer-management-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="customer-view" class="panel hidden">
+          <div class="section-head">
+            <p class="eyebrow">Khach hang</p>
+            <h3>Tim phien live, tim san pham va xem goi y</h3>
+          </div>
+
+          <form id="search-form" class="stack">
+            <label>Tim theo ten phien live, san pham hoac chu de
+              <input id="search-input" type="text" placeholder="Vi du: serum vitamin C, skincare da nhay cam..." />
+            </label>
+            <button type="submit" class="primary-btn">Tim kiem noi dung</button>
+          </form>
+
+          <div id="search-result" class="message-box muted">Nhap tu khoa de tim phien live va san pham phu hop.</div>
+          <div id="search-list" class="search-list"></div>
+
+          <div class="section-head section-gap">
+            <p class="eyebrow">Goi y lien quan</p>
+            <h3>Noi dung de xuat cho ban</h3>
+          </div>
+          <div id="recommendation-list" class="recommendation-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <p class="eyebrow">Comment trong live</p>
+            <h3>Binh luan hien tai cua phong live</h3>
+          </div>
+
+          <form id="comment-form" class="stack">
+            <label>San pham dang quan tam
+              <select id="comment-product-select"></select>
+            </label>
+            <label>Noi dung binh luan
+              <textarea id="comment-input" rows="4" placeholder="Vi du: Shop oi em muon chot 2 serum toi nay."></textarea>
+            </label>
+            <button type="submit" class="primary-btn">Gui binh luan</button>
+          </form>
+
+          <div id="comment-result" class="message-box muted">Comment moi se hien thi ngay trong feed cua phien live.</div>
+          <div id="comment-list" class="comment-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <p class="eyebrow">Tin nhan</p>
+            <h3>Hoi thoai giua shop va khach hang</h3>
+            <p class="muted">ML ho tro nhan dien khach co y dinh mua va tu dong mo dau hoi thoai mot lan trong moi phien live.</p>
+          </div>
+
+          <div class="message-layout">
+            <div id="conversation-list" class="conversation-list"></div>
+
+            <div class="message-thread-panel">
+              <div id="thread-header" class="thread-header"></div>
+              <div id="message-thread" class="message-thread"></div>
+
+              <form id="message-form" class="stack">
+                <label>Noi dung tin nhan
+                  <textarea id="message-input" rows="3" placeholder="Nhap tin nhan voi khach hang hoac shop..."></textarea>
+                </label>
+                <button type="submit" class="primary-btn">Gui tin nhan</button>
+              </form>
+
+              <div id="message-result" class="message-box muted">Tin nhan se hien thi va dong bo ngay trong app demo.</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

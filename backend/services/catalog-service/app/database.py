@@ -271,7 +271,9 @@ def insert_records(connection: sqlite3.Connection, table: str, records: list[dic
         return
     columns = TABLE_INSERT_COLUMNS[table]
     placeholders = ", ".join("?" for _ in columns)
-    query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+    # Seed data is shared across multiple services and startup can happen in parallel,
+    # so inserts must be idempotent to avoid crashing on existing unique values.
+    query = f"INSERT OR IGNORE INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
     values = [tuple(record.get(column) for column in columns) for record in valid_records]
     connection.executemany(query, values)
 

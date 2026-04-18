@@ -4,9 +4,33 @@ Nền tảng quản lý vận hành livestream đa nền tảng theo kiến trú
 
 ## Tổng quan
 
-Project gồm 3 phần chính:
+## App demo livestream
 
-- `frontend`: dashboard tĩnh cho admin, staff và quản lý sản phẩm
+App demo livestream n?m t?i:
+
+- `apps/demo-app/`
+
+File ch?nh:
+
+- `apps/demo-app/index.html`
+- `apps/demo-app/app.js`
+- `apps/demo-app/styles.css`
+
+Ch?y nhanh:
+
+```bash
+cd apps/demo-app
+python -m http.server 3010
+```
+
+M? tr?nh duy?t t?i:
+
+- `http://localhost:3010`
+
+Project gồm 4 phần chính:
+
+- `frontend`: app quản lý livestream cho admin, staff và quản lý sản phẩm
+- `apps/demo-app`: app demo riêng để mô phỏng phiên live khi không thể trình diễn trực tiếp trên Facebook hoặc TikTok
 - `backend`: cụm microservice `FastAPI`
 - `ml`: dữ liệu và model phục vụ phân tích comment
 
@@ -133,6 +157,8 @@ flowchart LR
 
 ```text
 frontend/                               Dashboard tĩnh
+apps/
+  demo-app/                            App demo riêng cho khách hàng và người bán
 backend/
   services/                             Các microservice FastAPI
   docker-compose.yml                    Chạy riêng backend
@@ -140,8 +166,12 @@ infra/docker/
   docker-compose.yml                    Chạy toàn bộ hệ thống
 ml/                                     Dữ liệu huấn luyện và model AI
 docs/                                   Tài liệu hệ thống
-databricks/                             Dữ liệu mẫu và notebook hỗ trợ
 ```
+
+Ghi chú:
+
+- `frontend/` là app quản lý livestream chính.
+- `apps/demo-app/` là app demo mô phỏng khách hàng và người bán cho phần thuyết trình.
 
 Dữ liệu dùng chung cho `identity`, `catalog`, `livestream` được chia theo domain để dễ quản lý:
 
@@ -170,9 +200,17 @@ cd infra/docker
 docker compose up --build
 ```
 
-Các URL chính:
+Chạy app demo livestream riêng:
+
+```bash
+cd apps/demo-app
+python -m http.server 3010
+```
+
+Các URL public mặc định:
 
 - Frontend: `http://localhost:3000`
+- Demo app: `http://localhost:3010`
 - API Gateway: `http://localhost:8000`
 - AI Service: `http://localhost:8001`
 - Auth Service: `http://localhost:8002`

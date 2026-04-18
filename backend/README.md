@@ -20,7 +20,7 @@ cd backend
 docker compose up --build
 ```
 
-Các cổng mặc định:
+Các URL public mặc định:
 
 - `http://localhost:8000`: API Gateway
 - `http://localhost:8001`: AI Service

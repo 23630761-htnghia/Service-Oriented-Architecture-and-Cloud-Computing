@@ -9,34 +9,34 @@ from app.schemas import CommentAnalysis, CommentRequest
 
 
 POSITIVE_KEYWORDS = {
-    "chốt",
+    "chot",
     "mua",
-    "đặt",
-    "lấy",
+    "dat",
+    "lay",
     "ok",
-    "tốt",
-    "thích",
+    "tot",
+    "thich",
     "xinh",
-    "đẹp",
+    "dep",
     "ib",
     "inbox",
 }
 NEGATIVE_KEYWORDS = {
-    "lỗi",
+    "loi",
     "lag",
-    "chán",
-    "tệ",
-    "không tốt",
-    "giá cao",
-    "thất vọng",
-    "khiếu nại",
+    "chan",
+    "te",
+    "khong tot",
+    "gia cao",
+    "that vong",
+    "khieu nai",
 }
-PRICE_KEYWORDS = {"giá", "bao nhiêu", "bn", "price", "ship"}
-BUYING_KEYWORDS = {"mua", "đặt", "chốt", "lấy", "ib", "inbox", "check inbox"}
-CONSULT_KEYWORDS = {"tư vấn", "size", "màu", "còn hàng", "chi tiết", "shop ơi"}
-SPAM_KEYWORDS = {"spam", "kiếm tiền", "link", "telegram", "bitcoin", "http://", "https://"}
-COMPLAINT_KEYWORDS = {"khiếu nại", "lỗi", "không đúng", "giao chậm", "hỏng", "lag"}
-HIGH_PRIORITY_HINTS = {"ib", "inbox", "mua", "đặt", "chốt", "ship"}
+PRICE_KEYWORDS = {"gia", "bao nhieu", "bn", "price", "ship", "freeship"}
+BUYING_KEYWORDS = {"mua", "dat", "chot", "lay", "ib", "inbox", "muon chot", "lay luon"}
+CONSULT_KEYWORDS = {"tu van", "size", "mau", "con hang", "chi tiet", "shop oi", "da nhay cam", "thanh phan"}
+SPAM_KEYWORDS = {"spam", "kiem tien", "link", "telegram", "bitcoin", "http://", "https://"}
+COMPLAINT_KEYWORDS = {"khieu nai", "loi", "khong dung", "giao cham", "hong", "lag"}
+HIGH_PRIORITY_HINTS = {"ib", "inbox", "mua", "dat", "chot", "ship", "lay luon"}
 
 
 def resolve_model_dir() -> Path:
@@ -145,31 +145,31 @@ def score_comment(text: str, sentiment: str, intent: str) -> tuple[int, list[str
 
     if intent == "buying_intent":
         score += 45
-        reasons.append("Comment cho thấy ý định mua hàng rõ ràng.")
+        reasons.append("Comment cho thay y dinh mua hang ro rang.")
     elif intent == "ask_price":
         score += 25
-        reasons.append("Khách hàng đang hỏi giá sản phẩm.")
+        reasons.append("Khach hang dang hoi gia hoac uu dai.")
     elif intent == "consult_request":
         score += 20
-        reasons.append("Khách hàng cần được tư vấn thêm.")
+        reasons.append("Khach hang can duoc tu van them.")
     elif intent == "complaint":
         score += 5
-        reasons.append("Cần ưu tiên chăm sóc vì có dấu hiệu phản hồi tiêu cực.")
+        reasons.append("Comment mang tinh phan hoi tieu cuc can duoc uu tien.")
     elif intent == "spam":
         score -= 60
-        reasons.append("Comment có dấu hiệu spam.")
+        reasons.append("Comment co dau hieu spam.")
 
     if sentiment == "positive":
         score += 10
-        reasons.append("Cảm xúc tích cực làm tăng khả năng chuyển đổi.")
+        reasons.append("Cam xuc tich cuc tang kha nang chuyen doi.")
     elif sentiment == "negative":
         score -= 10
-        reasons.append("Cảm xúc tiêu cực làm giảm khả năng chốt đơn.")
+        reasons.append("Cam xuc tieu cuc lam giam kha nang chot don.")
 
     high_priority_matches = sum(1 for keyword in NORMALIZED_HIGH_PRIORITY_HINTS if keyword in text)
     if high_priority_matches:
         score += min(high_priority_matches * 5, 15)
-        reasons.append("Có từ khóa hành động mạnh như mua, inbox hoặc đặt hàng.")
+        reasons.append("Comment co tu khoa hanh dong manh nhu mua, chot, lay luon hoac inbox.")
 
     score = max(0, min(score, 100))
     return score, reasons
@@ -185,18 +185,37 @@ def choose_priority(score: int, intent: str) -> str:
 
 def choose_action(intent: str, priority: str) -> str:
     if intent == "buying_intent":
-        return "Nhân viên nên inbox hoặc xác nhận đơn ngay."
+        return "Uu tien tra loi rieng va xac nhan don ngay."
     if intent == "ask_price":
-        return "Trả lời giá và gợi ý sản phẩm liên quan."
+        return "Tra loi gia, uu dai va dieu kien giao hang."
     if intent == "consult_request":
-        return "Hỏi thêm nhu cầu và tư vấn sản phẩm phù hợp."
+        return "Hoi them nhu cau va tu van san pham phu hop."
     if intent == "complaint":
-        return "Xử lý phản hồi ưu tiên cao để tránh mất khách."
+        return "Can nhan vien xu ly can than de tranh mat khach."
     if intent == "spam":
-        return "Đánh dấu spam và ẩn hoặc lọc comment."
+        return "Danh dau spam va khong dua vao hang xu ly."
     if priority == "high":
-        return "Đưa vào hàng đợi ưu tiên cho nhân viên."
-    return "Theo dõi thêm trong dashboard."
+        return "Day vao hang doi uu tien cho nguoi ban."
+    return "Theo doi them trong dashboard."
+
+
+def should_auto_message(intent: str, score: int) -> bool:
+    return intent == "buying_intent" or (intent == "ask_price" and score >= 70)
+
+
+def build_auto_message(request: CommentRequest, intent: str, score: int) -> tuple[bool, str | None, str]:
+    if not request.username:
+        return False, None, "Chua co username khach hang nen he thong chua tu dong nhan."
+
+    if should_auto_message(intent, score):
+        customer_name = request.username.strip() or "ban"
+        message = (
+            f"Chao {customer_name}, shop da nhan duoc nhu cau cua ban. "
+            "Minh xin phep nhan rieng de xac nhan so luong, uu dai va ho tro chot don ngay trong phien live."
+        )
+        return True, message, "Comment co tin hieu mua hang ro rang nen phu hop de tra loi tu dong."
+
+    return False, None, "Comment chua du tin hieu mua ngay nen chua tu dong nhan."
 
 
 def analyze_comment(request: CommentRequest) -> CommentAnalysis:
@@ -206,20 +225,28 @@ def analyze_comment(request: CommentRequest) -> CommentAnalysis:
     lead_score, reasons = score_comment(normalized, sentiment, intent)
     priority = choose_priority(lead_score, intent)
     suggested_action = choose_action(intent, priority)
+    auto_message_enabled, auto_message, auto_message_reason = build_auto_message(request, intent, lead_score)
 
     if INTENT_MODEL is not None:
-        reasons.append("Intent được suy đoán bởi model đã train.")
+        reasons.append("Intent duoc suy doan boi model da train.")
     if SENTIMENT_MODEL is not None:
-        reasons.append("Sentiment được suy đoán bởi model đã train.")
+        reasons.append("Sentiment duoc suy doan boi model da train.")
     if not reasons:
-        reasons.append("Comment chưa có dấu hiệu rõ ràng, cần theo dõi thêm.")
+        reasons.append("Comment chua co dau hieu ro rang, can theo doi them.")
 
     return CommentAnalysis(
         comment=request.comment,
+        username=request.username,
+        livestream_id=request.livestream_id,
+        account_id=request.account_id,
+        platform=request.platform,
         sentiment=sentiment,
         intent=intent,
         lead_score=lead_score,
         priority=priority,
         reasons=reasons,
         suggested_action=suggested_action,
+        should_auto_message=auto_message_enabled,
+        auto_message=auto_message,
+        auto_message_reason=auto_message_reason,
     )

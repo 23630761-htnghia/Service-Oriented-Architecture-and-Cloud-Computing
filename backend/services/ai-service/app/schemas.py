@@ -28,12 +28,19 @@ class CommentRequest(BaseModel):
 
 class CommentAnalysis(BaseModel):
     comment: str
+    username: str | None = None
+    livestream_id: str | None = None
+    account_id: str | None = None
+    platform: str | None = None
     sentiment: SentimentLabel
     intent: IntentLabel
     lead_score: int = Field(..., ge=0, le=100)
     priority: PriorityLabel
     reasons: list[str]
     suggested_action: str
+    should_auto_message: bool
+    auto_message: str | None = None
+    auto_message_reason: str
 
 
 class BatchCommentRequest(BaseModel):

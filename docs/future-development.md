@@ -11,6 +11,8 @@ project_CK/
 |-- README.md
 |-- docs/
 |-- frontend/
+|-- apps/
+|   |-- demo-app/
 |-- backend/
 |   |-- services/
 |   |   |-- api-gateway/
