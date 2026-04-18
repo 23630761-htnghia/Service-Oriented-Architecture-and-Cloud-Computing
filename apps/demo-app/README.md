@@ -5,7 +5,7 @@ Day la app demo livestream rieng, tach khoi app SmartLive chinh.
 Muc dich:
 
 - Mo phong buoi live khi khong the demo truc tiep tren Facebook hoac TikTok.
-- Co 2 vai tro: `nhan vien live` va `khach hang`.
+- Co 2 vai tro: `nhan vien live` va `khach hang` 
 - Nhan vien live co the bat dau, ket thuc phien, bat camera, micro, ghim san pham va chan khach trong live.
 - Khach hang co the tim phien live, tim san pham, xem goi y noi dung lien quan, comment va nhan tin voi shop.
 - Phan nhan tin duoc ho tro boi ML theo kịch ban demo: khach co y dinh mua se duoc shop chu dong nhan tin mot lan trong moi phien live.
