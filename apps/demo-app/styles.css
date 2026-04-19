@@ -31,6 +31,10 @@ body {
     linear-gradient(140deg, #f8fbff 0%, var(--bg) 44%, var(--bg-strong) 100%);
 }
 
+body.chat-open {
+  overflow: hidden;
+}
+
 button,
 input,
 select,
@@ -246,6 +250,21 @@ textarea:focus {
   gap: 12px;
 }
 
+.register-entry {
+  display: grid;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.register-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
 .demo-account-btn {
   text-align: left;
   border-radius: 20px;
@@ -344,7 +363,7 @@ textarea:focus {
 }
 
 .live-room-layout {
-  grid-template-columns: minmax(0, 1.42fr) minmax(320px, 0.74fr);
+  grid-template-columns: minmax(250px, 0.56fr) minmax(0, 1.35fr) minmax(320px, 0.82fr);
   margin-top: 20px;
 }
 
@@ -458,6 +477,24 @@ textarea:focus {
   line-height: 1.7;
 }
 
+.session-sidebar,
+.live-comment-panel {
+  align-self: start;
+  position: sticky;
+  top: 18px;
+}
+
+.live-comment-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.live-comment-list {
+  max-height: 620px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
 .host-controls {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   margin-top: 18px;
@@ -470,6 +507,10 @@ textarea:focus {
 .staff-tools-grid,
 .message-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.message-summary-actions {
   margin-top: 18px;
 }
 
@@ -580,6 +621,37 @@ textarea:focus {
   gap: 16px;
 }
 
+.chat-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 24, 44, 0.44);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 50;
+}
+
+.chat-modal-card {
+  width: min(1180px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  border-radius: 28px;
+  padding: 24px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.98), rgba(228, 241, 255, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 18px;
+}
+
+.chat-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .thread-header {
   padding: 16px 18px;
   border-radius: 20px;
@@ -666,7 +738,8 @@ textarea:focus {
   .product-card-head,
   .comment-header,
   .viewer-card,
-  .thread-header {
+  .thread-header,
+  .chat-modal-head {
     flex-direction: column;
     align-items: stretch;
   }
@@ -683,5 +756,14 @@ textarea:focus {
 
   .video-frame {
     min-height: 320px;
+  }
+
+  .chat-modal {
+    padding: 12px;
+  }
+
+  .chat-modal-card {
+    max-height: calc(100vh - 24px);
+    padding: 18px;
   }
 }

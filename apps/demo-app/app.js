@@ -1,6 +1,7 @@
 const API_BASE = "http://localhost:8000";
-const SESSION_KEY = "smartlive-demo-session-v6";
+const SESSION_KEY = "smartlive-demo-session-v7";
 const LOCAL_STATE_KEY = "smartlive-demo-local-v6";
+const PRESENCE_SESSION_KEY = "smartlive-demo-presence-id";
 const REALTIME_REFRESH_MS = 3000;
 
 const loginScreen = document.getElementById("login-screen");
@@ -17,6 +18,9 @@ const registerLocation = document.getElementById("register-location");
 const registerBirthYear = document.getElementById("register-birth-year");
 const registerPassword = document.getElementById("register-password");
 const registerResult = document.getElementById("register-result");
+const openRegisterBtn = document.getElementById("open-register-btn");
+const closeRegisterBtn = document.getElementById("close-register-btn");
+const registerPanel = document.getElementById("register-panel");
 const demoAccountButtons = document.querySelectorAll(".demo-account-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const resetDemoBtn = document.getElementById("reset-demo-btn");
@@ -44,6 +48,9 @@ const customerView = document.getElementById("customer-view");
 const productManagerView = document.getElementById("product-manager-view");
 const commentPanel = document.getElementById("comment-form").closest(".panel");
 const messagePanel = document.getElementById("message-form").closest(".panel");
+const chatModal = document.getElementById("chat-modal");
+const openChatBtn = document.getElementById("open-chat-btn");
+const closeChatBtn = document.getElementById("close-chat-btn");
 
 const connectMediaBtn = document.getElementById("connect-media-btn");
 const toggleCameraBtn = document.getElementById("toggle-camera-btn");
@@ -113,8 +120,11 @@ let selectedConversationCustomerId = null;
 let mediaStream = null;
 let cameraEnabled = true;
 let micEnabled = true;
+let hostLiveEnabled = false;
+let isChatModalOpen = false;
 let realtimeRefreshTimer = null;
 let realtimeRefreshInFlight = false;
+let currentPresenceAccountId = null;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -179,6 +189,9 @@ function loadSession() {
   try {
     const parsed = JSON.parse(raw);
     currentUser = parsed.currentUser || null;
+    if (currentUser && currentUser.role !== "staff" && currentUser.role !== "customer") {
+      currentUser = null;
+    }
     selectedAccountId = parsed.selectedAccountId || null;
     selectedConversationCustomerId = parsed.selectedConversationCustomerId || null;
   } catch (_error) {
@@ -190,6 +203,32 @@ function loadSession() {
 
 function saveLocalState() {
   localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(demoState));
+}
+
+function setRegisterPanelOpen(open) {
+  if (!registerPanel) return;
+  registerPanel.classList.toggle("hidden", !open);
+}
+
+function setChatModalOpen(open) {
+  isChatModalOpen = open;
+  if (!chatModal) return;
+  chatModal.classList.toggle("hidden", !open);
+  document.body.classList.toggle("chat-open", open);
+}
+
+function getPresenceSessionId() {
+  let value = sessionStorage.getItem(PRESENCE_SESSION_KEY);
+  if (!value) {
+    value = `presence-${Math.random().toString(36).slice(2, 10)}`;
+    sessionStorage.setItem(PRESENCE_SESSION_KEY, value);
+  }
+  return value;
+}
+
+function getPresenceViewerId() {
+  if (!currentUser) return null;
+  return `${currentUser.id}-${getPresenceSessionId()}`;
 }
 
 function applyLocalState(nextState) {
@@ -229,6 +268,7 @@ function setCartMessage(message, muted = false) {
 }
 
 function setProductManagerMessage(message, muted = false) {
+  if (!productManagerResult) return;
   productManagerResult.textContent = message;
   productManagerResult.classList.toggle("muted", muted);
 }
@@ -244,6 +284,16 @@ function getCurrentCustomer() {
 }
 
 function getVisibleAccounts() {
+  if (currentUser?.role === "customer") {
+    return [...backendState.accounts].sort((left, right) => {
+      const leftLive = left.broadcast_status === "live" ? 1 : 0;
+      const rightLive = right.broadcast_status === "live" ? 1 : 0;
+      if (leftLive !== rightLive) return rightLive - leftLive;
+      const leftHeartbeat = left.last_heartbeat_at ? new Date(left.last_heartbeat_at).getTime() : 0;
+      const rightHeartbeat = right.last_heartbeat_at ? new Date(right.last_heartbeat_at).getTime() : 0;
+      return rightHeartbeat - leftHeartbeat;
+    });
+  }
   if (currentUser?.role !== "staff") {
     return backendState.accounts;
   }
@@ -256,6 +306,12 @@ function ensureSelectedAccount() {
   if (!visibleAccounts.length) {
     selectedAccountId = null;
     return null;
+  }
+  if (currentUser?.role === "customer") {
+    const liveAccount = visibleAccounts.find((account) => account.broadcast_status === "live");
+    if (liveAccount && selectedAccountId !== liveAccount.account_id) {
+      selectedAccountId = liveAccount.account_id;
+    }
   }
   if (!visibleAccounts.some((account) => account.account_id === selectedAccountId)) {
     selectedAccountId = visibleAccounts[0].account_id;
@@ -375,7 +431,53 @@ async function loadBackendData() {
 
 async function refreshDataAndRender() {
   await loadBackendData();
+  await syncCurrentPresence();
   renderLayout();
+}
+
+function applyPresenceStateToAccounts(state) {
+  backendState.accounts = (backendState.accounts || []).map((account) =>
+    account.account_id === state.account_id
+      ? {
+          ...account,
+          current_viewers: state.current_viewers,
+          broadcast_status: state.broadcast_status,
+          live_started_at: state.live_started_at,
+          last_heartbeat_at: state.last_heartbeat_at,
+        }
+      : account
+  );
+}
+
+async function syncCurrentPresence() {
+  if (!currentUser || !selectedAccountId) return;
+  const state = await fetchJson(`/api/v1/livestream-accounts/${selectedAccountId}/presence/heartbeat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      viewer_id: getPresenceViewerId(),
+      viewer_role: currentUser.role,
+      viewer_name: currentUser.name,
+      is_host: currentUser.role === "staff",
+      is_live: currentUser.role === "staff" ? hostLiveEnabled : false,
+    }),
+  });
+  currentPresenceAccountId = selectedAccountId;
+  applyPresenceStateToAccounts(state);
+}
+
+async function leaveCurrentPresence() {
+  const viewerId = getPresenceViewerId();
+  if (!currentPresenceAccountId || !viewerId) return;
+  try {
+    await fetchJson(`/api/v1/livestream-accounts/${currentPresenceAccountId}/presence/${encodeURIComponent(viewerId)}`, {
+      method: "DELETE",
+    });
+  } catch (_error) {
+    // Presence will expire on the next active refresh cycle if this delete fails.
+  } finally {
+    currentPresenceAccountId = null;
+  }
 }
 
 function stopRealtimeRefresh() {
@@ -448,12 +550,12 @@ function renderLiveSummary() {
     pinnedProductCard.innerHTML = '<p class="muted">Chưa có sản phẩm ghim cho phiên live này.</p>';
   }
 
-  metricLiveStatus.textContent = account.status === "active" ? "Đang sẵn sàng" : account.status;
+  metricLiveStatus.textContent = account.broadcast_status === "live" ? "Đang live" : "Chưa live";
   metricViewers.textContent = String(account.current_viewers);
   metricComments.textContent = String(visibleComments.length);
   metricBlocked.textContent = String(blockedCount);
-  liveStatusPill.textContent = account.status === "active" ? "Live Ready" : account.status;
-  liveStatusPill.className = `status-pill ${account.status === "active" ? "live" : "offline"}`;
+  liveStatusPill.textContent = account.broadcast_status === "live" ? "Đang live" : "Offline";
+  liveStatusPill.className = `status-pill ${account.broadcast_status === "live" ? "live" : "offline"}`;
 
   if (mediaStream && cameraEnabled && currentUser?.role === "staff") {
     videoOverlay.classList.add("hidden");
@@ -641,7 +743,7 @@ function searchContent(query) {
   if (!normalized) {
     return {
       liveMatches: getVisibleAccounts().slice(0, 3),
-      productMatches: selectedAccountId ? getAssignedProducts(selectedAccountId).slice(0, 4) : [],
+      productMatches: selectedAccountId ? getAssignedProducts(selectedAccountId).slice(0, 8) : [],
     };
   }
 
@@ -663,8 +765,8 @@ function buildRecommendations() {
     return { products: [], accounts: [] };
   }
 
-  const products = getAssignedProducts(account.account_id).slice(0, 4);
-  const otherAccounts = getVisibleAccounts().filter((item) => item.account_id !== account.account_id).slice(0, 2);
+  const products = getAssignedProducts(account.account_id).slice(0, 8);
+  const otherAccounts = getVisibleAccounts().filter((item) => item.account_id !== account.account_id).slice(0, 4);
   return { products, accounts: otherAccounts };
 }
 
@@ -689,6 +791,7 @@ function renderCustomerSearchAndRecommendations(query = "") {
           <h4>${escapeHtml(account.name)}</h4>
           <p>${escapeHtml(account.platform_display_name)} - ${escapeHtml(account.owner_name)}</p>
           <div class="product-meta">
+            <span class="badge ${account.broadcast_status === "live" ? "live-badge" : ""}">${escapeHtml(account.broadcast_status === "live" ? "Đang live" : "Chưa live")}</span>
             <span class="badge">${escapeHtml(account.shift_label)}</span>
             <span class="badge">${escapeHtml(account.warehouse_location)}</span>
           </div>
@@ -735,6 +838,9 @@ function renderCustomerSearchAndRecommendations(query = "") {
         <p class="eyebrow">Phong live lien quan</p>
         <h4>${escapeHtml(account.name)}</h4>
         <p>${escapeHtml(account.platform_display_name)} - ${escapeHtml(account.owner_name)}</p>
+        <div class="product-meta">
+          <span class="badge ${account.broadcast_status === "live" ? "live-badge" : ""}">${escapeHtml(account.broadcast_status === "live" ? "Đang live" : "Chưa live")}</span>
+        </div>
         <button type="button" class="ghost-btn select-live-btn" data-account-id="${account.account_id}">Chuyen sang phong nay</button>
       </article>
     `).join("")}
@@ -874,7 +980,10 @@ function renderLayout() {
   loginScreen.classList.toggle("hidden", loggedIn);
   appScreen.classList.toggle("hidden", !loggedIn);
 
-  if (!loggedIn) return;
+  if (!loggedIn) {
+    setChatModalOpen(false);
+    return;
+  }
 
   currentUserName.textContent = currentUser.name;
   currentUserRole.textContent = currentUser.role === "product_manager"
@@ -885,9 +994,9 @@ function renderLayout() {
 
   staffView.classList.toggle("hidden", currentUser.role !== "staff");
   customerView.classList.toggle("hidden", currentUser.role !== "customer");
-  productManagerView.classList.toggle("hidden", currentUser.role !== "product_manager");
-  commentPanel.classList.toggle("hidden", currentUser.role === "product_manager");
-  messagePanel.classList.toggle("hidden", currentUser.role === "product_manager");
+  productManagerView.classList.add("hidden");
+  commentPanel?.classList.remove("hidden");
+  messagePanel?.classList.remove("hidden");
 
   renderLiveSummary();
   renderProductSelectors();
@@ -977,7 +1086,13 @@ async function handleLogin(event) {
         password: loginPassword.value,
       }),
     });
+    if (data.user.role !== "staff" && data.user.role !== "customer") {
+      currentUser = null;
+      loginResult.textContent = "App demo chỉ cho phép đăng nhập bằng tài khoản nhân viên bán hàng hoặc khách hàng.";
+      return;
+    }
     currentUser = data.user;
+    setRegisterPanelOpen(false);
     await refreshDataAndRender();
     loginResult.textContent = `Đăng nhập thành công với vai trò ${currentUser.role}.`;
   } catch (error) {
@@ -1014,7 +1129,11 @@ async function handleRegister(event) {
         password: loginPassword.value,
       }),
     });
+    if (data.user.role !== "customer") {
+      throw new Error("Tài khoản vừa tạo chưa được nhận diện là khách hàng.");
+    }
     currentUser = data.user;
+    setRegisterPanelOpen(false);
     await refreshDataAndRender();
   } catch (error) {
     registerResult.textContent = error.message;
@@ -1164,7 +1283,7 @@ async function checkoutCustomerCart() {
   setCartMessage(`Checkout thành công. ${orderSummary}`, false);
 }
 
-function handleCommentSubmit(event) {
+async function handleCommentSubmit(event) {
   event.preventDefault();
   if (!currentUser || currentUser.role !== "customer") return;
   if (!selectedAccountId) return;
@@ -1180,6 +1299,29 @@ function handleCommentSubmit(event) {
     commentResult.textContent = "Vui lòng nhập nội dung bình luận trước khi gửi.";
     return;
   }
+
+  commentResult.classList.remove("muted");
+  commentResult.textContent = "Đang gửi bình luận lên hệ thống...";
+  try {
+    const data = await fetchJson("/api/v1/livestream-comments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        account_id: selectedAccountId,
+        customer_id: currentUser.id,
+        product_id: commentProductSelect.value,
+        content,
+      }),
+    });
+    commentInput.value = "";
+    await refreshDataAndRender();
+    commentResult.textContent = data.auto_message_sent
+      ? `Đã gửi bình luận. AI đã mở hội thoại: ${data.auto_message_preview || ""}`
+      : "Đã gửi bình luận và đồng bộ lên database.";
+  } catch (error) {
+    commentResult.textContent = error.message;
+  }
+  return;
 
   const comment = {
     id: `cmt-${Date.now()}`,
@@ -1201,7 +1343,7 @@ function handleCommentSubmit(event) {
   renderLayout();
 }
 
-function handleMessageSubmit(event) {
+async function handleMessageSubmit(event) {
   event.preventDefault();
   if (!currentUser) return;
   const content = messageInput.value.trim();
@@ -1210,6 +1352,36 @@ function handleMessageSubmit(event) {
     messageResult.textContent = "Vui lòng nhập nội dung tin nhắn trước khi gửi.";
     return;
   }
+
+  const customerId = currentUser.role === "customer" ? currentUser.id : selectedConversationCustomerId;
+  if (!selectedAccountId || !customerId) {
+    messageResult.classList.remove("muted");
+    messageResult.textContent = "Chưa chọn đúng hội thoại để gửi tin nhắn.";
+    return;
+  }
+
+  messageResult.classList.remove("muted");
+  messageResult.textContent = "Đang gửi tin nhắn...";
+  try {
+    await fetchJson("/api/v1/livestream-messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        account_id: selectedAccountId,
+        customer_id: customerId,
+        sender_id: currentUser.id,
+        sender_role: currentUser.role,
+        content,
+        source: "manual",
+      }),
+    });
+    messageInput.value = "";
+    await refreshDataAndRender();
+    messageResult.textContent = "Đã gửi tin nhắn và đồng bộ lên database.";
+  } catch (error) {
+    messageResult.textContent = error.message;
+  }
+  return;
 
   if (currentUser.role === "customer") {
     appendMessage(currentUser.id, {
@@ -1264,11 +1436,32 @@ function attachEventListeners() {
     });
   });
 
+  openRegisterBtn?.addEventListener("click", () => {
+    setRegisterPanelOpen(true);
+    registerPhone.focus();
+  });
+
+  closeRegisterBtn?.addEventListener("click", () => {
+    setRegisterPanelOpen(false);
+  });
+
+  openChatBtn?.addEventListener("click", () => {
+    setChatModalOpen(true);
+  });
+
+  closeChatBtn?.addEventListener("click", () => {
+    setChatModalOpen(false);
+  });
+
   logoutBtn.addEventListener("click", () => {
+    leaveCurrentPresence();
     currentUser = null;
     backendState.cartItems = [];
     backendState.orders = [];
     stopMediaStream();
+    setRegisterPanelOpen(false);
+    setChatModalOpen(false);
+    hostLiveEnabled = false;
     saveSession();
     renderLayout();
   });
@@ -1309,6 +1502,9 @@ function attachEventListeners() {
 
     const selectLiveButton = target.closest(".select-live-btn");
     if (selectLiveButton) {
+      if (selectedAccountId && selectLiveButton.dataset.accountId !== selectedAccountId) {
+        leaveCurrentPresence();
+      }
       selectedAccountId = selectLiveButton.dataset.accountId || selectedAccountId;
       saveSession();
       renderLayout();
@@ -1320,6 +1516,9 @@ function attachEventListeners() {
       const productId = focusProductButton.dataset.productId;
       const assignment = backendState.assignments.find((item) => item.product_id === productId);
       if (assignment) {
+        if (selectedAccountId && assignment.account_id !== selectedAccountId) {
+          leaveCurrentPresence();
+        }
         selectedAccountId = assignment.account_id;
         renderLayout();
       }
@@ -1423,6 +1622,7 @@ function attachEventListeners() {
     if (quickMessageButton) {
       selectedConversationCustomerId = quickMessageButton.dataset.userId;
       saveSession();
+      setChatModalOpen(true);
       renderLayout();
       return;
     }
@@ -1431,11 +1631,13 @@ function attachEventListeners() {
     if (conversationButton) {
       selectedConversationCustomerId = conversationButton.dataset.customerId;
       saveSession();
+      setChatModalOpen(true);
       renderLayout();
     }
   });
 
   window.addEventListener("beforeunload", () => {
+    leaveCurrentPresence();
     stopMediaStream();
   });
 
@@ -1444,12 +1646,41 @@ function attachEventListeners() {
     loadLocalState();
     renderLayout();
   });
+
+  chatModal?.addEventListener("click", (event) => {
+    if (event.target === chatModal) {
+      setChatModalOpen(false);
+    }
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isChatModalOpen) {
+      setChatModalOpen(false);
+    }
+  });
 }
 
 async function bootstrap() {
   loadSession();
   loadLocalState();
   attachEventListeners();
+  setRegisterPanelOpen(false);
+  startLiveBtn.addEventListener("click", async () => {
+    hostLiveEnabled = true;
+    try {
+      await syncCurrentPresence();
+      await loadBackendData();
+      renderLayout();
+    } catch (_error) {}
+  });
+  endLiveBtn.addEventListener("click", async () => {
+    hostLiveEnabled = false;
+    try {
+      await syncCurrentPresence();
+      await loadBackendData();
+      renderLayout();
+    } catch (_error) {}
+  });
   setDeviceStatus("Chưa cấp quyền camera và micro.", true);
   setStaffAction("App demo đã sẵn sàng cho dữ liệu backend.", true);
   setCartMessage("Khách hàng có thể thêm sản phẩm vào giỏ và mua ngay với dữ liệu được đồng bộ database.", true);

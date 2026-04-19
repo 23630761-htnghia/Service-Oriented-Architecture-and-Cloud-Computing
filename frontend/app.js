@@ -54,13 +54,17 @@ const supplierSearchInput = document.getElementById("supplier-search-input");
 const suppliersResult = document.getElementById("suppliers-result");
 const offerSearchInput = document.getElementById("offer-search-input");
 const offersResult = document.getElementById("offers-result");
-const commentForm = document.getElementById("comment-form");
-const commentInput = document.getElementById("comment-input");
-const commentResult = document.getElementById("comment-result");
-const viewerForm = document.getElementById("viewer-form");
-const viewerResult = document.getElementById("viewer-result");
-const accountASelect = document.getElementById("account-a-select");
-const accountBSelect = document.getElementById("account-b-select");
+const aiSettingsForm = document.getElementById("ai-settings-form");
+const aiEnabledInput = document.getElementById("ai-enabled");
+const aiReplyTemplateInput = document.getElementById("ai-reply-template");
+const aiSettingsResult = document.getElementById("ai-settings-result");
+const commentForm = { addEventListener() {} };
+const commentInput = { value: "" };
+const commentResult = { textContent: "", innerHTML: "", classList: { add() {}, remove() {} } };
+const viewerForm = { addEventListener() {} };
+const viewerResult = { textContent: "", innerHTML: "", classList: { add() {}, remove() {} } };
+const accountASelect = { innerHTML: "", value: "" };
+const accountBSelect = { innerHTML: "", value: "" };
 const menuCards = document.querySelectorAll(".menu-card");
 const tabPanels = document.querySelectorAll(".tab-panel");
 const topbarStatus = document.querySelector(".topbar-status");
@@ -104,6 +108,7 @@ let currentAllAccounts = [];
 let currentProducts = [];
 let currentSuppliers = [];
 let currentOffers = [];
+let currentAiSettings = null;
 
 function applyDemoCredentials(email, password) {
   loginEmail.value = email;
@@ -401,6 +406,7 @@ function resetDashboardState() {
   currentProducts = [];
   currentSuppliers = [];
   currentOffers = [];
+  currentAiSettings = null;
   livestreamAccounts = [];
   staffCredentialFlashMessage = "";
   accountManagementFlashMessage = "";
@@ -459,6 +465,10 @@ function resetDashboardState() {
   assignmentSearchInput.value = "";
   assignmentAccountSelect.innerHTML = "";
   assignmentProductSelect.innerHTML = "";
+  aiEnabledInput.checked = false;
+  aiReplyTemplateInput.value = "";
+  aiSettingsResult.classList.add("muted");
+  aiSettingsResult.textContent = "Đăng nhập bằng admin để xem và cập nhật cấu hình AI.";
   sessionCard.classList.add("muted");
   sessionCard.textContent = "Phiên làm việc chưa được khởi tạo.";
   accountASelect.innerHTML = "";
@@ -1143,14 +1153,6 @@ function renderProductAssignments(assignments) {
   productAssignmentResult.innerHTML = `${flashNote}<div class="account-cards">${[...grouped.entries()].map(([accountId, group]) => `<article class="account-table-card"><h3>${escapeHtml(group.account_name)}</h3><p>${escapeHtml(group.platform_display_name)} | ${group.items.length} sản phẩm được gán</p><div class="offer-grid">${group.items.map((assignment) => `<article class="offer-card product-assignment-card" data-assignment-id="${escapeHtml(assignment.assignment_id)}"><h3>${escapeHtml(assignment.product_name)}</h3><p>${escapeHtml(assignment.product_category)} | ${escapeHtml(assignment.product_sku)}</p><div class="offer-meta"><span>Mã cấu hình: ${escapeHtml(assignment.assignment_id)}</span><span>Người gán: ${escapeHtml(assignment.assigned_by_name || "Chưa ghi nhận")}</span><span>Thời điểm: ${escapeHtml(assignment.assigned_at)}</span></div>${canManageCatalog() ? `<button type="button" class="ghost-btn danger-btn assignment-delete-btn">Gỡ sản phẩm khỏi room</button>` : ""}</article>`).join("")}</div></article>`).join("")}</div>`;
 }
 
-function fillAccountSelectors(accounts) {
-  const options = accounts.map((account) => `<option value="${account.account_id}">${account.name} (${account.platform_display_name} - ${account.owner_name})</option>`).join("");
-  accountASelect.innerHTML = options;
-  accountBSelect.innerHTML = options;
-  if (accounts[0]) accountASelect.value = accounts[0].account_id;
-  if (accounts[1]) accountBSelect.value = accounts[1].account_id;
-}
-
 function fillAssignmentSelectors(accounts, products) {
   const accountOptions = [...accounts]
     .sort((left, right) => left.name.localeCompare(right.name, "vi"))
@@ -1168,9 +1170,23 @@ function fillAssignmentSelectors(accounts, products) {
   if (products[0]) assignmentProductSelect.value = products[0].product_id;
 }
 
-function renderCommentResult(data) {
-  commentResult.classList.remove("muted");
-  commentResult.innerHTML = `<strong>Intent:</strong> ${data.intent}<br /><strong>Sentiment:</strong> ${data.sentiment}<br /><strong>Lead score:</strong> ${data.lead_score}<br /><strong>Priority:</strong> ${data.priority}<br /><strong>Suggested action:</strong> ${data.suggested_action}<ul class="result-list">${data.reasons.map((reason) => `<li>${reason}</li>`).join("")}</ul>`;
+function renderAiAssistantSettings(settings, message = "") {
+  if (!settings) {
+    aiEnabledInput.checked = false;
+    aiReplyTemplateInput.value = "";
+    aiSettingsResult.classList.add("muted");
+    aiSettingsResult.textContent = "Đăng nhập bằng admin để xem và cập nhật cấu hình AI.";
+    return;
+  }
+
+  aiEnabledInput.checked = Boolean(settings.is_enabled);
+  aiReplyTemplateInput.value = settings.customer_reply_template || "";
+  aiSettingsResult.classList.remove("muted");
+  aiSettingsResult.innerHTML = [
+    message ? `<strong>${escapeHtml(message)}</strong>` : "",
+    `<span>Trạng thái: ${settings.is_enabled ? "Đang bật" : "Đang tắt"}</span>`,
+    `<span>Cập nhật lúc: ${escapeHtml(settings.updated_at || "Chưa có dữ liệu")}</span>`,
+  ].filter(Boolean).join("<br />");
 }
 
 function renderViewerResult(data) {
@@ -1200,7 +1216,6 @@ function renderDashboardViews() {
     renderManagedAccounts(currentAllAccounts, allAssignmentsByAccount);
     renderStaffCredentials(currentUsers);
     renderSuppliers(currentSuppliers);
-    fillAccountSelectors(currentAllAccounts);
   } else if (isProductManagerSession()) {
     renderSuppliers(currentSuppliers);
   } else {
@@ -1215,6 +1230,18 @@ function renderDashboardViews() {
   renderProducts(visibleProducts, visibleAssignments);
   renderOffers(visibleOffers);
   renderProductAssignments(visibleAssignments);
+  renderAiAssistantSettings(currentAiSettings);
+}
+
+async function loadAiAssistantSettings() {
+  if (!currentSession || !isAdminSession()) {
+    currentAiSettings = null;
+    renderAiAssistantSettings(null);
+    return;
+  }
+
+  currentAiSettings = await fetchJson("/api/v1/ai-assistant/settings");
+  renderAiAssistantSettings(currentAiSettings);
 }
 
 async function loadDashboardData() {
@@ -1231,6 +1258,7 @@ async function loadDashboardData() {
   currentOffers = overview.supplier_offers || [];
   currentAssignments = overview.livestream_product_assignments || [];
   renderDashboardViews();
+  await loadAiAssistantSettings();
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -1464,6 +1492,31 @@ supplierCreateForm.addEventListener("submit", async (event) => {
 assignmentCreateForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await handleProductAssignmentCreate();
+});
+
+aiSettingsForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!isAdminSession()) {
+    renderAiAssistantSettings(currentAiSettings, "Chỉ admin mới được cập nhật cấu hình AI.");
+    return;
+  }
+
+  aiSettingsResult.classList.remove("muted");
+  aiSettingsResult.textContent = "Đang lưu cấu hình AI...";
+  try {
+    currentAiSettings = await fetchJson("/api/v1/ai-assistant/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        is_enabled: aiEnabledInput.checked,
+        customer_reply_template: aiReplyTemplateInput.value.trim(),
+      }),
+    });
+    renderAiAssistantSettings(currentAiSettings, "Đã cập nhật cấu hình AI.");
+  } catch (error) {
+    aiSettingsResult.classList.remove("muted");
+    aiSettingsResult.textContent = extractErrorMessage(error, "Không thể lưu cấu hình AI.");
+  }
 });
 
 commentForm.addEventListener("submit", async (event) => {

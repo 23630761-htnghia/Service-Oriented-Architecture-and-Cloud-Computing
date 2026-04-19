@@ -166,6 +166,16 @@ async def list_customers():
     return await forward_get(settings.account_service_url, "/customers")
 
 
+@app.get("/api/v1/ai-assistant/settings")
+async def get_ai_assistant_settings():
+    return await forward_get(settings.account_service_url, "/ai-assistant/settings")
+
+
+@app.patch("/api/v1/ai-assistant/settings")
+async def update_ai_assistant_settings(payload: dict):
+    return await forward_patch(settings.account_service_url, "/ai-assistant/settings", payload)
+
+
 @app.post("/api/v1/customers/register")
 async def register_customer(payload: dict):
     return await forward_post(settings.account_service_url, "/customers/register", payload)
@@ -247,6 +257,16 @@ async def delete_user(user_id: str):
 @app.get("/api/v1/livestream-accounts")
 async def list_livestream_accounts():
     return await forward_get(settings.livestream_service_url, "/livestream-accounts")
+
+
+@app.post("/api/v1/livestream-accounts/{account_id}/presence/heartbeat")
+async def upsert_livestream_presence(account_id: str, payload: dict):
+    return await forward_post(settings.livestream_service_url, f"/livestream-accounts/{account_id}/presence/heartbeat", payload)
+
+
+@app.delete("/api/v1/livestream-accounts/{account_id}/presence/{viewer_id}")
+async def remove_livestream_presence(account_id: str, viewer_id: str):
+    return await forward_delete(settings.livestream_service_url, f"/livestream-accounts/{account_id}/presence/{viewer_id}")
 
 
 @app.get("/api/v1/livestream-accounts/grouped")

@@ -380,26 +380,21 @@
         </section>
 
         <section id="tab-ai-tools" class="tab-panel hidden">
-          <div class="content-grid two-wide">
+          <div class="content-grid">
             <section class="panel">
-              <div class="panel-header"><h2>AI phân tích comment</h2><p>Ưu tiên lead, đo sentiment và gợi ý hành động cho CSKH livestream.</p></div>
-              <form id="comment-form" class="stack">
-                <label>Nội dung comment<textarea id="comment-input" rows="5" placeholder="Ví dụ: Shop ơi cho mình chốt 2 serum giao về quận 7 nhé"></textarea></label>
-                <button type="submit" class="primary-btn">Phân tích comment</button>
+              <div class="panel-header"><h2>Trợ lý AI cho khách hàng</h2><p>Admin chỉ cần bật hoặc tắt AI, đồng thời chỉnh lại mẫu tin nhắn mà AI dùng để mở hội thoại với khách trong phiên live.</p></div>
+              <form id="ai-settings-form" class="stack">
+                <label class="toggle-field">
+                  <span>Bật trợ lý AI</span>
+                  <input id="ai-enabled" type="checkbox" />
+                </label>
+                <label>Mẫu trả lời AI cho khách hàng
+                  <textarea id="ai-reply-template" rows="7" placeholder="Ví dụ: Chào {customer_name}, shop đã nhận được quan tâm của bạn và sẽ hỗ trợ ngay."></textarea>
+                </label>
+                <div class="muted">Biến hỗ trợ: <code>{customer_name}</code></div>
+                <button type="submit" class="primary-btn">Lưu cấu hình AI</button>
               </form>
-              <div id="comment-result" class="result-card muted">Kết quả phân tích sẽ xuất hiện tại đây sau khi đăng nhập.</div>
-            </section>
-            <section class="panel">
-              <div class="panel-header"><h2>AI cân bằng viewer</h2><p>Điều phối lượt xem về room phù hợp để giảm rủi ro lag khi traffic tăng đột biến.</p></div>
-              <form id="viewer-form" class="stack">
-                <label>Viewer mới dự kiến<input id="incoming-viewers" type="number" min="0" value="450" /></label>
-                <div class="account-grid selectors">
-                  <label>Phòng live A<select id="account-a-select"></select></label>
-                  <label>Phòng live B<select id="account-b-select"></select></label>
-                </div>
-                <button type="submit" class="primary-btn">Tính cân bằng viewer</button>
-              </form>
-              <div id="viewer-result" class="result-card muted">Đề xuất phân bổ viewer sẽ hiển thị tại đây sau khi đăng nhập.</div>
+              <div id="ai-settings-result" class="result-card muted">Đăng nhập bằng admin để xem và cập nhật cấu hình AI.</div>
             </section>
           </div>
         </section>

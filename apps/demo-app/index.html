@@ -11,23 +11,23 @@
     <section id="login-screen" class="login-screen">
       <div class="hero-card">
         <p class="eyebrow">Demo Livestream App</p>
-        <h1>App demo livestream tách riêng để trình bày cả phía nhân viên live và khách hàng.</h1>
+        <h1>App demo livestream để trình bày rõ luồng nhân viên bán hàng và khách hàng.</h1>
         <p class="hero-copy">
-          SmartLive vẫn là nơi quản lý nghiệp vụ và các tính năng thông minh. App demo này mô phỏng buổi live
-          thực tế với camera, micro, bình luận, tìm kiếm, gợi ý nội dung và nhắn tin giữa shop với khách.
+          SmartLive vẫn là nơi quản lý nghiệp vụ và dữ liệu thật. App demo này mô phỏng buổi live với video,
+          bình luận, giỏ hàng, sản phẩm đang ghim và hội thoại giữa shop với khách hàng.
         </p>
         <div class="hero-points">
           <article>
             <strong>Nhân viên live</strong>
-            <span>Bắt đầu, kết thúc live, xem bình luận hiện tại và chặn khách ngay trong phiên.</span>
+            <span>Bắt đầu live, ghim sản phẩm, theo dõi bình luận và trả lời khách ngay trong phiên.</span>
           </article>
           <article>
             <strong>Khách hàng</strong>
-            <span>Tìm phiên live, tìm sản phẩm, nhận gợi ý liên quan và tham gia bình luận.</span>
+            <span>Xem room đang live, thêm sản phẩm vào giỏ hàng, bình luận và nhắn tin với shop.</span>
           </article>
           <article>
-            <strong>Nhắn tin có hỗ trợ AI</strong>
-            <span>Khách có nhu cầu mua sẽ được hệ thống chủ động mở đầu hội thoại để nhân viên tiếp tục trả lời.</span>
+            <strong>AI hỗ trợ</strong>
+            <span>Khi khách để lại bình luận quan tâm, AI có thể chủ động mở đầu hội thoại để nhân viên tiếp tục trả lời.</span>
           </article>
         </div>
       </div>
@@ -50,64 +50,64 @@
         </form>
 
         <div class="demo-account-list">
-          <button type="button" class="demo-account-btn" data-email="product.manager@smartlive.vn" data-password="pm001">
-            <strong>Quản lý sản phẩm</strong>
-            <span>product.manager@smartlive.vn</span>
-            <small>Quản lý danh mục sản phẩm, tồn kho và gán sản phẩm vào các phiên live trước khi bán</small>
-          </button>
           <button type="button" class="demo-account-btn" data-email="staff@smartlive.vn" data-password="staff01">
-            <strong>Nhân viên live 1</strong>
+            <strong>Nhân viên bán hàng</strong>
             <span>staff@smartlive.vn</span>
-            <small>Được admin cấp tài khoản, có quyền điều khiển phiên live và ghim sản phẩm</small>
-          </button>
-          <button type="button" class="demo-account-btn" data-email="staff02@smartlive.vn" data-password="staff02">
-            <strong>Nhân viên live 2</strong>
-            <span>staff02@smartlive.vn</span>
-            <small>Được admin cấp tài khoản, có thể thay phiên và xử lý khách đang live</small>
+            <small>Được admin cấp tài khoản, có quyền điều khiển phiên live, ghim sản phẩm và trả lời khách.</small>
           </button>
           <button type="button" class="demo-account-btn" data-email="0901234567" data-password="123456">
-            <strong>Khách hàng 1</strong>
+            <strong>Khách hàng demo 1</strong>
             <span>0901234567</span>
-            <small>Đăng nhập bằng số điện thoại, có giỏ hàng và có thể mua trong live</small>
+            <small>Đăng nhập bằng số điện thoại, có giỏ hàng, bình luận và mua trực tiếp trong live.</small>
           </button>
           <button type="button" class="demo-account-btn" data-email="0912345678" data-password="123456">
-            <strong>Khách hàng 2</strong>
+            <strong>Khách hàng demo 2</strong>
             <span>0912345678</span>
-            <small>Khách demo thứ hai để test bình luận, nhắn tin và mua hàng</small>
+            <small>Dùng để kiểm thử thêm giỏ hàng, bình luận và hội thoại trong cùng một buổi live.</small>
           </button>
         </div>
 
         <div id="login-result" class="message-box muted">Trạng thái đăng nhập sẽ hiển thị tại đây.</div>
 
-        <div class="section-head section-gap">
-          <p class="eyebrow">Đăng ký khách hàng</p>
-          <h3>Khách hàng tự tạo tài khoản</h3>
-          <p class="muted">Số điện thoại là khóa chính. Khách phải từ 18 tuổi trở lên mới được tạo tài khoản.</p>
+        <div class="register-entry">
+          <button id="open-register-btn" type="button" class="ghost-btn">Tạo tài khoản khách hàng mới</button>
+          <p class="muted">Khách hàng tự bấm để mở form đăng ký. Số điện thoại là khóa chính và người đăng ký phải từ 18 tuổi trở lên.</p>
         </div>
 
-        <form id="register-form" class="stack">
-          <label>Số điện thoại
-            <input id="register-phone" type="tel" placeholder="Nhập số điện thoại 10 số" autocomplete="tel" />
-          </label>
-          <label>Họ và tên
-            <input id="register-full-name" type="text" placeholder="Nguyễn Văn A" autocomplete="name" />
-          </label>
-          <label>Email
-            <input id="register-email" type="email" placeholder="ban@email.com" autocomplete="email" />
-          </label>
-          <label>Địa điểm giao hàng
-            <input id="register-location" type="text" placeholder="Quận 7, TP.HCM" autocomplete="street-address" />
-          </label>
-          <label>Năm sinh
-            <input id="register-birth-year" type="number" min="1900" max="2026" placeholder="2000" />
-          </label>
-          <label>Mật khẩu
-            <input id="register-password" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" />
-          </label>
-          <button type="submit" class="primary-btn">Tạo tài khoản khách hàng</button>
-        </form>
+        <section id="register-panel" class="register-panel hidden">
+          <div class="section-head section-gap">
+            <p class="eyebrow">Đăng ký khách hàng</p>
+            <h3>Tạo tài khoản mới</h3>
+            <p class="muted">Sau khi tạo thành công, app sẽ tự đăng nhập bằng tài khoản khách hàng vừa đăng ký.</p>
+          </div>
 
-        <div id="register-result" class="message-box muted">Thông tin đăng ký khách hàng sẽ hiển thị tại đây.</div>
+          <form id="register-form" class="stack">
+            <label>Số điện thoại
+              <input id="register-phone" type="tel" placeholder="Nhập số điện thoại 10 số" autocomplete="tel" />
+            </label>
+            <label>Họ và tên
+              <input id="register-full-name" type="text" placeholder="Nguyễn Văn A" autocomplete="name" />
+            </label>
+            <label>Email
+              <input id="register-email" type="email" placeholder="ban@email.com" autocomplete="email" />
+            </label>
+            <label>Địa điểm giao hàng
+              <input id="register-location" type="text" placeholder="Quận 7, TP.HCM" autocomplete="street-address" />
+            </label>
+            <label>Năm sinh
+              <input id="register-birth-year" type="number" min="1900" max="2026" placeholder="2000" />
+            </label>
+            <label>Mật khẩu
+              <input id="register-password" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" />
+            </label>
+            <div class="inline-actions">
+              <button type="submit" class="primary-btn">Tạo tài khoản khách hàng</button>
+              <button id="close-register-btn" type="button" class="ghost-btn">Đóng form</button>
+            </div>
+          </form>
+
+          <div id="register-result" class="message-box muted">Thông tin đăng ký khách hàng sẽ hiển thị tại đây.</div>
+        </section>
       </div>
     </section>
 
@@ -137,6 +137,15 @@
           </div>
 
           <div class="live-room-layout">
+            <aside class="panel side-panel session-sidebar">
+              <div class="section-head">
+                <p class="eyebrow">Thông tin phiên live</p>
+                <h3>Session đang chọn</h3>
+              </div>
+              <div id="session-card" class="session-card"></div>
+              <div id="pinned-product-card" class="pinned-product-card"></div>
+            </aside>
+
             <div class="video-stage">
               <div class="video-frame">
                 <video id="live-preview" autoplay playsinline muted></video>
@@ -153,7 +162,7 @@
                 </article>
                 <article class="metric-card">
                   <span>Viewer</span>
-                  <strong id="metric-viewers">128</strong>
+                  <strong id="metric-viewers">0</strong>
                 </article>
                 <article class="metric-card">
                   <span>Bình luận</span>
@@ -166,13 +175,24 @@
               </div>
             </div>
 
-            <aside class="panel side-panel">
+            <aside class="panel live-comment-panel">
               <div class="section-head">
-                <p class="eyebrow">Thông tin phòng live</p>
-                <h3>Session đang chọn</h3>
+                <p class="eyebrow">Bình luận trong live</p>
+                <h3>Bình luận hiện tại của phòng live</h3>
               </div>
-              <div id="session-card" class="session-card"></div>
-              <div id="pinned-product-card" class="pinned-product-card"></div>
+
+              <form id="comment-form" class="stack">
+                <label>Sản phẩm đang quan tâm
+                  <select id="comment-product-select"></select>
+                </label>
+                <label>Nội dung bình luận
+                  <textarea id="comment-input" rows="4" placeholder="Ví dụ: Shop ơi em muốn chốt 2 serum tối nay."></textarea>
+                </label>
+                <button type="submit" class="primary-btn">Gửi bình luận</button>
+              </form>
+
+              <div id="comment-result" class="message-box muted">Bình luận mới sẽ hiển thị ngay trong feed của phiên live.</div>
+              <div id="comment-list" class="comment-list live-comment-list"></div>
             </aside>
           </div>
         </section>
@@ -320,52 +340,47 @@
           </div>
         </section>
 
-        <section class="panel">
-          <div class="section-head">
-            <p class="eyebrow">Bình luận trong live</p>
-            <h3>Bình luận hiện tại của phòng live</h3>
-          </div>
-
-          <form id="comment-form" class="stack">
-            <label>Sản phẩm đang quan tâm
-              <select id="comment-product-select"></select>
-            </label>
-            <label>Nội dung bình luận
-              <textarea id="comment-input" rows="4" placeholder="Ví dụ: Shop ơi em muốn chốt 2 serum tối nay."></textarea>
-            </label>
-            <button type="submit" class="primary-btn">Gửi bình luận</button>
-          </form>
-
-          <div id="comment-result" class="message-box muted">Bình luận mới sẽ hiển thị ngay trong feed của phiên live.</div>
-          <div id="comment-list" class="comment-list"></div>
-        </section>
-
-        <section class="panel">
+        <section class="panel message-summary-panel">
           <div class="section-head">
             <p class="eyebrow">Tin nhắn</p>
             <h3>Hội thoại giữa shop và khách hàng</h3>
             <p class="muted">AI hỗ trợ nhận diện khách có ý định mua và tự động mở đầu hội thoại một lần trong mỗi phiên live.</p>
           </div>
-
-          <div class="message-layout">
-            <div id="conversation-list" class="conversation-list"></div>
-
-            <div class="message-thread-panel">
-              <div id="thread-header" class="thread-header"></div>
-              <div id="message-thread" class="message-thread"></div>
-
-              <form id="message-form" class="stack">
-                <label>Nội dung tin nhắn
-                  <textarea id="message-input" rows="3" placeholder="Nhập tin nhắn với khách hàng hoặc shop..."></textarea>
-                </label>
-                <button type="submit" class="primary-btn">Gửi tin nhắn</button>
-              </form>
-
-              <div id="message-result" class="message-box muted">Tin nhắn sẽ hiển thị và đồng bộ ngay trong app demo.</div>
-            </div>
+          <div class="message-summary-actions">
+            <button id="open-chat-btn" type="button" class="primary-btn">Mở giao diện trò chuyện</button>
           </div>
         </section>
       </main>
+    </section>
+  </div>
+
+  <div id="chat-modal" class="chat-modal hidden">
+    <section class="chat-modal-card">
+      <div class="chat-modal-head">
+        <div>
+          <p class="eyebrow">Tin nhắn</p>
+          <h3>Giao diện trò chuyện riêng</h3>
+        </div>
+        <button id="close-chat-btn" type="button" class="ghost-btn">Đóng</button>
+      </div>
+
+      <div class="message-layout">
+        <div id="conversation-list" class="conversation-list"></div>
+
+        <div class="message-thread-panel">
+          <div id="thread-header" class="thread-header"></div>
+          <div id="message-thread" class="message-thread"></div>
+
+          <form id="message-form" class="stack">
+            <label>Nội dung tin nhắn
+              <textarea id="message-input" rows="3" placeholder="Nhập tin nhắn với khách hàng hoặc shop..."></textarea>
+            </label>
+            <button type="submit" class="primary-btn">Gửi tin nhắn</button>
+          </form>
+
+          <div id="message-result" class="message-box muted">Tin nhắn sẽ hiển thị và đồng bộ ngay trong app demo.</div>
+        </div>
+      </div>
     </section>
   </div>
 

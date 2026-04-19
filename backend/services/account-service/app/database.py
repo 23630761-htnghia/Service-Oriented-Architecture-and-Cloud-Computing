@@ -306,6 +306,13 @@ CREATE TABLE IF NOT EXISTS conversation_messages (
 
 CREATE INDEX IF NOT EXISTS idx_conversation_messages_account_customer_created
 ON conversation_messages(account_id, customer_id, created_at);
+
+CREATE TABLE IF NOT EXISTS ai_assistant_settings (
+    settings_id TEXT PRIMARY KEY,
+    is_enabled INTEGER NOT NULL DEFAULT 1,
+    customer_reply_template TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
 
 
@@ -448,12 +455,102 @@ def ensure_schema_migrations(connection: sqlite3.Connection) -> None:
     if "last_heartbeat_at" not in livestream_columns:
         connection.execute("ALTER TABLE livestream_accounts ADD COLUMN last_heartbeat_at TEXT")
 
+    ai_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(ai_assistant_settings)").fetchall()
+    }
+    if ai_columns and "updated_at" not in ai_columns:
+        connection.execute("ALTER TABLE ai_assistant_settings ADD COLUMN updated_at TEXT")
+
+
+def ensure_default_ai_settings(connection: sqlite3.Connection) -> None:
+    existing = connection.execute(
+        "SELECT settings_id FROM ai_assistant_settings WHERE settings_id = 'default'"
+    ).fetchone()
+    if existing:
+        return
+    updated_at = connection.execute("SELECT datetime('now')").fetchone()[0]
+    connection.execute(
+        """
+        INSERT INTO ai_assistant_settings (
+            settings_id,
+            is_enabled,
+            customer_reply_template,
+            updated_at
+        ) VALUES (?, ?, ?, ?)
+        """,
+        (
+            "default",
+            1,
+            "Chào {customer_name}, SmartLive thấy bạn đang quan tâm sản phẩm trong phiên live. Shop đã mở hội thoại để nhân viên hỗ trợ bạn nhanh hơn.",
+            updated_at,
+        ),
+    )
+
+
+def ensure_default_demo_customers(connection: sqlite3.Connection) -> None:
+    demo_customers = [
+        {
+            "customer_id": "customer-0901234567",
+            "phone": "0901234567",
+            "email": "khach1@smartlive.vn",
+            "password": "123456",
+            "full_name": "Nguyễn Thị An",
+            "shipping_address": "Quận 7, TP.HCM",
+            "birth_year": 1998,
+        },
+        {
+            "customer_id": "customer-0912345678",
+            "phone": "0912345678",
+            "email": "khach2@smartlive.vn",
+            "password": "123456",
+            "full_name": "Trần Minh Khoa",
+            "shipping_address": "Thủ Đức, TP.HCM",
+            "birth_year": 1996,
+        },
+    ]
+    for customer in demo_customers:
+        existing = connection.execute(
+            "SELECT customer_id FROM customers WHERE customer_id = ? OR phone = ? OR email = ?",
+            (customer["customer_id"], customer["phone"], customer["email"]),
+        ).fetchone()
+        if existing:
+            continue
+        connection.execute(
+            """
+            INSERT INTO customers (
+                customer_id,
+                phone,
+                email,
+                password,
+                full_name,
+                shipping_address,
+                birth_year,
+                status,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                customer["customer_id"],
+                customer["phone"],
+                customer["email"],
+                customer["password"],
+                customer["full_name"],
+                customer["shipping_address"],
+                customer["birth_year"],
+                "active",
+                connection.execute("SELECT datetime('now')").fetchone()[0],
+            ),
+        )
+
 
 def initialize_database() -> None:
     with get_connection() as connection:
         existing_tables = get_existing_tables(connection)
         connection.executescript(SCHEMA_SQL)
         ensure_schema_migrations(connection)
+        ensure_default_ai_settings(connection)
+        ensure_default_demo_customers(connection)
         if not existing_tables.intersection(TABLE_LOAD_ORDER):
             for table in TABLE_LOAD_ORDER:
                 insert_records(connection, table, load_json_records(table))

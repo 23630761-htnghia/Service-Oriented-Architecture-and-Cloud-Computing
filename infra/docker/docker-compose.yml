@@ -109,3 +109,12 @@ services:
       - api-gateway
     ports:
       - "3000:3000"
+
+  demo-app:
+    build:
+      context: ../../apps/demo-app
+    container_name: livestream-demo-app
+    depends_on:
+      - api-gateway
+    ports:
+      - "3010:3010"

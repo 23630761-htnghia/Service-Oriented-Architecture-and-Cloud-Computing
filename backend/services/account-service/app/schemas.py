@@ -199,3 +199,15 @@ class LivestreamMessage(BaseModel):
     content: str = Field(..., min_length=1)
     source: str = Field(..., min_length=1)
     created_at: str = Field(..., min_length=1)
+
+
+class AiAssistantSettings(BaseModel):
+    settings_id: str = Field(..., min_length=1)
+    is_enabled: bool
+    customer_reply_template: str = Field(..., min_length=1, max_length=2000)
+    updated_at: str = Field(..., min_length=1)
+
+
+class AiAssistantSettingsUpdate(BaseModel):
+    is_enabled: bool
+    customer_reply_template: str = Field(..., min_length=1, max_length=2000)

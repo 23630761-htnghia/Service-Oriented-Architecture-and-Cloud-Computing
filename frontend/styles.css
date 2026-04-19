@@ -37,6 +37,8 @@ body.auth-locked #auth-screen { display: grid !important; }
 .auth-header p, .auth-kicker, .inline-note, .demo-credentials small, .panel-header p, .topbar-subtitle, .status-pill span, .profile-chip span, label, .muted, .table-subline, .supplier-meta, .offer-meta, .product-meta { color: var(--muted); }
 .auth-kicker { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .stack { display: grid; gap: 16px; }
+.toggle-field { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 18px; background: rgba(247, 251, 255, 0.9); }
+.toggle-field input[type="checkbox"] { width: 20px; height: 20px; margin: 0; }
 label { display: grid; gap: 8px; font-size: 14px; font-weight: 600; }
 input, select, textarea, button { font: inherit; }
 input, select, textarea { width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.98); color: var(--ink); }

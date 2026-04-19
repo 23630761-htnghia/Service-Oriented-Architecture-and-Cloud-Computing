@@ -67,6 +67,14 @@ class LivestreamPresenceHeartbeat(BaseModel):
     is_live: bool = False
 
 
+class LivestreamPresenceState(BaseModel):
+    account_id: str = Field(..., min_length=1)
+    current_viewers: int = Field(..., ge=0)
+    broadcast_status: str = Field(..., min_length=1)
+    live_started_at: str | None = None
+    last_heartbeat_at: str | None = None
+
+
 class LivestreamPresenceDeleteResponse(BaseModel):
     account_id: str = Field(..., min_length=1)
     viewer_id: str = Field(..., min_length=1)

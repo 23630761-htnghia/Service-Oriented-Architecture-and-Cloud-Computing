@@ -16,6 +16,9 @@ from app.schemas import (
     LivestreamAccount,
     LivestreamAccountCreate,
     LivestreamAccountDeleteResponse,
+    LivestreamPresenceDeleteResponse,
+    LivestreamPresenceHeartbeat,
+    LivestreamPresenceState,
     LivestreamProductAssignment,
     LivestreamProductAssignmentCreate,
     LivestreamProductAssignmentDeleteResponse,
@@ -96,14 +99,44 @@ def list_livestream_accounts_data(platform: str | None = None) -> list[Livestrea
             u.email AS owner_email,
             u.password AS owner_password,
             la.backup_contact,
-            la.current_viewers,
+            (
+                SELECT COUNT(*)
+                FROM livestream_viewer_presence lvp
+                WHERE lvp.account_id = la.account_id
+                  AND lvp.last_seen_at >= datetime('now', '-15 seconds')
+            ) AS current_viewers,
             la.max_capacity,
             la.engagement_rate,
             la.lag_signal,
             la.status,
-            la.broadcast_status,
-            la.live_started_at,
-            la.last_heartbeat_at,
+            CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM livestream_viewer_presence host_presence
+                    WHERE host_presence.account_id = la.account_id
+                      AND host_presence.is_host = 1
+                      AND host_presence.is_live = 1
+                      AND host_presence.last_seen_at >= datetime('now', '-15 seconds')
+                ) THEN 'live'
+                ELSE 'offline'
+            END AS broadcast_status,
+            CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM livestream_viewer_presence host_presence
+                    WHERE host_presence.account_id = la.account_id
+                      AND host_presence.is_host = 1
+                      AND host_presence.is_live = 1
+                      AND host_presence.last_seen_at >= datetime('now', '-15 seconds')
+                ) THEN la.live_started_at
+                ELSE NULL
+            END AS live_started_at,
+            (
+                SELECT MAX(lvp.last_seen_at)
+                FROM livestream_viewer_presence lvp
+                WHERE lvp.account_id = la.account_id
+                  AND lvp.last_seen_at >= datetime('now', '-15 seconds')
+            ) AS last_heartbeat_at,
             la.stream_url,
             la.warehouse_location,
             la.shift_label,
@@ -119,6 +152,163 @@ def list_livestream_accounts_data(platform: str | None = None) -> list[Livestrea
     query += " ORDER BY la.platform_code ASC, la.name ASC"
     rows = fetch_all(query, params)
     return [LivestreamAccount(**row) for row in rows]
+
+
+def get_account_presence_state(connection, account_id: str) -> LivestreamPresenceState:
+    account = connection.execute(
+        """
+        SELECT account_id, broadcast_status, live_started_at, last_heartbeat_at
+        FROM livestream_accounts
+        WHERE account_id = ?
+        """,
+        (account_id,),
+    ).fetchone()
+    if not account:
+        raise HTTPException(status_code=404, detail="Không tìm thấy phòng livestream trong hệ thống.")
+
+    current_viewers = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM livestream_viewer_presence
+        WHERE account_id = ?
+          AND last_seen_at >= datetime('now', '-15 seconds')
+        """,
+        (account_id,),
+    ).fetchone()[0]
+
+    has_live_host = connection.execute(
+        """
+        SELECT 1
+        FROM livestream_viewer_presence
+        WHERE account_id = ?
+          AND is_host = 1
+          AND is_live = 1
+          AND last_seen_at >= datetime('now', '-15 seconds')
+        LIMIT 1
+        """,
+        (account_id,),
+    ).fetchone()
+    broadcast_status = "live" if has_live_host else "offline"
+    live_started_at = account["live_started_at"] if has_live_host else None
+    last_heartbeat_at = account["last_heartbeat_at"] if current_viewers else None
+
+    connection.execute(
+        """
+        UPDATE livestream_accounts
+        SET current_viewers = ?, broadcast_status = ?, live_started_at = ?, last_heartbeat_at = ?
+        WHERE account_id = ?
+        """,
+        (current_viewers, broadcast_status, live_started_at, last_heartbeat_at, account_id),
+    )
+    return LivestreamPresenceState(
+        account_id=account_id,
+        current_viewers=current_viewers,
+        broadcast_status=broadcast_status,
+        live_started_at=live_started_at,
+        last_heartbeat_at=last_heartbeat_at,
+    )
+
+
+def heartbeat_livestream_presence(account_id: str, payload: LivestreamPresenceHeartbeat) -> LivestreamPresenceState:
+    get_livestream_account_basic_record(account_id)
+    with get_connection() as connection:
+        timestamp = get_current_timestamp(connection)
+        existing = connection.execute(
+            """
+            SELECT presence_id
+            FROM livestream_viewer_presence
+            WHERE account_id = ? AND viewer_id = ?
+            """,
+            (account_id, payload.viewer_id),
+        ).fetchone()
+        if existing:
+            connection.execute(
+                """
+                UPDATE livestream_viewer_presence
+                SET viewer_role = ?, viewer_name = ?, is_host = ?, is_live = ?, last_seen_at = ?
+                WHERE account_id = ? AND viewer_id = ?
+                """,
+                (
+                    payload.viewer_role.strip().lower(),
+                    payload.viewer_name.strip(),
+                    int(payload.is_host),
+                    int(payload.is_live),
+                    timestamp,
+                    account_id,
+                    payload.viewer_id,
+                ),
+            )
+        else:
+            connection.execute(
+                """
+                INSERT INTO livestream_viewer_presence (
+                    presence_id,
+                    account_id,
+                    viewer_id,
+                    viewer_role,
+                    viewer_name,
+                    is_host,
+                    is_live,
+                    last_seen_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    f"presence-{account_id}-{payload.viewer_id}",
+                    account_id,
+                    payload.viewer_id,
+                    payload.viewer_role.strip().lower(),
+                    payload.viewer_name.strip(),
+                    int(payload.is_host),
+                    int(payload.is_live),
+                    timestamp,
+                ),
+            )
+
+        if payload.is_host and payload.is_live:
+            current_live_started_at = connection.execute(
+                "SELECT live_started_at FROM livestream_accounts WHERE account_id = ?",
+                (account_id,),
+            ).fetchone()[0]
+            if not current_live_started_at:
+                connection.execute(
+                    """
+                    UPDATE livestream_accounts
+                    SET live_started_at = ?, last_heartbeat_at = ?
+                    WHERE account_id = ?
+                    """,
+                    (timestamp, timestamp, account_id),
+                )
+        else:
+            connection.execute(
+                "UPDATE livestream_accounts SET last_heartbeat_at = ? WHERE account_id = ?",
+                (timestamp, account_id),
+            )
+
+        state = get_account_presence_state(connection, account_id)
+        connection.commit()
+        return state
+
+
+def delete_livestream_presence(account_id: str, viewer_id: str) -> LivestreamPresenceDeleteResponse:
+    get_livestream_account_basic_record(account_id)
+    with get_connection() as connection:
+        deleted = connection.execute(
+            """
+            DELETE FROM livestream_viewer_presence
+            WHERE account_id = ? AND viewer_id = ?
+            """,
+            (account_id, viewer_id),
+        )
+        if deleted.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Không tìm thấy lượt tham gia phiên live cần xóa.")
+        get_account_presence_state(connection, account_id)
+        connection.commit()
+
+    return LivestreamPresenceDeleteResponse(
+        account_id=account_id,
+        viewer_id=viewer_id,
+        message="Đã xóa lượt tham gia khỏi phiên live.",
+    )
 
 
 def get_product_record(product_id: str) -> dict:
@@ -582,6 +772,16 @@ def list_accounts_by_platform(platform: str) -> list[LivestreamAccount]:
     if not filtered_accounts:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản cho nền tảng này.")
     return filtered_accounts
+
+
+@app.post("/livestream-accounts/{account_id}/presence/heartbeat", response_model=LivestreamPresenceState)
+def upsert_livestream_presence(account_id: str, payload: LivestreamPresenceHeartbeat) -> LivestreamPresenceState:
+    return heartbeat_livestream_presence(account_id, payload)
+
+
+@app.delete("/livestream-accounts/{account_id}/presence/{viewer_id}", response_model=LivestreamPresenceDeleteResponse)
+def remove_livestream_presence(account_id: str, viewer_id: str) -> LivestreamPresenceDeleteResponse:
+    return delete_livestream_presence(account_id, viewer_id)
 
 
 @app.get("/livestream-product-assignments", response_model=list[LivestreamProductAssignment])

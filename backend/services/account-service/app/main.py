@@ -10,6 +10,8 @@ from fastapi import FastAPI, HTTPException
 
 from app.database import delete_json_record, get_connection, initialize_database, save_json_record
 from app.schemas import (
+    AiAssistantSettings,
+    AiAssistantSettingsUpdate,
     CartItemCreateRequest,
     CartItemResponse,
     CartMutationResponse,
@@ -943,7 +945,54 @@ def list_livestream_messages_data(account_id: str, customer_id: str | None = Non
     return [LivestreamMessage(**row) for row in rows]
 
 
+def get_ai_assistant_settings_data() -> AiAssistantSettings:
+    row = fetch_one(
+        """
+        SELECT settings_id, is_enabled, customer_reply_template, updated_at
+        FROM ai_assistant_settings
+        WHERE settings_id = 'default'
+        """
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cấu hình AI.")
+    return AiAssistantSettings(
+        settings_id=row["settings_id"],
+        is_enabled=bool(row["is_enabled"]),
+        customer_reply_template=row["customer_reply_template"],
+        updated_at=row["updated_at"],
+    )
+
+
+def update_ai_assistant_settings_data(payload: AiAssistantSettingsUpdate) -> AiAssistantSettings:
+    template = payload.customer_reply_template.strip()
+    if "{customer_name}" not in template:
+        raise HTTPException(status_code=400, detail="Mẫu trả lời AI phải chứa biến {customer_name}.")
+
+    with get_connection() as connection:
+        updated_at = get_current_timestamp(connection)
+        connection.execute(
+            """
+            UPDATE ai_assistant_settings
+            SET is_enabled = ?, customer_reply_template = ?, updated_at = ?
+            WHERE settings_id = 'default'
+            """,
+            (int(payload.is_enabled), template, updated_at),
+        )
+        connection.commit()
+
+    return get_ai_assistant_settings_data()
+
+
 def maybe_create_ai_outreach_message(connection, account_id: str, customer: dict, analysis: dict) -> str | None:
+    settings_row = connection.execute(
+        """
+        SELECT is_enabled, customer_reply_template
+        FROM ai_assistant_settings
+        WHERE settings_id = 'default'
+        """
+    ).fetchone()
+    if settings_row and not bool(settings_row["is_enabled"]):
+        return None
     if not analysis.get("should_auto_message"):
         return None
 
@@ -963,6 +1012,11 @@ def maybe_create_ai_outreach_message(connection, account_id: str, customer: dict
     default_message = (
         f"Chào {customer['full_name']}, SmartLive thấy bạn đang quan tâm sản phẩm trong live. "
         "Shop đã mở hội thoại để nhân viên hỗ trợ bạn chốt đơn nhanh hơn."
+    )
+    generated_ai_message = (
+        settings_row["customer_reply_template"].replace("{customer_name}", customer["full_name"])
+        if settings_row and settings_row["customer_reply_template"]
+        else default_message
     )
     connection.execute(
         """
@@ -985,7 +1039,7 @@ def maybe_create_ai_outreach_message(connection, account_id: str, customer: dict
             "ai-assistant",
             "ai",
             "SmartLive AI",
-            analysis.get("auto_message") or default_message,
+            analysis.get("auto_message") or generated_ai_message,
             "ai",
             get_current_timestamp(connection),
         ),
@@ -1133,6 +1187,16 @@ def demo_login(payload: DemoLoginRequest) -> DemoLoginResponse:
 @app.get("/customers", response_model=list[CustomerProfile])
 def list_customers() -> list[CustomerProfile]:
     return list_customers_data()
+
+
+@app.get("/ai-assistant/settings", response_model=AiAssistantSettings)
+def get_ai_assistant_settings() -> AiAssistantSettings:
+    return get_ai_assistant_settings_data()
+
+
+@app.patch("/ai-assistant/settings", response_model=AiAssistantSettings)
+def update_ai_assistant_settings(payload: AiAssistantSettingsUpdate) -> AiAssistantSettings:
+    return update_ai_assistant_settings_data(payload)
 
 
 @app.post("/customers/register", response_model=CustomerProfile)
