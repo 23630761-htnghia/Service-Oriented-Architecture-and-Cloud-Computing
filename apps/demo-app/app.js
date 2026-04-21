@@ -18,6 +18,7 @@ const registerLocation = document.getElementById("register-location");
 const registerBirthYear = document.getElementById("register-birth-year");
 const registerPassword = document.getElementById("register-password");
 const registerResult = document.getElementById("register-result");
+const openLoginBtn = document.getElementById("open-login-btn");
 const openRegisterBtn = document.getElementById("open-register-btn");
 const closeRegisterBtn = document.getElementById("close-register-btn");
 const registerPanel = document.getElementById("register-panel");
@@ -32,11 +33,15 @@ const currentUserRole = document.getElementById("current-user-role");
 const liveRoomTitle = document.getElementById("live-room-title");
 const liveRoomDescription = document.getElementById("live-room-description");
 const livePreview = document.getElementById("live-preview");
+const remotePreviewFrame = document.getElementById("remote-preview-frame");
 const videoOverlay = document.getElementById("video-overlay");
 const videoOverlayText = document.getElementById("video-overlay-text");
 const liveStatusPill = document.getElementById("live-status-pill");
 const sessionCard = document.getElementById("session-card");
 const pinnedProductCard = document.getElementById("pinned-product-card");
+const customerRoomToolbar = document.getElementById("customer-room-toolbar");
+const customerRoomSearchInput = document.getElementById("customer-room-search-input");
+const customerRoomList = document.getElementById("customer-room-list");
 
 const metricLiveStatus = document.getElementById("metric-live-status");
 const metricViewers = document.getElementById("metric-viewers");
@@ -125,6 +130,11 @@ let isChatModalOpen = false;
 let realtimeRefreshTimer = null;
 let realtimeRefreshInFlight = false;
 let currentPresenceAccountId = null;
+let previewBroadcastTimer = null;
+let lastRemotePreviewPayload = null;
+const previewChannel = typeof BroadcastChannel !== "undefined"
+  ? new BroadcastChannel("smartlive-demo-preview")
+  : null;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -273,6 +283,58 @@ function setProductManagerMessage(message, muted = false) {
   productManagerResult.classList.toggle("muted", muted);
 }
 
+function applyRemotePreview(payload) {
+  lastRemotePreviewPayload = payload;
+  if (!remotePreviewFrame) return;
+  if (!payload?.frame) {
+    remotePreviewFrame.src = "";
+    remotePreviewFrame.classList.add("hidden");
+    return;
+  }
+  remotePreviewFrame.src = payload.frame;
+  remotePreviewFrame.classList.toggle("hidden", currentUser?.role === "staff");
+}
+
+function stopPreviewBroadcast() {
+  if (!previewBroadcastTimer) return;
+  clearInterval(previewBroadcastTimer);
+  previewBroadcastTimer = null;
+}
+
+function publishPreviewFrame(forceClear = false) {
+  if (!selectedAccountId) return;
+  if (
+    forceClear ||
+    !currentUser ||
+    currentUser.role !== "staff" ||
+    !mediaStream ||
+    !cameraEnabled ||
+    !hostLiveEnabled ||
+    !livePreview.videoWidth ||
+    !livePreview.videoHeight
+  ) {
+    previewChannel?.postMessage({ accountId: selectedAccountId, frame: null });
+    localStorage.setItem("smartlive-demo-preview-frame", JSON.stringify({ accountId: selectedAccountId, frame: null, at: Date.now() }));
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = livePreview.videoWidth;
+  canvas.height = livePreview.videoHeight;
+  const context = canvas.getContext("2d");
+  if (!context) return;
+  context.drawImage(livePreview, 0, 0, canvas.width, canvas.height);
+  const frame = canvas.toDataURL("image/jpeg", 0.72);
+  const payload = { accountId: selectedAccountId, frame, at: Date.now() };
+  previewChannel?.postMessage(payload);
+  localStorage.setItem("smartlive-demo-preview-frame", JSON.stringify(payload));
+}
+
+function startPreviewBroadcast() {
+  stopPreviewBroadcast();
+  previewBroadcastTimer = setInterval(() => publishPreviewFrame(false), 900);
+}
+
 function getAllCustomers() {
   return backendState.customers || [];
 }
@@ -307,16 +369,13 @@ function ensureSelectedAccount() {
     selectedAccountId = null;
     return null;
   }
-  if (currentUser?.role === "customer") {
-    const liveAccount = visibleAccounts.find((account) => account.broadcast_status === "live");
-    if (liveAccount && selectedAccountId !== liveAccount.account_id) {
-      selectedAccountId = liveAccount.account_id;
-    }
+  if (selectedAccountId && !visibleAccounts.some((account) => account.account_id === selectedAccountId)) {
+    selectedAccountId = null;
   }
-  if (!visibleAccounts.some((account) => account.account_id === selectedAccountId)) {
+  if (!selectedAccountId && currentUser?.role !== "customer") {
     selectedAccountId = visibleAccounts[0].account_id;
   }
-  return visibleAccounts.find((account) => account.account_id === selectedAccountId) || visibleAccounts[0];
+  return visibleAccounts.find((account) => account.account_id === selectedAccountId) || null;
 }
 
 function getSelectedAccount() {
@@ -513,6 +572,18 @@ function renderLiveSummary() {
     metricViewers.textContent = "0";
     metricComments.textContent = "0";
     metricBlocked.textContent = "0";
+    if (currentUser?.role === "customer") {
+      topbarTitle.textContent = "Chọn phòng live";
+      liveRoomTitle.textContent = "Chọn phòng live để bắt đầu xem";
+      sessionCard.innerHTML = '<p class="muted">Hãy chọn một phòng live ở thanh phía trên để xem camera, sản phẩm ghim và bình luận theo thời gian thực.</p>';
+      pinnedProductCard.innerHTML = '<p class="muted">Chưa có sản phẩm ghim vì bạn chưa chọn phòng live.</p>';
+      metricLiveStatus.textContent = "Chưa chọn";
+      liveStatusPill.textContent = "Chưa chọn";
+      liveStatusPill.className = "status-pill offline";
+      remotePreviewFrame?.classList.add("hidden");
+      videoOverlay.classList.remove("hidden");
+      videoOverlayText.textContent = "Chọn phòng live ở phía trên để xem phiên đang phát và sản phẩm đang ghim.";
+    }
     return;
   }
 
@@ -556,8 +627,17 @@ function renderLiveSummary() {
   metricBlocked.textContent = String(blockedCount);
   liveStatusPill.textContent = account.broadcast_status === "live" ? "Đang live" : "Offline";
   liveStatusPill.className = `status-pill ${account.broadcast_status === "live" ? "live" : "offline"}`;
+  const shouldShowRemotePreview = currentUser?.role === "customer"
+    && lastRemotePreviewPayload?.accountId === account.account_id
+    && Boolean(lastRemotePreviewPayload?.frame);
+  remotePreviewFrame?.classList.toggle("hidden", !shouldShowRemotePreview);
+  if (shouldShowRemotePreview && remotePreviewFrame) {
+    remotePreviewFrame.src = lastRemotePreviewPayload.frame;
+  }
 
   if (mediaStream && cameraEnabled && currentUser?.role === "staff") {
+    videoOverlay.classList.add("hidden");
+  } else if (shouldShowRemotePreview) {
     videoOverlay.classList.add("hidden");
   } else {
     videoOverlay.classList.remove("hidden");
@@ -588,6 +668,12 @@ function renderLiveSummary() {
 function renderProductSelectors() {
   const account = getSelectedAccount();
   const products = account ? getAssignedProducts(account.account_id) : [];
+  if (!products.length || !account) {
+    commentProductSelect.innerHTML = '<option value="">Chưa có sản phẩm nào trong phòng live này</option>';
+    commentProductSelect.disabled = true;
+    return;
+  }
+  commentProductSelect.disabled = false;
   commentProductSelect.innerHTML = products.map((product) => `
     <option value="${product.product_id}">${escapeHtml(product.name)} - ${escapeHtml(formatCurrency(getEffectivePrice(account.account_id, product.product_id)))}</option>
   `).join("");
@@ -667,6 +753,40 @@ function renderViewerManagement() {
           ${blocked ? "Bỏ chặn" : "Chặn khách"}
         </button>
       </article>
+    `;
+  }).join("");
+}
+
+function renderCustomerRoomPicker(query = "") {
+  if (!customerRoomToolbar || !customerRoomList) return;
+  const isCustomer = currentUser?.role === "customer";
+  customerRoomToolbar.classList.toggle("hidden", !isCustomer);
+  if (!isCustomer) {
+    customerRoomList.innerHTML = "";
+    return;
+  }
+
+  const normalized = normalizeText(query);
+  const accounts = getVisibleAccounts().filter((account) => normalizeText(
+    `${account.name} ${account.platform_display_name} ${account.owner_name} ${account.shift_label} ${account.warehouse_location}`
+  ).includes(normalized)).slice(0, 6);
+
+  if (!accounts.length) {
+    customerRoomList.innerHTML = '<div class="message-box muted">Không tìm thấy phòng live phù hợp với từ khóa này.</div>';
+    return;
+  }
+
+  customerRoomList.innerHTML = accounts.map((account) => {
+    const liveOffer = getLiveOffer(account.account_id);
+    const pinnedProduct = liveOffer
+      ? backendState.products.find((item) => item.product_id === liveOffer.product_id)
+      : null;
+    return `
+      <button type="button" class="room-pill ${selectedAccountId === account.account_id ? "active" : ""} select-live-btn" data-account-id="${account.account_id}">
+        <strong>${escapeHtml(account.name)}</strong>
+        <span>${escapeHtml(account.platform_display_name)} • ${escapeHtml(account.owner_name)}</span>
+        <small>${escapeHtml(account.broadcast_status === "live" ? "Đang live" : "Chưa live")} • ${escapeHtml(String(account.current_viewers))} viewer${pinnedProduct ? ` • ${escapeHtml(pinnedProduct.name)}` : ""}</small>
+      </button>
     `;
   }).join("");
 }
@@ -887,7 +1007,15 @@ function renderCustomerCart() {
 }
 
 function renderComments() {
+  if (!selectedAccountId) {
+    commentList.innerHTML = '<div class="message-box muted">Chọn phòng live để xem và gửi bình luận theo đúng phiên.</div>';
+    return;
+  }
   const comments = getVisibleComments();
+  if (!comments.length) {
+    commentList.innerHTML = '<div class="message-box muted">Chưa có bình luận nào trong phòng live này.</div>';
+    return;
+  }
   commentList.innerHTML = comments.map((comment) => {
     const isStaff = currentUser?.role === "staff";
     return `
@@ -900,7 +1028,7 @@ function renderComments() {
           <span class="badge">${escapeHtml(formatDateTime(comment.created_at))}</span>
         </div>
         <div class="comment-meta">
-          <span class="badge">${escapeHtml(comment.product_name || "San pham")}</span>
+          <span class="badge">${escapeHtml(comment.product_name || "Sản phẩm")}</span>
           <span class="badge">${escapeHtml(comment.intent)}</span>
           <span class="badge">${escapeHtml(comment.customer_phone || "Online")}</span>
         </div>
@@ -997,8 +1125,12 @@ function renderLayout() {
   productManagerView.classList.add("hidden");
   commentPanel?.classList.remove("hidden");
   messagePanel?.classList.remove("hidden");
+  customerRoomToolbar?.classList.toggle("hidden", currentUser.role !== "customer");
+  viewerManagementList?.closest(".tool-panel")?.classList.add("hidden");
+  commentForm.classList.toggle("hidden", currentUser.role !== "customer");
 
   renderLiveSummary();
+  renderCustomerRoomPicker(customerRoomSearchInput?.value?.trim() || "");
   renderProductSelectors();
   renderStaffProductList();
   renderViewerManagement();
@@ -1013,8 +1145,8 @@ function renderLayout() {
 
   const blocked = currentUser.role === "customer" && selectedAccountId && isBlocked(selectedAccountId, currentUser.id);
   commentInput.disabled = Boolean(blocked);
-  commentProductSelect.disabled = Boolean(blocked);
-  commentForm.querySelector("button[type='submit']").disabled = Boolean(blocked);
+  commentProductSelect.disabled = Boolean(blocked) || currentUser.role !== "customer" || !selectedAccountId || !commentProductSelect.value;
+  commentForm.querySelector("button[type='submit']").disabled = Boolean(blocked) || currentUser.role !== "customer" || !selectedAccountId || !commentProductSelect.value;
 }
 
 async function connectMediaDevices() {
@@ -1028,6 +1160,7 @@ async function connectMediaDevices() {
     stopMediaStream();
     mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     livePreview.srcObject = mediaStream;
+    startPreviewBroadcast();
     cameraEnabled = true;
     micEnabled = true;
     setDeviceStatus("Da cap quyen camera va micro thanh cong.", false);
@@ -1044,6 +1177,8 @@ function stopMediaStream() {
   mediaStream.getTracks().forEach((track) => track.stop());
   mediaStream = null;
   livePreview.srcObject = null;
+  stopPreviewBroadcast();
+  publishPreviewFrame(true);
 }
 
 function toggleTrack(kind) {
@@ -1065,6 +1200,7 @@ function toggleTrack(kind) {
 
   if (kind === "video") {
     cameraEnabled = nextEnabled;
+    publishPreviewFrame(!nextEnabled);
     setStaffAction(nextEnabled ? "Đã bật lại camera." : "Đã tắt camera.", false);
   } else {
     micEnabled = nextEnabled;
@@ -1294,6 +1430,7 @@ async function handleCommentSubmit(event) {
   }
 
   const content = commentInput.value.trim();
+  const productId = commentProductSelect.value;
   if (!content) {
     commentResult.classList.remove("muted");
     commentResult.textContent = "Vui lòng nhập nội dung bình luận trước khi gửi.";
@@ -1309,7 +1446,7 @@ async function handleCommentSubmit(event) {
       body: JSON.stringify({
         account_id: selectedAccountId,
         customer_id: currentUser.id,
-        product_id: commentProductSelect.value,
+        product_id: productId,
         content,
       }),
     });
@@ -1436,6 +1573,11 @@ function attachEventListeners() {
     });
   });
 
+  openLoginBtn?.addEventListener("click", () => {
+    setRegisterPanelOpen(false);
+    loginEmail.focus();
+  });
+
   openRegisterBtn?.addEventListener("click", () => {
     setRegisterPanelOpen(true);
     registerPhone.focus();
@@ -1451,6 +1593,10 @@ function attachEventListeners() {
 
   closeChatBtn?.addEventListener("click", () => {
     setChatModalOpen(false);
+  });
+
+  customerRoomSearchInput?.addEventListener("input", () => {
+    renderCustomerRoomPicker(customerRoomSearchInput.value.trim());
   });
 
   logoutBtn.addEventListener("click", () => {
@@ -1507,7 +1653,7 @@ function attachEventListeners() {
       }
       selectedAccountId = selectLiveButton.dataset.accountId || selectedAccountId;
       saveSession();
-      renderLayout();
+      await refreshDataAndRender();
       return;
     }
 
@@ -1520,7 +1666,7 @@ function attachEventListeners() {
           leaveCurrentPresence();
         }
         selectedAccountId = assignment.account_id;
-        renderLayout();
+        await refreshDataAndRender();
       }
       if (productId) {
         commentProductSelect.value = productId;
@@ -1642,8 +1788,20 @@ function attachEventListeners() {
   });
 
   window.addEventListener("storage", (event) => {
-    if (event.key !== LOCAL_STATE_KEY) return;
-    loadLocalState();
+    if (event.key === LOCAL_STATE_KEY) {
+      loadLocalState();
+      renderLayout();
+      return;
+    }
+    if (event.key === "smartlive-demo-preview-frame" && event.newValue) {
+      try {
+        applyRemotePreview(JSON.parse(event.newValue));
+      } catch (_error) {}
+    }
+  });
+
+  previewChannel?.addEventListener("message", (event) => {
+    applyRemotePreview(event.data);
     renderLayout();
   });
 
@@ -1663,12 +1821,19 @@ function attachEventListeners() {
 async function bootstrap() {
   loadSession();
   loadLocalState();
+  const persistedPreview = localStorage.getItem("smartlive-demo-preview-frame");
+  if (persistedPreview) {
+    try {
+      applyRemotePreview(JSON.parse(persistedPreview));
+    } catch (_error) {}
+  }
   attachEventListeners();
   setRegisterPanelOpen(false);
   startLiveBtn.addEventListener("click", async () => {
     hostLiveEnabled = true;
     try {
       await syncCurrentPresence();
+      publishPreviewFrame(false);
       await loadBackendData();
       renderLayout();
     } catch (_error) {}
@@ -1676,6 +1841,7 @@ async function bootstrap() {
   endLiveBtn.addEventListener("click", async () => {
     hostLiveEnabled = false;
     try {
+      publishPreviewFrame(true);
       await syncCurrentPresence();
       await loadBackendData();
       renderLayout();

@@ -1,0 +1,8 @@
+{
+  "platform_id": "platform-demo-app",
+  "code": "demo_app",
+  "display_name": "Demo App",
+  "category": "internal_demo",
+  "region": "VN",
+  "is_active": 1
+}

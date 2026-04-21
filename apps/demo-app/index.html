@@ -35,43 +35,29 @@
       <div class="login-card">
         <div class="section-head">
           <p class="eyebrow">Đăng nhập</p>
-          <h2>Chọn tài khoản demo</h2>
+          <h2>Đăng nhập hoặc đăng ký</h2>
           <p class="muted">Nhân viên live đăng nhập bằng email do admin cấp. Khách hàng đăng nhập bằng số điện thoại hoặc email đã đăng ký.</p>
+        </div>
+
+        <div class="inline-actions">
+          <button id="open-login-btn" type="button" class="primary-btn">Đăng nhập</button>
+          <button id="open-register-btn" type="button" class="ghost-btn">Đăng ký</button>
         </div>
 
         <form id="login-form" class="stack">
           <label>Email nhân viên hoặc số điện thoại khách hàng
-            <input id="login-email" type="text" value="staff@smartlive.vn" autocomplete="username" />
+            <input id="login-email" type="text" autocomplete="username" />
           </label>
           <label>Mật khẩu
-            <input id="login-password" type="password" value="staff01" autocomplete="current-password" />
+            <input id="login-password" type="password" autocomplete="current-password" />
           </label>
           <button type="submit" class="primary-btn">Vào app livestream demo</button>
         </form>
 
-        <div class="demo-account-list">
-          <button type="button" class="demo-account-btn" data-email="staff@smartlive.vn" data-password="staff01">
-            <strong>Nhân viên bán hàng</strong>
-            <span>staff@smartlive.vn</span>
-            <small>Được admin cấp tài khoản, có quyền điều khiển phiên live, ghim sản phẩm và trả lời khách.</small>
-          </button>
-          <button type="button" class="demo-account-btn" data-email="0901234567" data-password="123456">
-            <strong>Khách hàng demo 1</strong>
-            <span>0901234567</span>
-            <small>Đăng nhập bằng số điện thoại, có giỏ hàng, bình luận và mua trực tiếp trong live.</small>
-          </button>
-          <button type="button" class="demo-account-btn" data-email="0912345678" data-password="123456">
-            <strong>Khách hàng demo 2</strong>
-            <span>0912345678</span>
-            <small>Dùng để kiểm thử thêm giỏ hàng, bình luận và hội thoại trong cùng một buổi live.</small>
-          </button>
-        </div>
-
         <div id="login-result" class="message-box muted">Trạng thái đăng nhập sẽ hiển thị tại đây.</div>
 
         <div class="register-entry">
-          <button id="open-register-btn" type="button" class="ghost-btn">Tạo tài khoản khách hàng mới</button>
-          <p class="muted">Khách hàng tự bấm để mở form đăng ký. Số điện thoại là khóa chính và người đăng ký phải từ 18 tuổi trở lên.</p>
+          <p class="muted">Khách hàng bấm `Đăng ký` để mở form tạo tài khoản. Số điện thoại là khóa chính và người đăng ký phải từ 18 tuổi trở lên.</p>
         </div>
 
         <section id="register-panel" class="register-panel hidden">
@@ -102,7 +88,7 @@
             </label>
             <div class="inline-actions">
               <button type="submit" class="primary-btn">Tạo tài khoản khách hàng</button>
-              <button id="close-register-btn" type="button" class="ghost-btn">Đóng form</button>
+              <button id="close-register-btn" type="button" class="ghost-btn">Quay lại đăng nhập</button>
             </div>
           </form>
 
@@ -135,6 +121,12 @@
             <h3 id="live-room-title">GlowHouse - Livestream skincare tối nay</h3>
             <p id="live-room-description" class="muted"></p>
           </div>
+          <div id="customer-room-toolbar" class="customer-room-toolbar hidden">
+            <label class="customer-room-search-label">Tìm nhanh phòng live
+              <input id="customer-room-search-input" type="search" placeholder="Ví dụ: TikTok serum, Hà My, demo app..." />
+            </label>
+            <div id="customer-room-list" class="customer-room-list"></div>
+          </div>
 
           <div class="live-room-layout">
             <aside class="panel side-panel session-sidebar">
@@ -149,6 +141,7 @@
             <div class="video-stage">
               <div class="video-frame">
                 <video id="live-preview" autoplay playsinline muted></video>
+                <img id="remote-preview-frame" class="remote-preview-frame hidden" alt="Khung hình live từ nhân viên" />
                 <div id="video-overlay" class="video-overlay">
                   <span id="live-status-pill" class="status-pill offline">Offline</span>
                   <p id="video-overlay-text">Nhân viên live có thể cấp quyền camera và micro để bắt đầu demo.</p>

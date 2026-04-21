@@ -103,6 +103,7 @@ def list_livestream_accounts_data(platform: str | None = None) -> list[Livestrea
                 SELECT COUNT(*)
                 FROM livestream_viewer_presence lvp
                 WHERE lvp.account_id = la.account_id
+                  AND lvp.is_host = 0
                   AND lvp.last_seen_at >= datetime('now', '-15 seconds')
             ) AS current_viewers,
             la.max_capacity,
@@ -171,6 +172,7 @@ def get_account_presence_state(connection, account_id: str) -> LivestreamPresenc
         SELECT COUNT(*)
         FROM livestream_viewer_presence
         WHERE account_id = ?
+          AND is_host = 0
           AND last_seen_at >= datetime('now', '-15 seconds')
         """,
         (account_id,),

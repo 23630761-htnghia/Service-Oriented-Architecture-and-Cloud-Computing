@@ -28,6 +28,7 @@ const platformSummary = document.getElementById("platform-summary");
 const kpiGrid = document.getElementById("kpi-grid");
 const overviewHighlight = document.getElementById("overview-highlight");
 const accountForm = document.getElementById("account-form");
+const accountPlatform = document.getElementById("account-platform");
 const accountFormResult = document.getElementById("account-form-result");
 const accountsResult = document.getElementById("accounts-result");
 const accountsSearchInput = document.getElementById("accounts-search-input");
@@ -114,6 +115,10 @@ function applyDemoCredentials(email, password) {
   loginEmail.value = email;
   loginPassword.value = password;
   captchaAnswer.focus();
+}
+
+if (accountPlatform && !accountPlatform.querySelector('option[value="demo_app"]')) {
+  accountPlatform.insertAdjacentHTML("beforeend", '<option value="demo_app">Demo App</option>');
 }
 
 function formatRole(role) {
@@ -637,7 +642,9 @@ function renderKpis(summary, overview) {
   const activeOffers = overview.supplier_offers.filter((offer) => offer.status === "active").length;
   const totalInventory = overview.products.reduce((total, item) => total + item.stock_quantity, 0);
   const totalViewers = summary.reduce((total, item) => total + item.total_viewers, 0);
-  const warningRooms = overview.livestream_accounts.filter((item) => item.status === "warning").length;
+  const liveRooms = overview.livestream_accounts.filter((item) => item.broadcast_status === "live").length;
+  const totalStaff = overview.users.filter((item) => item.role === "staff").length;
+  const warningRooms = liveRooms;
   kpiGrid.classList.remove("muted");
   kpiGrid.innerHTML = [
     { label: "Viewer realtime", value: totalViewers.toLocaleString("vi-VN"), note: "Tổng viewer đang có trên toàn hệ thống" },
@@ -748,7 +755,7 @@ function renderManagedAccounts(accounts, assignmentsByAccount) {
 
 function renderStaffCredentials(users) {
   const staffUsers = filterUsersBySearch(
-    users.filter((user) => user.role !== "admin"),
+    users.filter((user) => user.role === "staff"),
     staffCredentialsSearchInput.value,
   )
     .sort((left, right) => {
@@ -771,7 +778,7 @@ function renderStaffCredentials(users) {
 async function handleManagedUserCreate() {
   if (!isAdminSession()) return;
 
-  const selectedRole = staffRole.value;
+  const selectedRole = "staff";
   const payload = {
     staff_code: document.getElementById("staff-code").value.trim(),
     full_name: document.getElementById("staff-full-name").value.trim(),
@@ -1197,7 +1204,11 @@ function renderViewerResult(data) {
 }
 
 function renderDashboardViews() {
-  const summary = buildGroupedAccounts(currentAllAccounts).map((group) => group.summary);
+  const groupedAccounts = buildGroupedAccounts(currentAllAccounts);
+  const summary = groupedAccounts.map((group) => ({
+    ...group.summary,
+    display_name: group.display_name,
+  }));
   const visibleAssignments = getVisibleAssignments(currentAssignments, currentAllAccounts);
   const allAssignmentsByAccount = buildAssignmentsByAccount(currentAssignments);
   const visibleAssignmentsByAccount = buildAssignmentsByAccount(visibleAssignments);
@@ -1279,6 +1290,13 @@ loginForm.addEventListener("submit", async (event) => {
         captcha_answer: captchaAnswer.value.trim().toUpperCase(),
       }),
     });
+    if (data.user.role !== "admin" && data.user.role !== "product_manager") {
+      lockToAuthScreen();
+      loginResult.classList.remove("muted");
+      loginResult.textContent = "App quản lý chỉ cho phép tài khoản admin hoặc quản lý sản phẩm đăng nhập.";
+      await loadCaptcha();
+      return;
+    }
     setSession(data);
     loginResult.classList.remove("muted");
     loginResult.innerHTML = `<strong>Đăng nhập thành công</strong><br />${data.user.name} - ${data.user.email}<br />Vai trò: ${formatRole(data.user.role)}`;
