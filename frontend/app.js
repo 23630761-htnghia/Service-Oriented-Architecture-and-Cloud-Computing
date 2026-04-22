@@ -59,13 +59,6 @@ const aiSettingsForm = document.getElementById("ai-settings-form");
 const aiEnabledInput = document.getElementById("ai-enabled");
 const aiReplyTemplateInput = document.getElementById("ai-reply-template");
 const aiSettingsResult = document.getElementById("ai-settings-result");
-const commentForm = { addEventListener() {} };
-const commentInput = { value: "" };
-const commentResult = { textContent: "", innerHTML: "", classList: { add() {}, remove() {} } };
-const viewerForm = { addEventListener() {} };
-const viewerResult = { textContent: "", innerHTML: "", classList: { add() {}, remove() {} } };
-const accountASelect = { innerHTML: "", value: "" };
-const accountBSelect = { innerHTML: "", value: "" };
 const menuCards = document.querySelectorAll(".menu-card");
 const tabPanels = document.querySelectorAll(".tab-panel");
 const topbarStatus = document.querySelector(".topbar-status");
@@ -171,10 +164,6 @@ function isProductManagerSession() {
   return currentSession?.user?.role === "product_manager";
 }
 
-function isStaffSession() {
-  return currentSession?.user?.role === "staff";
-}
-
 function canManageCatalog() {
   return isAdminSession() || isProductManagerSession();
 }
@@ -235,11 +224,6 @@ function setAdminAccountsMode(mode = "view") {
   setAdminManageSection(adminManageSection);
 }
 
-function getOwnedAccounts(accounts = livestreamAccounts) {
-  if (!isStaffSession()) return accounts;
-  return accounts.filter((account) => account.owner_user_id === currentSession.user.id);
-}
-
 function buildAssignmentsByAccount(assignments = []) {
   const grouped = new Map();
   assignments.forEach((assignment) => {
@@ -249,24 +233,6 @@ function buildAssignmentsByAccount(assignments = []) {
     grouped.get(assignment.account_id).push(assignment);
   });
   return grouped;
-}
-
-function getVisibleAssignments(assignments, accounts = livestreamAccounts) {
-  if (!isStaffSession()) return assignments;
-  const ownedAccountIds = new Set(getOwnedAccounts(accounts).map((account) => account.account_id));
-  return assignments.filter((assignment) => ownedAccountIds.has(assignment.account_id));
-}
-
-function getVisibleProducts(products, assignments, accounts = livestreamAccounts) {
-  if (!isStaffSession()) return products;
-  const assignedProductIds = new Set(getVisibleAssignments(assignments, accounts).map((assignment) => assignment.product_id));
-  return products.filter((product) => assignedProductIds.has(product.product_id));
-}
-
-function getVisibleOffers(offers, visibleProducts) {
-  if (!isStaffSession()) return offers;
-  const productIds = new Set(visibleProducts.map((product) => product.product_id));
-  return offers.filter((offer) => productIds.has(offer.product_id));
 }
 
 function buildGroupedAccounts(accounts) {
@@ -451,10 +417,6 @@ function resetDashboardState() {
   offersResult.textContent = "Đăng nhập để xem các offer hiện hành.";
   suppliersResult.classList.add("muted");
   suppliersResult.textContent = "Đăng nhập để xem danh sách nhà cung cấp.";
-  commentResult.classList.add("muted");
-  commentResult.textContent = "Kết quả phân tích sẽ xuất hiện tại đây sau khi đăng nhập.";
-  viewerResult.classList.add("muted");
-  viewerResult.textContent = "Đề xuất phân bổ viewer sẽ hiển thị tại đây sau khi đăng nhập.";
   accountFormResult.classList.add("muted");
   accountFormResult.textContent = "Bạn có thể thêm phòng live mới để cập nhật lại danh sách vận hành.";
   staffCreateResult.classList.add("muted");
@@ -476,8 +438,6 @@ function resetDashboardState() {
   aiSettingsResult.textContent = "Đăng nhập bằng admin để xem và cập nhật cấu hình AI.";
   sessionCard.classList.add("muted");
   sessionCard.textContent = "Phiên làm việc chưa được khởi tạo.";
-  accountASelect.innerHTML = "";
-  accountBSelect.innerHTML = "";
   platformSummaryPanel.classList.remove("hidden");
   topbarStatus.classList.remove("hidden");
   suppliersMenuCard.classList.remove("hidden");
@@ -521,9 +481,7 @@ function syncSessionUI() {
   sidebarUserRole.textContent = formatRole(currentSession.user.role);
   topbarSubtitle.textContent = isAdminSession()
     ? `${currentSession.user.name} đang theo dõi hiệu suất hệ thống, hàng hóa và nhà cung cấp trong ca trực hiện tại.`
-    : isProductManagerSession()
-      ? `${currentSession.user.name} đang quản lý danh mục sản phẩm, nhà cung cấp và cấu hình sản phẩm cho từng phòng livestream.`
-      : `${currentSession.user.name} đang theo dõi room được phân công, ca làm hiện tại và danh mục hàng hóa cần bán.`;
+    : `${currentSession.user.name} đang quản lý danh mục sản phẩm, nhà cung cấp và cấu hình sản phẩm cho từng phòng livestream.`;
   sessionCard.classList.remove("muted");
   sessionCard.innerHTML = `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>${formatRole(currentSession.user.role)}</span><br /><span>${currentSession.user.department}</span>`;
 }
@@ -639,11 +597,17 @@ function startCaptchaCountdown(secondsRemaining) {
 }
 
 function renderKpis(summary, overview) {
-  const activeOffers = overview.supplier_offers.filter((offer) => offer.status === "active").length;
-  const totalInventory = overview.products.reduce((total, item) => total + item.stock_quantity, 0);
-  const totalViewers = summary.reduce((total, item) => total + item.total_viewers, 0);
-  const liveRooms = overview.livestream_accounts.filter((item) => item.broadcast_status === "live").length;
-  const totalStaff = overview.users.filter((item) => item.role === "staff").length;
+  const supplierOffers = Array.isArray(overview?.supplier_offers) ? overview.supplier_offers : [];
+  const products = Array.isArray(overview?.products) ? overview.products : [];
+  const livestreamAccounts = Array.isArray(overview?.livestream_accounts) ? overview.livestream_accounts : [];
+  const users = Array.isArray(overview?.users) ? overview.users : [];
+  const safeSummary = Array.isArray(summary) ? summary : [];
+
+  const activeOffers = supplierOffers.filter((offer) => offer.status === "active").length;
+  const totalInventory = products.reduce((total, item) => total + item.stock_quantity, 0);
+  const totalViewers = safeSummary.reduce((total, item) => total + item.total_viewers, 0);
+  const liveRooms = livestreamAccounts.filter((item) => item.broadcast_status === "live").length;
+  const totalStaff = users.filter((item) => item.role === "staff").length;
   const warningRooms = liveRooms;
   kpiGrid.classList.remove("muted");
   kpiGrid.innerHTML = [
@@ -652,7 +616,7 @@ function renderKpis(summary, overview) {
     { label: "Tồn kho sẵn bán", value: totalInventory.toLocaleString("vi-VN"), note: "Tổng đơn vị sản phẩm trong kho" },
     { label: "Room cảnh báo", value: warningRooms.toString(), note: "Phòng live đang có mức lag cần theo dõi" },
   ].map((item) => `<article class="kpi-card"><span>${item.label}</span><strong>${item.value}</strong><p>${item.note}</p></article>`).join("");
-  const topPlatform = [...summary].sort((a, b) => b.total_viewers - a.total_viewers)[0];
+  const topPlatform = [...safeSummary].sort((a, b) => b.total_viewers - a.total_viewers)[0];
   overviewHighlight.textContent = topPlatform
     ? `${topPlatform.display_name} đang dẫn đầu với ${topPlatform.total_viewers.toLocaleString("vi-VN")} viewer realtime trên ${topPlatform.total_accounts} phòng live. Hệ thống hiện có ${warningRooms} room cần theo dõi tín hiệu lag.`
     : "Chưa có dữ liệu nền tảng để tổng hợp KPI vận hành.";
@@ -663,30 +627,6 @@ function renderPlatformSummary(items) {
   platformSummary.innerHTML = items.map((item) => `<article class="kpi-card"><span>${item.display_name}</span><strong>${item.total_accounts}</strong><p>${item.total_viewers.toLocaleString("vi-VN")} / ${item.total_capacity.toLocaleString("vi-VN")} viewer | lag TB ${item.average_lag_signal}</p></article>`).join("");
 }
 
-function renderStaffOverview(accounts, products, offers) {
-  const shiftLabels = [...new Set(accounts.map((account) => account.shift_label))];
-  const warehouses = [...new Set(accounts.map((account) => account.warehouse_location))];
-  const totalViewers = accounts.reduce((total, account) => total + account.current_viewers, 0);
-  const totalCapacity = accounts.reduce((total, account) => total + account.max_capacity, 0);
-  const focusCategories = [...new Set(products.map((product) => product.category))];
-
-  kpiGrid.classList.remove("muted");
-  kpiGrid.innerHTML = [
-    { label: "Ca làm", value: shiftLabels.join(", ") || "Chưa phân ca", note: "Khung giờ bạn đang được phân công" },
-    { label: "Room phụ trách", value: String(accounts.length), note: "Số phòng livestream đang theo dõi" },
-    { label: "Viewer hiện tại", value: totalViewers.toLocaleString("vi-VN"), note: `Tổng sức chứa ${totalCapacity.toLocaleString("vi-VN")} viewer` },
-    { label: "Nhóm hàng", value: String(focusCategories.length), note: focusCategories.join(", ") || "Chưa có danh mục" },
-  ].map((item) => `<article class="kpi-card"><span>${item.label}</span><strong>${item.value}</strong><p>${item.note}</p></article>`).join("");
-
-  overviewHighlight.textContent = accounts.length
-    ? `Bạn đang phụ trách ${accounts.map((account) => account.name).join(", ")} tại ${warehouses.join(", ")}. Danh mục trong ca hiện có ${products.length} sản phẩm và ${offers.length} offer liên quan.`
-    : "Bạn chưa được phân công room livestream nào trong hệ thống.";
-
-  sessionCard.classList.remove("muted");
-  sessionCard.innerHTML = accounts.length
-    ? `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>${shiftLabels.join(", ")}</span><br /><span>${warehouses.join(", ")}</span><br /><span>Room phụ trách: ${accounts.map((account) => account.account_code).join(", ")}</span>`
-    : `<strong>${currentSession.user.name}</strong><br /><span>${currentSession.user.email}</span><br /><span>Chưa có room được phân công.</span>`;
-}
 
 function renderStaffAssignments(users, accounts, assignments) {
   const assignmentsByAccount = buildAssignmentsByAccount(assignments);
@@ -1133,9 +1073,7 @@ function renderProductAssignments(assignments) {
 
   const filteredAssignments = filterAssignmentsBySearch(assignments, assignmentSearchInput.value);
   if (!filteredAssignments.length) {
-    productAssignmentResult.innerHTML = `${flashNote}${isStaffSession()
-      ? "Bạn chưa có sản phẩm nào được gán cho các room đang phụ trách."
-      : "Chưa có cấu hình gán sản phẩm nào cho các phòng livestream."}`;
+    productAssignmentResult.innerHTML = `${flashNote}Chưa có cấu hình gán sản phẩm nào cho các phòng livestream.`;
     return;
   }
 
@@ -1196,25 +1134,17 @@ function renderAiAssistantSettings(settings, message = "") {
   ].filter(Boolean).join("<br />");
 }
 
-function renderViewerResult(data) {
-  viewerResult.classList.remove("muted");
-  const allocations = data.allocations.map((item) => `<li><strong>${item.account_id}</strong>: target ${item.target_viewers} viewer, delta ${item.viewer_delta}, <span class="risk-${item.lag_risk}">${item.lag_risk}</span></li>`).join("");
-  const transfers = data.transfer_plan.length ? data.transfer_plan.map((item) => `<li>Chuyển ${item.viewers_to_shift} viewer từ <strong>${item.from_account_id}</strong> sang <strong>${item.to_account_id}</strong>.</li>`).join("") : "<li>Không cần chuyển viewer trong cửa sổ hiện tại.</li>";
-  viewerResult.innerHTML = `<strong>Tóm tắt:</strong> ${data.summary}<br /><strong>Room ưu tiên nhận viewer:</strong> ${data.recommended_entry_account_id}<h4>Phân bổ đề xuất</h4><ul class="result-list">${allocations}</ul><h4>Kế hoạch điều hướng</h4><ul class="result-list">${transfers}</ul>`;
-}
-
 function renderDashboardViews() {
   const groupedAccounts = buildGroupedAccounts(currentAllAccounts);
   const summary = groupedAccounts.map((group) => ({
     ...group.summary,
     display_name: group.display_name,
   }));
-  const visibleAssignments = getVisibleAssignments(currentAssignments, currentAllAccounts);
+  const visibleAssignments = currentAssignments;
   const allAssignmentsByAccount = buildAssignmentsByAccount(currentAssignments);
-  const visibleAssignmentsByAccount = buildAssignmentsByAccount(visibleAssignments);
-  livestreamAccounts = isStaffSession() ? getOwnedAccounts(currentAllAccounts) : currentAllAccounts;
-  const visibleProducts = getVisibleProducts(currentProducts, currentAssignments, currentAllAccounts);
-  const visibleOffers = getVisibleOffers(currentOffers, visibleProducts);
+  livestreamAccounts = currentAllAccounts;
+  const visibleProducts = currentProducts;
+  const visibleOffers = currentOffers;
 
   if (isAdminSession()) {
     renderPlatformSummary(summary);
@@ -1229,9 +1159,6 @@ function renderDashboardViews() {
     renderSuppliers(currentSuppliers);
   } else if (isProductManagerSession()) {
     renderSuppliers(currentSuppliers);
-  } else {
-    renderStaffOverview(livestreamAccounts, visibleProducts, visibleOffers);
-    renderAccounts(buildGroupedAccounts(livestreamAccounts), visibleAssignmentsByAccount);
   }
 
   if (canManageCatalog()) {
@@ -1303,7 +1230,10 @@ loginForm.addEventListener("submit", async (event) => {
     await Promise.all([fetchGatewayHealth(), loadDashboardData()]);
   } catch (error) {
     lockToAuthScreen();
-    loginResult.textContent = "Đăng nhập thất bại. Vui lòng kiểm tra email, mật khẩu và CAPTCHA.";
+    loginResult.textContent = extractErrorMessage(
+      error,
+      "????ng nh???p th???t b???i. Vui l??ng ki???m tra email, m???t kh???u v?? CAPTCHA.",
+    );
     await loadCaptcha();
   }
 });
@@ -1347,26 +1277,6 @@ refreshCaptchaBtn.addEventListener("click", async () => {
     await loadCaptcha();
   } catch (error) {
     loginResult.textContent = "Không thể tải CAPTCHA mới.";
-  }
-});
-
-staffRole.addEventListener("change", () => {
-  const passwordInput = document.getElementById("staff-password");
-  const departmentInput = document.getElementById("staff-department");
-  if (staffRole.value === "product_manager") {
-    if (!passwordInput.value || passwordInput.value === "staff05") {
-      passwordInput.value = "pm001";
-    }
-    if (!departmentInput.value || departmentInput.value === "Vận hành livestream") {
-      departmentInput.value = "Quản lý sản phẩm";
-    }
-    return;
-  }
-  if (!passwordInput.value || passwordInput.value === "pm001") {
-    passwordInput.value = "staff05";
-  }
-  if (!departmentInput.value || departmentInput.value === "Quản lý sản phẩm") {
-    departmentInput.value = "Vận hành livestream";
   }
 });
 
@@ -1534,37 +1444,6 @@ aiSettingsForm.addEventListener("submit", async (event) => {
   } catch (error) {
     aiSettingsResult.classList.remove("muted");
     aiSettingsResult.textContent = extractErrorMessage(error, "Không thể lưu cấu hình AI.");
-  }
-});
-
-commentForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  commentResult.textContent = "Đang phân tích comment...";
-  try {
-    const data = await fetchJson("/api/v1/comments/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ comment: commentInput.value.trim() }) });
-    renderCommentResult(data);
-  } catch (error) {
-    commentResult.textContent = "Không thể phân tích comment.";
-  }
-});
-
-viewerForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  viewerResult.textContent = "Đang tính toán phân bổ viewer...";
-  const accounts = [accountASelect.value, accountBSelect.value].map((accountId) => livestreamAccounts.find((item) => item.account_id === accountId)).filter(Boolean);
-  if (accounts.length < 2) {
-    viewerResult.textContent = "Cần chọn đủ 2 phòng live để tính toán.";
-    return;
-  }
-  try {
-    const data = await fetchJson("/api/v1/streams/balance-viewers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ incoming_viewers: Number(document.getElementById("incoming-viewers").value), accounts: accounts.map((account) => ({ account_id: account.account_id, platform: account.platform, current_viewers: account.current_viewers, max_capacity: account.max_capacity, engagement_rate: account.engagement_rate, lag_signal: account.lag_signal })) }),
-    });
-    renderViewerResult(data);
-  } catch (error) {
-    viewerResult.textContent = "Không thể tính cân bằng viewer.";
   }
 });
 

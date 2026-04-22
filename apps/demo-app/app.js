@@ -50,7 +50,6 @@ const metricBlocked = document.getElementById("metric-blocked");
 
 const staffView = document.getElementById("staff-view");
 const customerView = document.getElementById("customer-view");
-const productManagerView = document.getElementById("product-manager-view");
 const commentPanel = document.getElementById("comment-form").closest(".panel");
 const messagePanel = document.getElementById("message-form").closest(".panel");
 const chatModal = document.getElementById("chat-modal");
@@ -65,7 +64,6 @@ const endLiveBtn = document.getElementById("end-live-btn");
 const deviceStatus = document.getElementById("device-status");
 const staffActionResult = document.getElementById("staff-action-result");
 const staffProductList = document.getElementById("staff-product-list");
-const viewerManagementList = document.getElementById("viewer-management-list");
 
 const productForm = document.getElementById("product-form");
 const productNameInput = document.getElementById("product-name-input");
@@ -645,8 +643,6 @@ function renderLiveSummary() {
       videoOverlayText.textContent = mediaStream
         ? "Camera đang tắt. Bạn có thể bật lại camera để tiếp tục demo."
         : "Nhân viên bán hàng có thể cấp quyền camera và micro để bắt đầu demo.";
-    } else if (currentUser?.role === "product_manager") {
-      videoOverlayText.textContent = "Vai trò này cấu hình sản phẩm, tồn kho và cấp sản phẩm vào phòng live từ database.";
     } else {
       videoOverlayText.textContent = "Khách hàng đang xem phòng live được đồng bộ từ backend và có thể mua hàng bằng giỏ hàng thật.";
     }
@@ -655,9 +651,6 @@ function renderLiveSummary() {
   if (currentUser?.role === "staff") {
     topbarSubtitle.textContent = "Nhân viên bán hàng đang đọc phòng live và sản phẩm được cấp từ database.";
     liveRoomDescription.textContent = "Giá live chỉ có hiệu lực sau khi nhân viên bán hàng ghim sản phẩm cho phòng live này.";
-  } else if (currentUser?.role === "product_manager") {
-    topbarSubtitle.textContent = "Nhân viên quản lý sản phẩm đang thao tác trên danh mục dùng chung giữa frontend chính và demo app.";
-    liveRoomDescription.textContent = "Mọi thay đổi sản phẩm, tồn kho và gán phòng live đều được ghi xuống database.";
   } else {
     const customer = getCurrentCustomer();
     topbarSubtitle.textContent = "Khách hàng đang xem sản phẩm từ phòng live thật và mua hàng qua giỏ hàng được đồng bộ database.";
@@ -725,38 +718,6 @@ function renderStaffProductList() {
   }).join("");
 }
 
-function renderViewerManagement() {
-  if (currentUser?.role !== "staff") {
-    viewerManagementList.innerHTML = "";
-    return;
-  }
-
-  const account = getSelectedAccount();
-  if (!account) {
-    viewerManagementList.innerHTML = "";
-    return;
-  }
-
-  viewerManagementList.innerHTML = getAllCustomers().map((customer) => {
-    const lastComment = (backendState.comments || [])
-      .filter((comment) => comment.account_id === account.account_id && comment.customer_id === customer.customer_id)
-      .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))[0];
-    const blocked = isBlocked(account.account_id, customer.customer_id);
-    return `
-      <article class="viewer-card">
-        <div>
-          <strong>${escapeHtml(customer.full_name)}</strong>
-          <p>${escapeHtml(customer.phone)}</p>
-          <small>${escapeHtml(lastComment?.content || customer.shipping_address)}</small>
-        </div>
-        <button type="button" class="${blocked ? "primary-btn" : "ghost-btn"} viewer-block-btn" data-account-id="${account.account_id}" data-user-id="${customer.customer_id}">
-          ${blocked ? "Bỏ chặn" : "Chặn khách"}
-        </button>
-      </article>
-    `;
-  }).join("");
-}
-
 function renderCustomerRoomPicker(query = "") {
   if (!customerRoomToolbar || !customerRoomList) return;
   const isCustomer = currentUser?.role === "customer";
@@ -787,72 +748,6 @@ function renderCustomerRoomPicker(query = "") {
         <span>${escapeHtml(account.platform_display_name)} • ${escapeHtml(account.owner_name)}</span>
         <small>${escapeHtml(account.broadcast_status === "live" ? "Đang live" : "Chưa live")} • ${escapeHtml(String(account.current_viewers))} viewer${pinnedProduct ? ` • ${escapeHtml(pinnedProduct.name)}` : ""}</small>
       </button>
-    `;
-  }).join("");
-}
-
-function renderProductManagerControls() {
-  if (currentUser?.role !== "product_manager") {
-    productManagerList.innerHTML = "";
-    liveAssignmentList.innerHTML = "";
-    return;
-  }
-
-  assignmentLiveSelect.innerHTML = backendState.accounts.map((account) => `
-    <option value="${account.account_id}">${escapeHtml(account.name)} (${escapeHtml(account.platform_display_name)})</option>
-  `).join("");
-
-  assignmentProductSelect.innerHTML = backendState.products.map((product) => `
-    <option value="${product.product_id}">${escapeHtml(product.name)} - ton ${escapeHtml(product.stock_quantity)}</option>
-  `).join("");
-
-  productManagerList.innerHTML = backendState.products.map((product) => `
-    <article class="product-card">
-      <div class="product-card-head">
-        <div>
-          <h4>${escapeHtml(product.name)}</h4>
-          <p>${escapeHtml(product.description)}</p>
-        </div>
-        <span class="badge">${escapeHtml(product.category)}</span>
-      </div>
-      <div class="product-meta">
-        <span class="badge">SKU ${escapeHtml(product.sku)}</span>
-        <span class="badge">Gia ${escapeHtml(formatCurrency(product.retail_price))}</span>
-        <span class="badge">Tồn ${escapeHtml(product.stock_quantity)}</span>
-      </div>
-      <label>Cong them ton kho
-        <input type="number" class="stock-adjust-input" min="1" step="1" value="10" />
-      </label>
-      <div class="inline-actions">
-        <button type="button" class="ghost-btn restock-product-btn" data-product-id="${product.product_id}">Cong ton</button>
-        <button type="button" class="ghost-btn remove-product-btn" data-product-id="${product.product_id}">Xóa sản phẩm</button>
-      </div>
-    </article>
-  `).join("");
-
-  liveAssignmentList.innerHTML = backendState.accounts.map((account) => {
-    const accountAssignments = backendState.assignments.filter((assignment) => assignment.account_id === account.account_id);
-    return `
-      <article class="product-card">
-        <div class="product-card-head">
-          <div>
-            <h4>${escapeHtml(account.name)}</h4>
-            <p>${escapeHtml(account.platform_display_name)} - ${escapeHtml(account.owner_name)}</p>
-          </div>
-          <span class="badge">${escapeHtml(account.shift_label)}</span>
-        </div>
-        <div class="stack">
-          ${accountAssignments.length ? accountAssignments.map((assignment) => `
-            <div class="viewer-card">
-              <div>
-                <strong>${escapeHtml(assignment.product_name)}</strong>
-                <small>${escapeHtml(assignment.product_sku)} - ${escapeHtml(assignment.product_category)}</small>
-              </div>
-              <button type="button" class="ghost-btn unassign-product-btn" data-assignment-id="${assignment.assignment_id}">Go khoi live</button>
-            </div>
-          `).join("") : '<div class="message-box muted">Chưa có sản phẩm nào được cấp cho phòng live này.</div>'}
-        </div>
-      </article>
     `;
   }).join("");
 }
@@ -1114,27 +1009,21 @@ function renderLayout() {
   }
 
   currentUserName.textContent = currentUser.name;
-  currentUserRole.textContent = currentUser.role === "product_manager"
-    ? "Nhân viên quản lý sản phẩm"
-    : currentUser.role === "staff"
-      ? "Nhân viên bán hàng"
-      : "Khách hàng";
+  currentUserRole.textContent = currentUser.role === "staff"
+    ? "Nhân viên bán hàng"
+    : "Khách hàng";
 
   staffView.classList.toggle("hidden", currentUser.role !== "staff");
   customerView.classList.toggle("hidden", currentUser.role !== "customer");
-  productManagerView.classList.add("hidden");
   commentPanel?.classList.remove("hidden");
   messagePanel?.classList.remove("hidden");
   customerRoomToolbar?.classList.toggle("hidden", currentUser.role !== "customer");
-  viewerManagementList?.closest(".tool-panel")?.classList.add("hidden");
   commentForm.classList.toggle("hidden", currentUser.role !== "customer");
 
   renderLiveSummary();
   renderCustomerRoomPicker(customerRoomSearchInput?.value?.trim() || "");
   renderProductSelectors();
   renderStaffProductList();
-  renderViewerManagement();
-  renderProductManagerControls();
   renderCustomerSearchAndRecommendations(searchInput.value.trim());
   renderCustomerCart();
   renderComments();
@@ -1705,46 +1594,6 @@ function attachEventListeners() {
         setStaffAction("Đã ghim sản phẩm và đồng bộ giá live vào database.", false);
       } catch (error) {
         setStaffAction(error.message, false);
-      }
-      return;
-    }
-
-    const restockButton = target.closest(".restock-product-btn");
-    if (restockButton && currentUser?.role === "product_manager") {
-      const card = restockButton.closest(".product-card");
-      const stockInput = card?.querySelector(".stock-adjust-input");
-      try {
-        await restockProduct(restockButton.dataset.productId, Number(stockInput?.value));
-        await refreshDataAndRender();
-        setProductManagerMessage("Da cong them ton kho va dong bo vao database.", false);
-      } catch (error) {
-        setProductManagerMessage(error.message, false);
-      }
-      return;
-    }
-
-    const removeProductButton = target.closest(".remove-product-btn");
-    if (removeProductButton && currentUser?.role === "product_manager") {
-      try {
-        await fetchJson(`/api/v1/products/${removeProductButton.dataset.productId}`, { method: "DELETE" });
-        await refreshDataAndRender();
-        setProductManagerMessage("Đã xóa sản phẩm khỏi catalog service.", false);
-      } catch (error) {
-        setProductManagerMessage(error.message, false);
-      }
-      return;
-    }
-
-    const unassignButton = target.closest(".unassign-product-btn");
-    if (unassignButton && currentUser?.role === "product_manager") {
-      try {
-        await fetchJson(`/api/v1/livestream-product-assignments/${unassignButton.dataset.assignmentId}`, {
-          method: "DELETE",
-        });
-        await refreshDataAndRender();
-        setProductManagerMessage("Đã gỡ sản phẩm khỏi phòng live trong database.", false);
-      } catch (error) {
-        setProductManagerMessage(error.message, false);
       }
       return;
     }

@@ -30,6 +30,10 @@
             <span>Khi khách để lại bình luận quan tâm, AI có thể chủ động mở đầu hội thoại để nhân viên tiếp tục trả lời.</span>
           </article>
         </div>
+        <div class="hero-cta">
+          <button id="open-login-btn" type="button" class="primary-btn">ÄÄƒng nháº­p</button>
+          <button id="open-register-btn" type="button" class="ghost-btn">ÄÄƒng kĂ½</button>
+        </div>
       </div>
 
       <div class="login-card">
@@ -219,13 +223,6 @@
               <div id="staff-product-list" class="product-grid"></div>
             </div>
 
-            <div class="tool-panel">
-              <div class="section-head">
-                <p class="eyebrow">Chặn khách</p>
-                <h3>Khách đang tham gia</h3>
-              </div>
-              <div id="viewer-management-list" class="viewer-management-list"></div>
-            </div>
           </div>
         </section>
 
@@ -263,75 +260,6 @@
           </div>
         </section>
 
-        <section id="product-manager-view" class="panel panel-span-2 hidden">
-          <div class="section-head">
-            <p class="eyebrow">Quản lý sản phẩm</p>
-            <h3>Danh mục sản phẩm và cấu hình trước phiên live</h3>
-            <p class="muted">Nhân viên quản lý sản phẩm có quyền thêm bớt sản phẩm, tăng tồn kho và gán sản phẩm vào từng phiên live trước khi nhân viên bán hàng lên sóng.</p>
-          </div>
-
-          <div class="staff-tools-grid">
-            <div class="tool-panel">
-              <div class="section-head">
-                <p class="eyebrow">Tạo sản phẩm</p>
-                <h3>Thêm sản phẩm mới</h3>
-              </div>
-              <form id="product-form" class="stack">
-                <label>Tên sản phẩm
-                  <input id="product-name-input" type="text" placeholder="Serum mới" />
-                </label>
-                <label>Danh mục
-                  <input id="product-category-input" type="text" placeholder="Skincare" />
-                </label>
-                <label>Giá gốc
-                  <input id="product-price-input" type="number" min="1000" step="1000" placeholder="329000" />
-                </label>
-                <label>Số lượng tồn kho
-                  <input id="product-stock-input" type="number" min="1" step="1" placeholder="50" />
-                </label>
-                <label>Thông tin sản phẩm
-                  <textarea id="product-highlight-input" rows="3" placeholder="Mô tả ngắn về sản phẩm..."></textarea>
-                </label>
-                <button type="submit" class="primary-btn">Thêm sản phẩm</button>
-              </form>
-            </div>
-
-            <div class="tool-panel">
-              <div class="section-head">
-                <p class="eyebrow">Gán vào live</p>
-                <h3>Cấp cho nhân viên bán hàng trước phiên live</h3>
-              </div>
-              <form id="live-assignment-form" class="stack">
-                <label>Phiên live
-                  <select id="assignment-live-select"></select>
-                </label>
-                <label>Sản phẩm
-                  <select id="assignment-product-select"></select>
-                </label>
-                <button type="submit" class="primary-btn">Gán sản phẩm vào phiên live</button>
-              </form>
-              <div id="product-manager-result" class="message-box muted">Trạng thái quản lý sản phẩm sẽ hiển thị tại đây.</div>
-            </div>
-          </div>
-
-          <div class="staff-tools-grid">
-            <div class="tool-panel">
-              <div class="section-head">
-                <p class="eyebrow">Danh mục hiện tại</p>
-                <h3>Sản phẩm và tồn kho</h3>
-              </div>
-              <div id="product-manager-list" class="product-grid"></div>
-            </div>
-
-            <div class="tool-panel">
-              <div class="section-head">
-                <p class="eyebrow">Gán sản phẩm</p>
-                <h3>Sản phẩm trong từng phiên live</h3>
-              </div>
-              <div id="live-assignment-list" class="product-grid"></div>
-            </div>
-          </div>
-        </section>
 
         <section class="panel message-summary-panel">
           <div class="section-head">

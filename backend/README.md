@@ -1,96 +1,77 @@
 # Backend
 
-Thư mục này chứa toàn bộ backend của hệ thống Smart Livestream Management Platform.
+Thư mục `backend/` chứa toàn bộ các service phía server của hệ thống Smart Livestream Management Platform.
 
-## Services hiện có
+## 1. Các service hiện có
 
-- `services/api-gateway/`: cổng vào thống nhất cho frontend và client.
-- `services/auth-service/`: auth demo với CAPTCHA và login.
-- `services/account-service/`: quản lý identity, user nội bộ và phân quyền.
-- `services/catalog-service/`: quản lý sản phẩm, nhà cung cấp và offer.
-- `services/livestream-service/`: quản lý nền tảng, phòng livestream và gán sản phẩm cho room.
-- `services/ai-service/`: phân tích comment và cân bằng viewer.
-- `services/sync-service/`: nhận comment qua API, gọi `ai-service` để enrich và lưu lịch sử sync trong memory.
-- `services/report-service/`: tổng hợp KPI bằng cách gọi `identity`, `catalog`, `livestream` và `sync`.
+- `services/api-gateway/`: cổng vào thống nhất cho app quản lý và app demo
+- `services/auth-service/`: cấp CAPTCHA và xử lý đăng nhập
+- `services/account-service/`: quản lý user nội bộ, khách hàng, giỏ hàng, đơn hàng, bình luận, hội thoại và cấu hình AI
+- `services/catalog-service/`: quản lý sản phẩm, nhà cung cấp và supplier offers
+- `services/livestream-service/`: quản lý phòng livestream, phân công sản phẩm, live offer, presence viewer và trạng thái live
+- `services/ai-service/`: phân tích bình luận để nhận diện mức độ quan tâm của khách hàng
+- `services/sync-service/`: đồng bộ và enrich dữ liệu comment mẫu
+- `services/report-service/`: tổng hợp dữ liệu và KPI từ nhiều service
 
-## Chạy backend bằng Docker
+## 2. Vai trò của backend trong bài hiện tại
 
-```bash
-cd backend
-docker compose up --build
-```
+Backend là lớp dùng chung cho cả 2 ứng dụng:
 
-Các URL public mặc định:
+- `frontend/` dùng backend để quản lý tài khoản, phòng live, sản phẩm, nhà cung cấp và cấu hình AI
+- `apps/demo-app/` dùng backend để lấy dữ liệu live thật, sản phẩm, comment, message, cart, order và viewer presence
 
-- `http://localhost:8000`: API Gateway
-- `http://localhost:8001`: AI Service
-- `http://localhost:8002`: Auth Service
-- `http://localhost:8003`: Account Service
-- `http://localhost:8004`: Sync Service
-- `http://localhost:8005`: Report Service
-- `http://localhost:8006`: Catalog Service
-- `http://localhost:8007`: Livestream Service
+Điều này có nghĩa là dữ liệu giữa app quản lý và app demo không chạy độc lập, mà được đồng bộ qua cùng một lớp service.
 
-Các URL nên dùng để kiểm tra:
-
-- API Gateway:
-  - root: `http://localhost:8000/`
-  - health: `http://localhost:8000/health`
-  - docs: `http://localhost:8000/docs`
-- AI Service:
-  - root: `http://localhost:8001/`
-  - health: `http://localhost:8001/health`
-  - docs: `http://localhost:8001/docs`
-- Auth Service:
-  - root: `http://localhost:8002/`
-  - health: `http://localhost:8002/health`
-  - docs: `http://localhost:8002/docs`
-- Account Service:
-  - root: `http://localhost:8003/`
-  - health: `http://localhost:8003/health`
-  - docs: `http://localhost:8003/docs`
-- Sync Service:
-  - root: `http://localhost:8004/`
-  - health: `http://localhost:8004/health`
-  - docs: `http://localhost:8004/docs`
-- Report Service:
-  - root: `http://localhost:8005/`
-  - health: `http://localhost:8005/health`
-  - docs: `http://localhost:8005/docs`
-- Catalog Service:
-  - root: `http://localhost:8006/`
-  - health: `http://localhost:8006/health`
-  - docs: `http://localhost:8006/docs`
-- Livestream Service:
-  - root: `http://localhost:8007/`
-  - health: `http://localhost:8007/health`
-  - docs: `http://localhost:8007/docs`
-
-Lưu ý:
-
-- Nếu bạn đang chạy image cũ thì root `/` có thể vẫn báo `Not Found`.
-- Khi đó cần build lại:
+## 3. Chạy backend bằng Docker
 
 ```bash
 cd backend
 docker compose up --build
 ```
 
-## Gateway APIs chính
+Hoặc chạy toàn bộ hệ thống:
+
+```bash
+cd infra/docker
+docker compose up --build
+```
+
+## 4. Cổng mặc định
+
+- `8000`: API Gateway
+- `8001`: AI Service
+- `8002`: Auth Service
+- `8003`: Account Service
+- `8004`: Sync Service
+- `8005`: Report Service
+- `8006`: Catalog Service
+- `8007`: Livestream Service
+
+## 5. API chính qua Gateway
 
 - `GET /health`
 - `GET /api/v1/auth/captcha`
 - `POST /api/v1/auth/login`
+- `GET /api/v1/database-overview`
 - `GET /api/v1/livestream-accounts`
-- `POST /api/v1/comments/analyze`
-- `POST /api/v1/streams/balance-viewers`
-- `POST /api/v1/sync/comments`
-- `GET /api/v1/sync/summary`
-- `GET /api/v1/reports/kpis/overview`
-- `GET /api/v1/reports/operations`
+- `POST /api/v1/livestream-comments`
+- `POST /api/v1/livestream-messages`
+- `GET /api/v1/customers`
+- `POST /api/v1/customers/register`
+- `GET /api/v1/customers/{customer_id}/cart`
+- `POST /api/v1/customers/{customer_id}/cart/items`
+- `POST /api/v1/customers/{customer_id}/checkout`
+- `GET /api/v1/ai-assistant/settings`
+- `PATCH /api/v1/ai-assistant/settings`
 
-## Ghi chú
+## 6. Dữ liệu và đồng bộ
 
-- `account-service`, `catalog-service`, `livestream-service` đang dùng chung dữ liệu seed và SQLite trong `services/account-service/app/data/`, được chia theo từng domain như `identity/`, `catalog/`, `livestream/`, `sqlite/`.
-- `sync-service` hiện chưa có database riêng.
-- `report-service` chỉ tổng hợp từ API nội bộ của các service khác.
+- `account-service`, `catalog-service` và `livestream-service` đang dùng dữ liệu seed + SQLite cho mục tiêu học tập và demo
+- `demo-app` không còn giữ dữ liệu chính ở local như customer, cart hay product; các dữ liệu này đều đi qua backend
+- Viewer realtime được tính theo presence/heartbeat từ client thật
+
+## 7. Ghi chú
+
+- App quản lý chỉ cho phép `admin` và `quản lý sản phẩm` đăng nhập
+- App demo dùng các vai trò `nhân viên bán hàng` và `khách hàng`
+- AI trong bài hiện tại dùng để phân tích comment và mở đầu hội thoại, còn phần tư vấn tiếp theo do nhân viên trả lời
