@@ -1031,6 +1031,12 @@ function renderLayout() {
 
   toggleCameraBtn.textContent = cameraEnabled ? "Tat camera" : "Bat camera";
   toggleMicBtn.textContent = micEnabled ? "Tat micro" : "Bat micro";
+  const canControlMedia = currentUser.role === "staff" && Boolean(mediaStream);
+  connectMediaBtn.disabled = currentUser.role !== "staff";
+  toggleCameraBtn.disabled = !canControlMedia || !mediaStream.getVideoTracks().length;
+  toggleMicBtn.disabled = !canControlMedia || !mediaStream.getAudioTracks().length;
+  startLiveBtn.disabled = currentUser.role !== "staff" || !selectedAccountId;
+  endLiveBtn.disabled = currentUser.role !== "staff" || !selectedAccountId;
 
   const blocked = currentUser.role === "customer" && selectedAccountId && isBlocked(selectedAccountId, currentUser.id);
   commentInput.disabled = Boolean(blocked);
@@ -1038,26 +1044,102 @@ function renderLayout() {
   commentForm.querySelector("button[type='submit']").disabled = Boolean(blocked) || currentUser.role !== "customer" || !selectedAccountId || !commentProductSelect.value;
 }
 
+function describeMediaError(error) {
+  const name = error?.name || "";
+  if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+    return "Trình duyệt đang chặn quyền camera/micro. Hãy bấm biểu tượng ổ khóa trên thanh địa chỉ và cho phép lại.";
+  }
+  if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+    return "Không tìm thấy camera hoặc micro trên thiết bị này.";
+  }
+  if (name === "NotReadableError" || name === "TrackStartError") {
+    return "Camera hoặc micro đang được ứng dụng khác sử dụng.";
+  }
+  if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") {
+    return "Thiết bị hiện tại không đáp ứng cấu hình camera/micro được yêu cầu.";
+  }
+  if (name === "SecurityError") {
+    return "Trình duyệt chặn camera/micro vì trang chưa chạy trên localhost hoặc HTTPS.";
+  }
+  return "Không mở được camera hoặc micro. Hãy kiểm tra quyền truy cập của trình duyệt.";
+}
+
+async function requestMediaStream() {
+  try {
+    return {
+      stream: await navigator.mediaDevices.getUserMedia({ video: true, audio: true }),
+      videoError: null,
+      audioError: null,
+    };
+  } catch (combinedError) {
+    const tracks = [];
+    let videoError = null;
+    let audioError = null;
+
+    try {
+      const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      tracks.push(...videoStream.getVideoTracks());
+    } catch (error) {
+      videoError = error;
+    }
+
+    try {
+      const audioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+      tracks.push(...audioStream.getAudioTracks());
+    } catch (error) {
+      audioError = error;
+    }
+
+    if (!tracks.length) {
+      throw combinedError;
+    }
+
+    return {
+      stream: new MediaStream(tracks),
+      videoError,
+      audioError,
+    };
+  }
+}
+
 async function connectMediaDevices() {
+  if (!window.isSecureContext) {
+    setDeviceStatus("Camera và micro chỉ hoạt động khi mở app bằng http://localhost:3010 hoặc HTTPS.", false);
+    setStaffAction("Hãy mở demo app trên localhost/HTTPS rồi cấp quyền lại.", false);
+    return;
+  }
+
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     setDeviceStatus("Trinh duyet hien tai khong ho tro truy cap camera va micro.", false);
     setStaffAction("Không thể demo camera và micro trên trình duyệt này.", false);
     return;
   }
 
+  setDeviceStatus("Đang xin quyền camera và micro từ trình duyệt...", true);
+  setStaffAction("Nếu trình duyệt hiện hộp thoại quyền truy cập, hãy chọn Cho phép.", true);
+
   try {
     stopMediaStream();
-    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const result = await requestMediaStream();
+    mediaStream = result.stream;
     livePreview.srcObject = mediaStream;
     startPreviewBroadcast();
-    cameraEnabled = true;
-    micEnabled = true;
-    setDeviceStatus("Da cap quyen camera va micro thanh cong.", false);
-    setStaffAction("Preview đã sẵn sàng. Bạn có thể tiếp tục demo.", false);
+    cameraEnabled = mediaStream.getVideoTracks().some((track) => track.enabled);
+    micEnabled = mediaStream.getAudioTracks().some((track) => track.enabled);
+
+    if (cameraEnabled && micEnabled) {
+      setDeviceStatus("Đã cấp quyền camera và micro thành công.", false);
+    } else if (cameraEnabled) {
+      setDeviceStatus(`Đã cấp quyền camera. Micro chưa sẵn sàng: ${describeMediaError(result.audioError)}`, false);
+    } else if (micEnabled) {
+      setDeviceStatus(`Đã cấp quyền micro. Camera chưa sẵn sàng: ${describeMediaError(result.videoError)}`, false);
+    }
+    setStaffAction("Thiết bị đã sẵn sàng cho phiên demo.", false);
     renderLayout();
-  } catch (_error) {
-    setDeviceStatus("Không mở được camera hoặc micro. Hãy kiểm tra quyền truy cập của trình duyệt.", false);
+  } catch (error) {
+    setDeviceStatus(describeMediaError(error), false);
     setStaffAction("Thiết bị chưa sẵn sàng để demo live.", false);
+    renderLayout();
   }
 }
 
@@ -1449,8 +1531,8 @@ function handleSearchSubmit(event) {
 function attachEventListeners() {
   loginForm.addEventListener("submit", handleLogin);
   registerForm.addEventListener("submit", handleRegister);
-  productForm.addEventListener("submit", handleProductCreate);
-  liveAssignmentForm.addEventListener("submit", handleAssignmentCreate);
+  productForm?.addEventListener("submit", handleProductCreate);
+  liveAssignmentForm?.addEventListener("submit", handleAssignmentCreate);
   searchForm.addEventListener("submit", handleSearchSubmit);
   commentForm.addEventListener("submit", handleCommentSubmit);
   messageForm.addEventListener("submit", handleMessageSubmit);
