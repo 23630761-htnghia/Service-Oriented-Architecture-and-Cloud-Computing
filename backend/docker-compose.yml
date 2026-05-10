@@ -2,101 +2,17 @@ services:
   ai-service:
     build:
       context: ./services/ai-service
-    container_name: ai-service
+    container_name: smartlive-ai-service
     ports:
       - "8001:8001"
-
-  auth-service:
-    build:
-      context: ./services/auth-service
-    container_name: auth-service
-    environment:
-      ACCOUNT_SERVICE_URL: http://account-service:8003
-    depends_on:
-      - account-service
-    ports:
-      - "8002:8002"
-
-  account-service:
-    build:
-      context: ./services/account-service
-    container_name: account-service
-    environment:
-      APP_DATA_DIR: /app/shared-data
-    volumes:
-      - ./services/account-service/app/data:/app/shared-data
-    ports:
-      - "8003:8003"
-
-  catalog-service:
-    build:
-      context: ./services/catalog-service
-    container_name: catalog-service
-    environment:
-      APP_DATA_DIR: /app/shared-data
-    volumes:
-      - ./services/account-service/app/data:/app/shared-data
-    ports:
-      - "8006:8006"
-
-  livestream-service:
-    build:
-      context: ./services/livestream-service
-    container_name: livestream-service
-    environment:
-      APP_DATA_DIR: /app/shared-data
-    volumes:
-      - ./services/account-service/app/data:/app/shared-data
-    ports:
-      - "8007:8007"
-
-  sync-service:
-    build:
-      context: ./services/sync-service
-    container_name: sync-service
-    environment:
-      AI_SERVICE_URL: http://ai-service:8001
-    depends_on:
-      - ai-service
-    ports:
-      - "8004:8004"
-
-  report-service:
-    build:
-      context: ./services/report-service
-    container_name: report-service
-    environment:
-      ACCOUNT_SERVICE_URL: http://account-service:8003
-      CATALOG_SERVICE_URL: http://catalog-service:8006
-      LIVESTREAM_SERVICE_URL: http://livestream-service:8007
-      SYNC_SERVICE_URL: http://sync-service:8004
-    depends_on:
-      - account-service
-      - catalog-service
-      - livestream-service
-      - sync-service
-    ports:
-      - "8005:8005"
 
   api-gateway:
     build:
       context: ./services/api-gateway
-    container_name: api-gateway
+    container_name: smartlive-api-gateway
     environment:
       AI_SERVICE_URL: http://ai-service:8001
-      AUTH_SERVICE_URL: http://auth-service:8002
-      ACCOUNT_SERVICE_URL: http://account-service:8003
-      CATALOG_SERVICE_URL: http://catalog-service:8006
-      LIVESTREAM_SERVICE_URL: http://livestream-service:8007
-      SYNC_SERVICE_URL: http://sync-service:8004
-      REPORT_SERVICE_URL: http://report-service:8005
     depends_on:
       - ai-service
-      - auth-service
-      - account-service
-      - catalog-service
-      - livestream-service
-      - sync-service
-      - report-service
     ports:
       - "8000:8000"

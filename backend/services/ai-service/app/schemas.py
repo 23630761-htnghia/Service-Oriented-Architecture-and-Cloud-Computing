@@ -14,93 +14,43 @@ IntentLabel = Literal[
     "spam",
     "other",
 ]
-PriorityLabel = Literal["high", "medium", "low"]
-RiskLabel = Literal["low", "medium", "high", "critical"]
 
 
-class CommentRequest(BaseModel):
-    comment: str = Field(..., min_length=1, max_length=1000)
-    username: str | None = Field(default=None, max_length=100)
-    livestream_id: str | None = Field(default=None, max_length=100)
-    account_id: str | None = Field(default=None, max_length=100)
-    platform: str | None = Field(default=None, max_length=50)
+class ChatProductContext(BaseModel):
+    product_id: str | None = Field(default=None, max_length=100)
+    name: str = Field(..., min_length=1, max_length=300)
+    category: str | None = Field(default=None, max_length=100)
+    brand: str | None = Field(default=None, max_length=100)
+    description: str | None = Field(default=None, max_length=1000)
+    retail_price: float | None = Field(default=None, ge=0)
+    live_price: float | None = Field(default=None, ge=0)
+    stock_quantity: int | None = Field(default=None, ge=0)
 
 
-class CommentAnalysis(BaseModel):
-    comment: str
-    username: str | None = None
-    livestream_id: str | None = None
-    account_id: str | None = None
-    platform: str | None = None
-    sentiment: SentimentLabel
+class ChatHistoryMessage(BaseModel):
+    sender_role: str = Field(..., min_length=1, max_length=50)
+    sender_name: str | None = Field(default=None, max_length=100)
+    content: str = Field(..., min_length=1, max_length=2000)
+    source: str | None = Field(default=None, max_length=50)
+    created_at: str | None = Field(default=None, max_length=100)
+
+
+class ChatbotReplyRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000)
+    customer_name: str | None = Field(default=None, max_length=100)
+    account_name: str | None = Field(default=None, max_length=200)
+    products: list[ChatProductContext] = Field(default_factory=list, max_length=20)
+    conversation_history: list[ChatHistoryMessage] = Field(default_factory=list, max_length=20)
+
+
+class ChatbotReplyResponse(BaseModel):
+    reply: str = Field(..., min_length=1, max_length=2000)
     intent: IntentLabel
-    lead_score: int = Field(..., ge=0, le=100)
-    priority: PriorityLabel
-    reasons: list[str]
-    suggested_action: str
-    should_auto_message: bool
-    auto_message: str | None = None
-    auto_message_reason: str
-
-
-class BatchCommentRequest(BaseModel):
-    comments: list[CommentRequest] = Field(..., min_length=1, max_length=100)
-
-
-class ViewerAccount(BaseModel):
-    account_id: str = Field(..., min_length=1, max_length=100)
-    platform: str = Field(..., min_length=1, max_length=50)
-    current_viewers: int = Field(..., ge=0)
-    max_capacity: int = Field(..., gt=0)
-    avg_watch_time_seconds: int = Field(default=0, ge=0)
-    engagement_rate: float = Field(default=0.0, ge=0.0, le=1.0)
-    manual_priority: float = Field(default=1.0, ge=0.5, le=2.0)
-    lag_signal: float = Field(default=0.0, ge=0.0, le=1.0)
-
-
-class ViewerBalancingRequest(BaseModel):
-    accounts: list[ViewerAccount] = Field(..., min_length=2, max_length=50)
-    incoming_viewers: int = Field(default=0, ge=0)
-    protect_high_engagement_streams: bool = True
-
-
-class ViewerAllocation(BaseModel):
-    account_id: str
-    current_viewers: int
-    target_viewers: int
-    projected_viewers: int
-    viewer_delta: int
-    lag_risk: RiskLabel
-    weighted_capacity: int
-    recommendation: str
-
-
-class TransferSuggestion(BaseModel):
-    from_account_id: str
-    to_account_id: str
-    viewers_to_shift: int = Field(..., ge=1)
-    reason: str
-
-
-class ViewerBalancingResponse(BaseModel):
-    summary: str
-    total_current_viewers: int
-    total_incoming_viewers: int
-    allocations: list[ViewerAllocation]
-    transfer_plan: list[TransferSuggestion]
-    recommended_entry_account_id: str
-
-
-class SessionOptimizationRequest(BaseModel):
-    comments: list[CommentRequest] = Field(default_factory=list, max_length=100)
-    accounts: list[ViewerAccount] = Field(..., min_length=2, max_length=50)
-    incoming_viewers: int = Field(default=0, ge=0)
-
-
-class SessionOptimizationResponse(BaseModel):
-    hot_leads: list[CommentAnalysis]
-    comment_summary: dict[str, int]
-    balancing: ViewerBalancingResponse
+    sentiment: SentimentLabel
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    should_escalate: bool
+    suggested_actions: list[str]
+    used_product_id: str | None = None
 
 
 class HealthResponse(BaseModel):

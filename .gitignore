@@ -1,5 +1,8 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
-
-backend/services/account-service/app/data/sqlite/account_management.db
+.ruff_cache/
+.mypy_cache/
+.venv/
+node_modules/
+.DS_Store
