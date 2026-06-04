@@ -1,0 +1,199 @@
+services:
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: smartlive-kafka
+    environment:
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/bitnami/kafka
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartlive-redis
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    container_name: smartlive-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: smartlive
+      MINIO_ROOT_PASSWORD: smartlive123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: smartlive-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: smartlive-postgres
+    environment:
+      POSTGRES_DB: smartlive
+      POSTGRES_USER: smartlive
+      POSTGRES_PASSWORD: smartlive
+    ports:
+      - "5432:5432"
+    volumes:
+      - smartlive-postgres-data:/var/lib/postgresql/data
+      - ./infra/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+  auth-service:
+    build: ./backend/services/auth-service
+    container_name: smartlive-auth-service
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-dev-secret}
+    ports:
+      - "8010:8010"
+
+  user-service:
+    build: ./backend/services/user-service
+    container_name: smartlive-user-service
+    ports:
+      - "8011:8011"
+
+  shop-service:
+    build: ./backend/services/shop-service
+    container_name: smartlive-shop-service
+    ports:
+      - "8012:8012"
+
+  product-service:
+    build: ./backend/services/product-service
+    container_name: smartlive-product-service
+    ports:
+      - "8013:8013"
+
+  voucher-service:
+    build: ./backend/services/voucher-service
+    container_name: smartlive-voucher-service
+    ports:
+      - "8014:8014"
+
+  livestream-service:
+    build: ./backend/services/livestream-service
+    container_name: smartlive-livestream-service
+    ports:
+      - "8015:8015"
+
+  chat-service:
+    build: ./backend/services/chat-service
+    container_name: smartlive-chat-service
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+    ports:
+      - "8016:8016"
+
+  ai-assistant-service:
+    build: ./backend/services/ai-service
+    container_name: smartlive-ai-assistant-service
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1}
+      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-12}
+      AI_TEMPERATURE: ${AI_TEMPERATURE:-0.2}
+      AI_MAX_TOKENS: ${AI_MAX_TOKENS:-220}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - ollama
+      - kafka
+    ports:
+      - "8001:8001"
+
+  order-service:
+    build: ./backend/services/order-service
+    container_name: smartlive-order-service
+    ports:
+      - "8017:8017"
+
+  notification-service:
+    build: ./backend/services/notification-service
+    container_name: smartlive-notification-service
+    ports:
+      - "8018:8018"
+
+  analytics-service:
+    build: ./backend/services/analytics-service
+    container_name: smartlive-analytics-service
+    ports:
+      - "8019:8019"
+
+  api-gateway:
+    build: ./backend/services/api-gateway
+    container_name: smartlive-api-gateway
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8010
+      USER_SERVICE_URL: http://user-service:8011
+      SHOP_SERVICE_URL: http://shop-service:8012
+      PRODUCT_SERVICE_URL: http://product-service:8013
+      VOUCHER_SERVICE_URL: http://voucher-service:8014
+      LIVESTREAM_SERVICE_URL: http://livestream-service:8015
+      CHAT_SERVICE_URL: http://chat-service:8016
+      AI_SERVICE_URL: http://ai-assistant-service:8001
+      ORDER_SERVICE_URL: http://order-service:8017
+      NOTIFICATION_SERVICE_URL: http://notification-service:8018
+      ANALYTICS_SERVICE_URL: http://analytics-service:8019
+      DATABASE_URL: postgresql://smartlive:smartlive@postgres:5432/smartlive
+      REDIS_URL: redis://redis:6379/0
+      RATE_LIMIT_PER_MINUTE: 120
+    depends_on:
+      - auth-service
+      - product-service
+      - livestream-service
+      - chat-service
+      - ai-assistant-service
+      - redis
+      - postgres
+    ports:
+      - "8000:8000"
+
+  demo-app:
+    build: ./apps/demo-app
+    container_name: smartlive-demo-app
+    depends_on:
+      - api-gateway
+    ports:
+      - "3010:3010"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: smartlive-prometheus
+    volumes:
+      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: smartlive-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  smartlive-postgres-data:
+  ollama_data:
+  kafka_data:
+  minio_data:
+  grafana_data:

@@ -1,0 +1,37 @@
+{
+  "title": "SmartLive Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "API Gateway Requests",
+      "targets": [
+        {
+          "expr": "smartlive_gateway_requests_total"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Active Gateway Clients",
+      "targets": [
+        {
+          "expr": "smartlive_gateway_clients_active"
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,261 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: smartlive/auth-service:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: smartlive-secret
+          ports:
+            - containerPort: 8010
+          readinessProbe: {httpGet: {path: /ready, port: 8010}}
+          livenessProbe: {httpGet: {path: /health, port: 8010}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: smartlive
+spec:
+  selector: {app: auth-service}
+  ports:
+    - port: 8010
+      targetPort: 8010
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: user-service}}
+  template:
+    metadata: {labels: {app: user-service}}
+    spec:
+      containers:
+        - name: user-service
+          image: smartlive/user-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8011}]
+          readinessProbe: {httpGet: {path: /ready, port: 8011}}
+          livenessProbe: {httpGet: {path: /health, port: 8011}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: smartlive
+spec:
+  selector: {app: user-service}
+  ports: [{port: 8011, targetPort: 8011}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: shop-service}}
+  template:
+    metadata: {labels: {app: shop-service}}
+    spec:
+      containers:
+        - name: shop-service
+          image: smartlive/shop-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8012}]
+          readinessProbe: {httpGet: {path: /ready, port: 8012}}
+          livenessProbe: {httpGet: {path: /health, port: 8012}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop-service
+  namespace: smartlive
+spec:
+  selector: {app: shop-service}
+  ports: [{port: 8012, targetPort: 8012}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: product-service}}
+  template:
+    metadata: {labels: {app: product-service}}
+    spec:
+      containers:
+        - name: product-service
+          image: smartlive/product-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8013}]
+          readinessProbe: {httpGet: {path: /ready, port: 8013}}
+          livenessProbe: {httpGet: {path: /health, port: 8013}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: smartlive
+spec:
+  selector: {app: product-service}
+  ports: [{port: 8013, targetPort: 8013}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voucher-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: voucher-service}}
+  template:
+    metadata: {labels: {app: voucher-service}}
+    spec:
+      containers:
+        - name: voucher-service
+          image: smartlive/voucher-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8014}]
+          readinessProbe: {httpGet: {path: /ready, port: 8014}}
+          livenessProbe: {httpGet: {path: /health, port: 8014}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: voucher-service
+  namespace: smartlive
+spec:
+  selector: {app: voucher-service}
+  ports: [{port: 8014, targetPort: 8014}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livestream-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: livestream-service}}
+  template:
+    metadata: {labels: {app: livestream-service}}
+    spec:
+      containers:
+        - name: livestream-service
+          image: smartlive/livestream-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8015}]
+          readinessProbe: {httpGet: {path: /ready, port: 8015}}
+          livenessProbe: {httpGet: {path: /health, port: 8015}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livestream-service
+  namespace: smartlive
+spec:
+  selector: {app: livestream-service}
+  ports: [{port: 8015, targetPort: 8015}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: order-service}}
+  template:
+    metadata: {labels: {app: order-service}}
+    spec:
+      containers:
+        - name: order-service
+          image: smartlive/order-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8017}]
+          readinessProbe: {httpGet: {path: /ready, port: 8017}}
+          livenessProbe: {httpGet: {path: /health, port: 8017}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: smartlive
+spec:
+  selector: {app: order-service}
+  ports: [{port: 8017, targetPort: 8017}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: notification-service}}
+  template:
+    metadata: {labels: {app: notification-service}}
+    spec:
+      containers:
+        - name: notification-service
+          image: smartlive/notification-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8018}]
+          readinessProbe: {httpGet: {path: /ready, port: 8018}}
+          livenessProbe: {httpGet: {path: /health, port: 8018}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: smartlive
+spec:
+  selector: {app: notification-service}
+  ports: [{port: 8018, targetPort: 8018}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: analytics-service}}
+  template:
+    metadata: {labels: {app: analytics-service}}
+    spec:
+      containers:
+        - name: analytics-service
+          image: smartlive/analytics-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8019}]
+          readinessProbe: {httpGet: {path: /ready, port: 8019}}
+          livenessProbe: {httpGet: {path: /health, port: 8019}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+  namespace: smartlive
+spec:
+  selector: {app: analytics-service}
+  ports: [{port: 8019, targetPort: 8019}]

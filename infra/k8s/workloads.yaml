@@ -1,0 +1,170 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: smartlive
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: smartlive/api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: smartlive-config
+            - secretRef:
+                name: smartlive-secret
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: smartlive
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-assistant-service
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-assistant-service
+  template:
+    metadata:
+      labels:
+        app: ai-assistant-service
+    spec:
+      containers:
+        - name: ai-assistant-service
+          image: smartlive/ai-assistant-service:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: smartlive-config
+          ports:
+            - containerPort: 8001
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8001
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-assistant-service
+  namespace: smartlive
+spec:
+  selector:
+    app: ai-assistant-service
+  ports:
+    - port: 8001
+      targetPort: 8001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+  namespace: smartlive
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      containers:
+        - name: chat-service
+          image: smartlive/chat-service:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: smartlive-config
+          ports:
+            - containerPort: 8016
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8016
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8016
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-service
+  namespace: smartlive
+spec:
+  selector:
+    app: chat-service
+  ports:
+    - port: 8016
+      targetPort: 8016
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: smartlive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: smartlive/demo-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3010
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: smartlive
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 3010
+      targetPort: 3010
