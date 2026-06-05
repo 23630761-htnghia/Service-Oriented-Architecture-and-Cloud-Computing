@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from uuid import uuid4
 
 from app.schemas import (
@@ -21,6 +21,11 @@ from app.schemas import (
     Voucher,
 )
 
+SHOP_ID = "00000000-0000-0000-0000-000000001001"
+LIVE_ID = "00000000-0000-0000-0000-000000004001"
+PRODUCT_SERUM_ID = "00000000-0000-0000-0000-000000002001"
+PRODUCT_LIPSTICK_ID = "00000000-0000-0000-0000-000000002002"
+VOUCHER_LIVE20_ID = "00000000-0000-0000-0000-000000003001"
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -34,7 +39,7 @@ def public_user(user: UserRecord) -> UserPublic:
     return UserPublic(**user.model_dump(exclude={"password_hash"}))
 
 
-class DemoStore:
+class RuntimeStore:
     def __init__(self) -> None:
         self.users: dict[str, UserRecord] = {}
         self.sessions: dict[str, str] = {}
@@ -63,21 +68,21 @@ class DemoStore:
         )
 
     def _seed(self) -> None:
-        self._seed_user("customer-01", "Khách hàng Demo", "customer@smartlive.test", "CUSTOMER")
-        self._seed_user("seller-01", "Người bán Demo", "seller@smartlive.test", "SELLER")
-        self._seed_user("admin-01", "Admin Demo", "admin@smartlive.test", "ADMIN")
+        self._seed_user("customer-01", "Khách hàng Mẫu", "customer@smartlive.test", "CUSTOMER")
+        self._seed_user("seller-01", "Người bán Mẫu", "seller@smartlive.test", "SELLER")
+        self._seed_user("admin-01", "Admin Mẫu", "admin@smartlive.test", "ADMIN")
 
-        self.shops["shop-01"] = Shop(
-            id="shop-01",
+        self.shops[SHOP_ID] = Shop(
+            id=SHOP_ID,
             seller_id="seller-01",
             name="SmartLive Beauty & Home",
-            description="Shop demo bán mỹ phẩm, thiết bị nhỏ và đồ gia dụng trong livestream.",
+            description="Shop mẫu bán mỹ phẩm, thiết bị nhỏ và đồ gia dụng trong livestream.",
             logo_url=None,
             created_at=now_iso(),
         )
-        self.livestreams["live-01"] = Livestream(
-            id="live-01",
-            shop_id="shop-01",
+        self.livestreams[LIVE_ID] = Livestream(
+            id=LIVE_ID,
+            shop_id=SHOP_ID,
             title="Flash sale tối nay",
             description="AI tư vấn tự động trong khung chat livestream.",
             status="LIVE",
@@ -86,81 +91,54 @@ class DemoStore:
             viewer_count=1284,
         )
         self.products = {
-            "product-01": Product(
-                product_id="product-01",
-                shop_id="shop-01",
-                name="Serum Vitamin C LumiSkin",
-                description="Serum sáng da, kết cấu nhẹ, phù hợp da xỉn màu và cần phục hồi sau nắng.",
+            PRODUCT_SERUM_ID: Product(
+                product_id=PRODUCT_SERUM_ID,
+                shop_id=SHOP_ID,
+                name="Serum Vitamin C Glow",
+                description="Serum dưỡng sáng da, phù hợp tư vấn trong livestream.",
                 category="Skincare",
                 brand="LumiSkin",
-                retail_price=169000,
+                retail_price=199000,
                 live_price=129000,
-                stock_quantity=18,
-                variants=["30ml", "Combo 2 chai"],
-                image_url="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=900&q=80",
-                purchase_url="https://shop.example.com/products/serum-vitamin-c",
-                related_product_ids=["product-03"],
-            ),
-            "product-02": Product(
-                product_id="product-02",
-                shop_id="shop-01",
-                name="Tai nghe Bluetooth TechGo MiniPods",
-                description="Tai nghe không dây, hộp sạc nhỏ, phù hợp học online và gọi video hằng ngày.",
-                category="Thiết bị công nghệ",
-                brand="TechGo",
-                retail_price=259000,
-                live_price=219000,
-                stock_quantity=12,
-                variants=["Trắng", "Đen"],
-                image_url="https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?auto=format&fit=crop&w=900&q=80",
-                purchase_url="https://shop.example.com/products/minipods",
-            ),
-            "product-03": Product(
-                product_id="product-03",
-                shop_id="shop-01",
-                name="Bình giữ nhiệt UrbanFlex 500ml",
-                description="Giữ nóng lạnh tốt, nắp kín, dễ mang theo khi đi học hoặc đi làm.",
-                category="Đồ gia dụng",
-                brand="UrbanFlex",
-                retail_price=139000,
-                live_price=99000,
                 stock_quantity=25,
-                variants=["Xanh rêu", "Kem", "Đen"],
-                image_url="https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80",
-                purchase_url="https://shop.example.com/products/urbanflex-500ml",
+                variants=["30ml", "50ml"],
+                image_url="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=900&q=80",
+                purchase_url="https://shop.example.com/serum-vitamin-c",
+                related_product_ids=[PRODUCT_LIPSTICK_ID],
+            ),
+            PRODUCT_LIPSTICK_ID: Product(
+                product_id=PRODUCT_LIPSTICK_ID,
+                shop_id=SHOP_ID,
+                name="Son Kem Velvet Rose",
+                description="Son kem lì màu hồng đất, chất son nhẹ môi.",
+                category="Makeup",
+                brand="Velvet",
+                retail_price=159000,
+                live_price=99000,
+                stock_quantity=40,
+                variants=["Rose", "Coral", "Nude"],
+                image_url="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?auto=format&fit=crop&w=900&q=80",
+                purchase_url="https://shop.example.com/velvet-rose",
             ),
         }
-        self.livestream_products["live-01"] = list(self.products.keys())
+        self.livestream_products[LIVE_ID] = list(self.products.keys())
         self.vouchers = {
-            "voucher-01": Voucher(
-                voucher_id="voucher-01",
-                shop_id="shop-01",
+            VOUCHER_LIVE20_ID: Voucher(
+                voucher_id=VOUCHER_LIVE20_ID,
+                shop_id=SHOP_ID,
                 code="LIVE20",
-                discount_type="AMOUNT",
-                discount_value="giảm 20.000đ",
-                min_order_value=199000,
-                conditions="áp dụng cho đơn từ 199.000đ",
+                discount_type="PERCENT",
+                discount_value="giảm 20%",
+                min_order_value=150000,
+                conditions="áp dụng cho đơn từ 150.000đ",
                 start_date="2026-06-01",
                 valid_until="2026-06-30",
                 applicable_product_ids=[],
-                remaining_quantity=80,
-            ),
-            "voucher-02": Voucher(
-                voucher_id="voucher-02",
-                shop_id="shop-01",
-                code="LUMI15",
-                discount_type="PERCENT",
-                discount_value="giảm 15%",
-                min_order_value=0,
-                conditions="chỉ áp dụng cho Serum Vitamin C LumiSkin",
-                start_date="2026-06-01",
-                valid_until="2026-06-20",
-                applicable_product_ids=["product-01"],
-                remaining_quantity=24,
+                remaining_quantity=100,
             ),
         }
-        self.policies["shop-01"] = SalesPolicy(
-            shop_id="shop-01",
+        self.policies[SHOP_ID] = SalesPolicy(
+            shop_id=SHOP_ID,
             shipping_fee_note="Phí ship nội thành từ 20.000đ, miễn phí ship cho đơn từ 399.000đ.",
             delivery_time_note="Thời gian giao dự kiến 1-2 ngày ở nội thành và 3-5 ngày ở tỉnh.",
             return_policy="Đổi trả trong 7 ngày nếu sản phẩm lỗi từ nhà sản xuất, còn tem và hóa đơn mua hàng.",
@@ -224,12 +202,21 @@ class DemoStore:
         return [product for product_id in product_ids if (product := self.products.get(product_id))]
 
     def vouchers_for_shop(self, shop_id: str) -> list[Voucher]:
-        return [voucher for voucher in self.vouchers.values() if voucher.shop_id == shop_id and voucher.status == "ACTIVE"]
+        today = date.today().isoformat()
+        return [
+            voucher
+            for voucher in self.vouchers.values()
+            if voucher.shop_id == shop_id
+            and voucher.status == "ACTIVE"
+            and voucher.remaining_quantity > 0
+            and (not voucher.start_date or voucher.start_date <= today)
+            and (not voucher.valid_until or voucher.valid_until >= today)
+        ]
 
     def upsert_product(self, product: Product) -> Product:
         self.products[product.product_id] = product
-        if product.product_id not in self.livestream_products.get("live-01", []):
-            self.livestream_products.setdefault("live-01", []).append(product.product_id)
+        if product.product_id not in self.livestream_products.get(LIVE_ID, []):
+            self.livestream_products.setdefault(LIVE_ID, []).append(product.product_id)
         return product
 
     def delete_product(self, product_id: str) -> bool:
@@ -312,7 +299,7 @@ class DemoStore:
 
     def create_order(self, customer_id: str, items: list[CartItem]) -> Order:
         order_items: list[OrderItem] = []
-        shop_id = "shop-01"
+        shop_id = SHOP_ID
         for item in items:
             product = self.products[item.product_id]
             shop_id = product.shop_id
@@ -338,4 +325,4 @@ class DemoStore:
         return order
 
 
-store = DemoStore()
+store = RuntimeStore()

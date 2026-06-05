@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Literal
+from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -71,6 +72,8 @@ class ChatHistoryMessage(BaseModel):
 
 class ChatbotReplyRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
+    livestream_id: str | None = Field(default=None, max_length=100)
+    shop_id: str | None = Field(default=None, max_length=100)
     customer_name: str | None = Field(default=None, max_length=100)
     account_name: str | None = Field(default=None, max_length=200)
     products: list[ChatProductContext] = Field(default_factory=list, max_length=20)
@@ -81,6 +84,7 @@ class ChatbotReplyRequest(BaseModel):
 
 
 class ChatbotReplyResponse(BaseModel):
+    log_id: str = Field(default_factory=lambda: str(uuid4()))
     reply: str = Field(..., min_length=1, max_length=2000)
     intent: IntentLabel
     sentiment: SentimentLabel

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import httpx
 import time
+from uuid import uuid4
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,6 +28,7 @@ from app.schemas import (
     StatusUpdateRequest,
     UserPublic,
     Voucher,
+    VoucherApplyRequest,
 )
 from app.store import hash_password, public_user, store
 
@@ -73,11 +75,75 @@ class RealtimeHub:
 hub = RealtimeHub()
 
 
+class SignalingHub:
+    def __init__(self) -> None:
+        self.rooms: dict[str, dict[str, WebSocket]] = {}
+        self.roles: dict[str, dict[str, str]] = {}
+        self.live_status: dict[str, bool] = {}
+
+    async def connect(self, livestream_id: str, connection_id: str, role: str, websocket: WebSocket) -> None:
+        await websocket.accept()
+        self.rooms.setdefault(livestream_id, {})[connection_id] = websocket
+        self.roles.setdefault(livestream_id, {})[connection_id] = role
+        await websocket.send_json(
+            {
+                "event": "signal-ready",
+                "payload": {
+                    "connection_id": connection_id,
+                    "role": role,
+                    "is_live": self.live_status.get(livestream_id, False),
+                },
+            }
+        )
+
+    def disconnect(self, livestream_id: str, connection_id: str) -> None:
+        self.rooms.get(livestream_id, {}).pop(connection_id, None)
+        self.roles.get(livestream_id, {}).pop(connection_id, None)
+
+    async def send(self, livestream_id: str, connection_id: str, event: str, payload: dict) -> None:
+        socket = self.rooms.get(livestream_id, {}).get(connection_id)
+        if not socket:
+            return
+        try:
+            await socket.send_json({"event": event, "payload": payload})
+        except RuntimeError:
+            self.disconnect(livestream_id, connection_id)
+
+    async def broadcast(self, livestream_id: str, event: str, payload: dict, exclude: str | None = None) -> None:
+        for connection_id in list(self.rooms.get(livestream_id, {})):
+            if connection_id == exclude:
+                continue
+            await self.send(livestream_id, connection_id, event, payload)
+
+    async def send_to_role(self, livestream_id: str, role: str, event: str, payload: dict) -> None:
+        for connection_id, connection_role in list(self.roles.get(livestream_id, {}).items()):
+            if connection_role == role:
+                await self.send(livestream_id, connection_id, event, payload)
+
+
+signaling_hub = SignalingHub()
+
+
 async def forward_post(base_url: str, path: str, payload: dict):
     response = await app.state.client.post(f"{base_url}{path}", json=payload)
     if response.status_code >= 400:
         raise HTTPException(status_code=response.status_code, detail=response.text)
     return response.json()
+
+
+async def forward_ai_reply(payload: dict) -> dict:
+    try:
+        return await forward_post(settings.ai_service_url, "/chatbot/reply", payload)
+    except (httpx.HTTPError, HTTPException) as exc:
+        return {
+            "reply": "Thông tin này shop cần kiểm tra thêm, em đã chuyển câu hỏi cho người bán hỗ trợ ạ.",
+            "intent": "other",
+            "confidence": 0.2,
+            "should_escalate": True,
+            "ai_status": "NEED_SELLER_SUPPORT",
+            "error_message": f"AI service unavailable or timeout: {exc}",
+            "retrieved_context": {"error": "AI service unavailable or timeout"},
+        }
 
 
 async def forward_request(base_url: str, path: str, method: str, payload: dict | None = None):
@@ -182,7 +248,7 @@ async def root():
         "service": "api-gateway",
         "status": "ok",
         "message": "SmartLive intelligent livestream API is running.",
-        "demo_accounts": {
+        "sample_accounts": {
             "CUSTOMER": "customer@smartlive.test / 123456",
             "SELLER": "seller@smartlive.test / 123456",
             "ADMIN": "admin@smartlive.test / 123456",
@@ -291,6 +357,26 @@ async def livestream_products(livestream_id: str, user=Depends(require_roles("CU
     return store.products_for_livestream(livestream_id)
 
 
+@app.get("/livestreams/{livestream_id}/vouchers", response_model=list[Voucher])
+async def livestream_vouchers(livestream_id: str, user=Depends(require_roles("CUSTOMER", "SELLER", "ADMIN"))):
+    livestream = store.livestreams.get(livestream_id)
+    if not livestream:
+        raise HTTPException(status_code=404, detail="Livestream not found")
+    if user.role == "SELLER":
+        assert_can_manage_shop(user, livestream.shop_id)
+    return store.vouchers_for_shop(livestream.shop_id)
+
+
+@app.get("/products/{product_id}", response_model=Product)
+async def product_detail(product_id: str, user=Depends(require_roles("CUSTOMER", "SELLER", "ADMIN"))):
+    product = store.products.get(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    if user.role == "SELLER":
+        assert_can_manage_shop(user, product.shop_id)
+    return product
+
+
 @app.post("/livestreams/{livestream_id}/chat", response_model=LivestreamMessageResponse)
 async def livestream_chat(
     livestream_id: str,
@@ -328,11 +414,11 @@ async def handle_livestream_message(payload: LivestreamMessageRequest, user) -> 
         if selected:
             products = [selected, *[product for product in products if product.product_id != selected.product_id]]
 
-        response = await forward_post(
-            settings.ai_service_url,
-            "/chatbot/reply",
+        response = await forward_ai_reply(
             {
                 "message": payload.message,
+                "livestream_id": payload.livestream_id,
+                "shop_id": shop.id,
                 "customer_name": payload.customer_name or getattr(user, "full_name", None),
                 "account_name": shop.name,
                 "products": [product.model_dump() for product in products],
@@ -439,6 +525,83 @@ async def livestream_socket(websocket: WebSocket, livestream_id: str, token: str
         hub.disconnect(livestream_id, websocket)
 
 
+@app.websocket("/ws/signaling/livestreams/{livestream_id}")
+@app.websocket("/ws/livestreams/{livestream_id}/signal")
+async def livestream_signaling_socket(websocket: WebSocket, livestream_id: str, token: str | None = None):
+    user = store.user_by_token(token or "")
+    livestream = store.livestreams.get(livestream_id)
+    if not user or not livestream:
+        await websocket.close(code=1008)
+        return
+    if user.role == "SELLER":
+        try:
+            assert_can_manage_shop(user, livestream.shop_id)
+        except HTTPException:
+            await websocket.close(code=1008)
+            return
+    elif user.role != "CUSTOMER":
+        await websocket.close(code=1008)
+        return
+
+    connection_id = str(uuid4())
+    await signaling_hub.connect(livestream_id, connection_id, user.role, websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            event = data.get("event")
+            payload = data.get("payload") or {}
+            enriched_payload = {
+                **payload,
+                "from_id": connection_id,
+                "from_role": user.role,
+                "livestream_id": livestream_id,
+            }
+            target_id = payload.get("target_id")
+
+            if event == "join-livestream":
+                if user.role == "CUSTOMER":
+                    await signaling_hub.send_to_role(livestream_id, "SELLER", "viewer-joined", enriched_payload)
+                    await websocket.send_json(
+                        {
+                            "event": "livestream-state",
+                            "payload": {
+                                "is_live": signaling_hub.live_status.get(livestream_id, False),
+                                "viewer_id": connection_id,
+                            },
+                        }
+                    )
+                else:
+                    await signaling_hub.broadcast(livestream_id, "seller-ready", enriched_payload, exclude=connection_id)
+            elif event == "seller-ready" and user.role == "SELLER":
+                await signaling_hub.broadcast(livestream_id, "seller-ready", enriched_payload, exclude=connection_id)
+            elif event == "livestream-started" and user.role == "SELLER":
+                signaling_hub.live_status[livestream_id] = True
+                livestream.status = "LIVE"
+                await signaling_hub.broadcast(livestream_id, "livestream-started", enriched_payload, exclude=connection_id)
+            elif event == "livestream-ended" and user.role == "SELLER":
+                signaling_hub.live_status[livestream_id] = False
+                livestream.status = "ENDED"
+                await signaling_hub.broadcast(livestream_id, "livestream-ended", enriched_payload, exclude=connection_id)
+            elif event in {"webrtc-offer", "webrtc-answer", "ice-candidate"} and target_id:
+                await signaling_hub.send(livestream_id, target_id, event, enriched_payload)
+    except WebSocketDisconnect:
+        await signaling_hub.broadcast(
+            livestream_id,
+            "peer-left",
+            {"from_id": connection_id, "from_role": user.role, "livestream_id": livestream_id},
+            exclude=connection_id,
+        )
+        if user.role == "SELLER":
+            signaling_hub.live_status[livestream_id] = False
+            await signaling_hub.broadcast(
+                livestream_id,
+                "livestream-ended",
+                {"from_id": connection_id, "from_role": user.role, "livestream_id": livestream_id},
+                exclude=connection_id,
+            )
+        signaling_hub.disconnect(livestream_id, connection_id)
+
+
 @app.post("/cart/items", response_model=list[CartItem])
 async def add_cart_item(payload: CartItemRequest, user=Depends(require_roles("CUSTOMER"))):
     if payload.product_id not in store.products:
@@ -450,6 +613,37 @@ async def add_cart_item(payload: CartItemRequest, user=Depends(require_roles("CU
     else:
         cart.append(CartItem(product_id=payload.product_id, quantity=payload.quantity))
     return cart
+
+
+@app.delete("/cart/items/{product_id}", response_model=list[CartItem])
+async def delete_cart_item(product_id: str, user=Depends(require_roles("CUSTOMER"))):
+    cart = store.carts.setdefault(user.id, [])
+    store.carts[user.id] = [item for item in cart if item.product_id != product_id]
+    return store.carts[user.id]
+
+
+@app.post("/cart/voucher")
+async def apply_cart_voucher(payload: VoucherApplyRequest, user=Depends(require_roles("CUSTOMER"))):
+    cart = store.carts.setdefault(user.id, [])
+    if not cart:
+        raise HTTPException(status_code=400, detail="Cart is empty")
+    shop_id = store.products[cart[0].product_id].shop_id
+    voucher = next(
+        (
+            item
+            for item in store.vouchers_for_shop(shop_id)
+            if item.code.lower() == payload.code.lower()
+            and item.remaining_quantity > 0
+            and (
+                not item.applicable_product_ids
+                or any(cart_item.product_id in item.applicable_product_ids for cart_item in cart)
+            )
+        ),
+        None,
+    )
+    if not voucher:
+        raise HTTPException(status_code=404, detail="Voucher is not valid for this cart")
+    return {"applied": True, "voucher": voucher}
 
 
 @app.post("/orders")
@@ -580,6 +774,26 @@ async def seller_toggle_ai(livestream_id: str, payload: AutoReplySettings, user=
     livestream.ai_enabled = payload.enabled
     store.settings = payload
     return livestream
+
+
+@app.post("/seller/livestreams/{livestream_id}/pin-product")
+async def seller_pin_product(livestream_id: str, payload: CartItemRequest, user=Depends(require_roles("SELLER"))):
+    livestream = store.livestreams.get(livestream_id)
+    if not livestream:
+        raise HTTPException(status_code=404, detail="Livestream not found")
+    assert_can_manage_shop(user, livestream.shop_id)
+    product = store.products.get(payload.product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    assert_can_manage_shop(user, product.shop_id)
+    product_ids = store.livestream_products.setdefault(livestream_id, [])
+    if payload.product_id not in product_ids:
+        product_ids.insert(0, payload.product_id)
+    else:
+        product_ids.remove(payload.product_id)
+        product_ids.insert(0, payload.product_id)
+    await hub.broadcast(livestream_id, "product_pinned", {"product_id": payload.product_id})
+    return {"pinned": True, "livestream_id": livestream_id, "product_id": payload.product_id}
 
 
 @app.get("/seller/livestreams/{livestream_id}/questions")

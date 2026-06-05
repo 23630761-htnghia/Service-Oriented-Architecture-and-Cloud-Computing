@@ -208,3 +208,126 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_livestream_created
 
 CREATE INDEX IF NOT EXISTS idx_ai_logs_livestream_created
     ON ai_db.ai_logs (livestream_id, created_at DESC);
+
+INSERT INTO auth_db.users (id, full_name, email, password_hash, role, status)
+VALUES
+    ('00000000-0000-0000-0000-000000000101', 'Khách hàng Mẫu', 'customer@smartlive.test', 'seed-123456', 'CUSTOMER', 'ACTIVE'),
+    ('00000000-0000-0000-0000-000000000102', 'Người bán Mẫu', 'seller@smartlive.test', 'seed-123456', 'SELLER', 'ACTIVE'),
+    ('00000000-0000-0000-0000-000000000103', 'Admin Mẫu', 'admin@smartlive.test', 'seed-123456', 'ADMIN', 'ACTIVE')
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO user_db.profiles (user_id, full_name, phone)
+VALUES
+    ('00000000-0000-0000-0000-000000000101', 'Khách hàng Mẫu', '0900000001'),
+    ('00000000-0000-0000-0000-000000000102', 'Người bán Mẫu', '0900000002'),
+    ('00000000-0000-0000-0000-000000000103', 'Admin Mẫu', '0900000003')
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO shop_db.shops (id, seller_id, name, description)
+VALUES (
+    '00000000-0000-0000-0000-000000001001',
+    '00000000-0000-0000-0000-000000000102',
+    'SmartLive Beauty',
+    'Shop mẫu bán mỹ phẩm và phụ kiện trong livestream.'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO product_db.products (id, shop_id, name, description, price, sale_price, stock, category, image_url, variants, purchase_url)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000002001',
+        '00000000-0000-0000-0000-000000001001',
+        'Serum Vitamin C Glow',
+        'Serum dưỡng sáng da, phù hợp tư vấn trong livestream.',
+        199000,
+        129000,
+        25,
+        'skincare',
+        'https://example.com/products/serum-vitamin-c.jpg',
+        '["30ml", "50ml"]'::jsonb,
+        'https://shop.example.com/serum-vitamin-c'
+    ),
+    (
+        '00000000-0000-0000-0000-000000002002',
+        '00000000-0000-0000-0000-000000001001',
+        'Son Kem Velvet Rose',
+        'Son kem lì màu hồng đất, chất son nhẹ môi.',
+        159000,
+        99000,
+        40,
+        'makeup',
+        'https://example.com/products/velvet-rose.jpg',
+        '["Rose", "Coral", "Nude"]'::jsonb,
+        'https://shop.example.com/velvet-rose'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO voucher_db.vouchers (id, shop_id, code, discount_type, discount_value, min_order_value, start_date, end_date, quantity, status)
+VALUES (
+    '00000000-0000-0000-0000-000000003001',
+    '00000000-0000-0000-0000-000000001001',
+    'LIVE20',
+    'PERCENT',
+    20,
+    150000,
+    CURRENT_DATE,
+    CURRENT_DATE + INTERVAL '14 days',
+    100,
+    'ACTIVE'
+)
+ON CONFLICT (shop_id, code) DO NOTHING;
+
+INSERT INTO livestream_db.livestreams (id, shop_id, title, description, status, ai_enabled, started_at)
+VALUES (
+    '00000000-0000-0000-0000-000000004001',
+    '00000000-0000-0000-0000-000000001001',
+    'Live sale mỹ phẩm tối nay',
+    'Livestream mẫu có AI tự động trả lời khách hàng.',
+    'LIVE',
+    true,
+    now()
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO livestream_db.livestream_products (livestream_id, product_id)
+VALUES
+    ('00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000002001'),
+    ('00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000002002')
+ON CONFLICT (livestream_id, product_id) DO NOTHING;
+
+INSERT INTO shop_db.sales_policies (shop_id, shipping_fee_note, delivery_time_note, return_policy, warranty_policy, sensitive_scope_note)
+VALUES (
+    '00000000-0000-0000-0000-000000001001',
+    'Phí ship nội thành từ 20.000 đ, miễn phí cho đơn từ 500.000 đ.',
+    'Giao hàng dự kiến 1-3 ngày tùy khu vực.',
+    'Đổi trả trong 7 ngày nếu sản phẩm lỗi do nhà sản xuất và còn nguyên tem.',
+    'Bảo hành theo chính sách của từng sản phẩm.',
+    'AI chỉ trả lời nội dung bán hàng, sản phẩm, voucher, giao hàng và đổi trả.'
+)
+ON CONFLICT (shop_id) DO NOTHING;
+
+INSERT INTO ai_db.ai_settings (shop_id, model_name, temperature, max_tokens, reply_style, auto_reply_enabled, fallback_to_seller_enabled)
+VALUES (
+    '00000000-0000-0000-0000-000000001001',
+    'llama3.1',
+    0.2,
+    220,
+    'ngắn gọn, thân thiện, chốt đơn',
+    true,
+    true
+);
+
+INSERT INTO ai_db.knowledge_embeddings (shop_id, source_type, source_id, content)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000001001',
+        'product',
+        '00000000-0000-0000-0000-000000002001',
+        'Serum Vitamin C Glow giá live 129000, tồn kho 25, có phân loại 30ml và 50ml.'
+    ),
+    (
+        '00000000-0000-0000-0000-000000001001',
+        'voucher',
+        '00000000-0000-0000-0000-000000003001',
+        'Voucher LIVE20 giảm 20 phần trăm cho đơn từ 150000, còn 100 lượt.'
+    );

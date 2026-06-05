@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import re
+
 from app.analyzer import detect_intent, detect_sentiment, normalize_text
+from app.db_context import load_database_context
 from app.ollama_client import OllamaError, generateReplyWithOllama
 from app.prompt_builder import SYSTEM_PROMPT, buildSellingPrompt
 from app.schemas import (
@@ -16,6 +19,24 @@ FALLBACK_REPLY = "Thông tin này shop cần kiểm tra thêm, em đã chuyển 
 
 HUMAN_HANDOFF_KEYWORDS = {"nhan vien", "nguoi that", "tu van vien", "goi lai", "hotline"}
 THANKS_KEYWORDS = {"cam on", "thanks", "thank", "ok shop", "da ro"}
+GENERIC_PRODUCT_KEYWORDS = {"san pham nay", "mau nay", "cai nay", "em nay", "hang nay"}
+PRODUCT_MATCH_STOPWORDS = {
+    "ban",
+    "bao",
+    "can",
+    "cho",
+    "con",
+    "cua",
+    "gia",
+    "hang",
+    "khong",
+    "live",
+    "mua",
+    "nay",
+    "shop",
+    "san",
+    "pham",
+}
 
 
 def format_currency(value: float | None) -> str | None:
@@ -37,6 +58,8 @@ def choose_product(message: str, products: list[ChatProductContext]) -> ChatProd
         return None
 
     normalized_message = normalize_text(message)
+    if has_any(normalized_message, GENERIC_PRODUCT_KEYWORDS):
+        return products[0]
     best_product: ChatProductContext | None = None
     best_score = 0
 
@@ -44,21 +67,24 @@ def choose_product(message: str, products: list[ChatProductContext]) -> ChatProd
         searchable = " ".join(
             [
                 product.name,
-                product.category or "",
                 product.brand or "",
-                product.description or "",
                 " ".join(product.variants),
             ]
         )
-        tokens = {token for token in normalize_text(searchable).split() if len(token) >= 3}
+        product_id = normalize_text(product.product_id or "")
+        if product_id and product_id in normalized_message:
+            return product
+        tokens = {
+            token
+            for token in normalize_text(searchable).split()
+            if len(token) >= 3 and token not in PRODUCT_MATCH_STOPWORDS
+        }
         score = sum(1 for token in tokens if token in normalized_message)
-        if product.product_id and normalize_text(product.product_id) in normalized_message:
-            score += 4
         if score > best_score:
             best_score = score
             best_product = product
 
-    return best_product or (products[0] if len(products) == 1 else None)
+    return best_product if best_score > 0 else None
 
 
 def vouchers_for_product(
@@ -72,6 +98,26 @@ def vouchers_for_product(
         for voucher in active_vouchers
         if not voucher.applicable_product_ids or product.product_id in voucher.applicable_product_ids
     ]
+
+
+def enrich_payload_with_database(payload: ChatbotReplyRequest) -> tuple[ChatbotReplyRequest, dict | None]:
+    db_context = load_database_context(payload.livestream_id, payload.shop_id)
+    if not db_context or db_context.get("error"):
+        return payload, db_context
+    products = db_context.get("products") or []
+    vouchers = db_context.get("vouchers") or []
+    policy = db_context.get("policy")
+    if not products and not vouchers and not policy:
+        return payload, db_context
+    enriched = payload.model_copy(
+        update={
+            "shop_id": db_context.get("shop_id") or payload.shop_id,
+            "products": products or payload.products,
+            "vouchers": vouchers or payload.vouchers,
+            "policy": policy or payload.policy,
+        }
+    )
+    return enriched, db_context
 
 
 def missing_data_reply(customer_name: str, topic: str) -> tuple[str, list[str]]:
@@ -220,16 +266,7 @@ def build_consult_reply(
     products: list[ChatProductContext],
 ) -> tuple[str, list[str], bool]:
     if not product:
-        available = [item for item in products if item.stock_quantity is None or item.stock_quantity > 0]
-        if not available:
-            return (*missing_data_reply(customer_name, "sản phẩm để tư vấn"), True)
-        names = ", ".join(item.name for item in available[:3])
-        return (
-            f"Dạ {customer_label(customer_name)}, hiện shop có thể tư vấn các sản phẩm: {names}. "
-            "Bạn đang quan tâm loại nào để mình báo đúng thông tin ạ?",
-            ["Hỏi khách chọn sản phẩm cụ thể."],
-            False,
-        )
+        return (*missing_data_reply(customer_name, "sản phẩm khách đang hỏi"), True)
 
     description = f" Điểm nổi bật: {product.description}" if product.description else ""
     variants = f" Có các phân loại: {', '.join(product.variants)}." if product.variants else ""
@@ -320,6 +357,10 @@ def _build_grounded_draft(payload: ChatbotReplyRequest) -> ChatbotReplyResponse:
     )
 
 
+def _context_text(retrieved_context: dict) -> str:
+    return normalize_text(str(retrieved_context))
+
+
 def validateAIReply(reply: str, retrieved_context: dict) -> tuple[bool, str | None]:
     normalized = reply.strip()
     if not normalized:
@@ -330,13 +371,36 @@ def validateAIReply(reply: str, retrieved_context: dict) -> tuple[bool, str | No
         return False, "Reply appears to answer as the customer"
     if not retrieved_context.get("product") and not retrieved_context.get("policy") and not retrieved_context.get("vouchers"):
         return False, "No relevant database context was retrieved"
+    context_text = _context_text(retrieved_context)
+    reply_text = normalize_text(normalized)
+    for amount in re.findall(r"\b\d{1,3}(?:[.,]\d{3})+\b|\b\d+\s*(?:d|đ|vnd)\b", reply_text):
+        digits = re.sub(r"\D", "", amount)
+        if digits and digits not in re.sub(r"\D", "", context_text):
+            return False, f"Reply contains amount not found in context: {amount}"
+    for quantity in re.findall(r"\b\d+\s*(?:san pham|cai|luot|size)\b", reply_text):
+        digits = re.sub(r"\D", "", quantity)
+        if digits and digits not in re.sub(r"\D", "", context_text):
+            return False, f"Reply contains quantity not found in context: {quantity}"
+    vouchers = {normalize_text(voucher.get("code", "")) for voucher in retrieved_context.get("vouchers", [])}
+    voucher_like = set(re.findall(r"\b[A-Z0-9]{4,20}\b", normalized))
+    for code in voucher_like:
+        normalized_code = normalize_text(code)
+        if normalized_code.startswith(("HTTP", "VND")):
+            continue
+        if any(char.isdigit() for char in code) and vouchers and normalized_code not in vouchers:
+            return False, f"Reply contains voucher/code not found in context: {code}"
     return True, None
 
 
 def build_chatbot_reply(payload: ChatbotReplyRequest) -> ChatbotReplyResponse:
-    draft = _build_grounded_draft(payload)
-    retrieved_context = retrieveRelevantShopData(payload)
-    prompt = buildSellingPrompt(payload, retrieved_context)
+    grounded_payload, db_context = enrich_payload_with_database(payload)
+    draft = _build_grounded_draft(grounded_payload)
+    retrieved_context = retrieveRelevantShopData(grounded_payload)
+    if db_context:
+        retrieved_context["data_source"] = db_context.get("source")
+        if db_context.get("error"):
+            retrieved_context["data_source_error"] = db_context.get("error")
+    prompt = buildSellingPrompt(grounded_payload, retrieved_context)
     draft.retrieved_context = retrieved_context
     draft.prompt = prompt
 
@@ -361,12 +425,13 @@ def build_chatbot_reply(payload: ChatbotReplyRequest) -> ChatbotReplyResponse:
         draft.ai_status = "ANSWERED"
         return draft
     except OllamaError as exc:
-        draft.reply = FALLBACK_REPLY
-        draft.confidence = 0.2
-        draft.should_escalate = True
+        draft.confidence = min(draft.confidence, 0.72)
         draft.error_message = f"Ollama error: {exc}"
-        draft.ai_status = "NEED_SELLER_SUPPORT"
-        draft.suggested_actions = ["Ollama lỗi hoặc timeout, người bán cần tiếp quản câu hỏi."]
+        draft.ai_status = "ANSWERED"
+        draft.suggested_actions = [
+            *draft.suggested_actions,
+            "LLM lỗi hoặc timeout; AI đã trả lời bằng logic an toàn từ dữ liệu truy xuất.",
+        ]
         return draft
 
 
@@ -382,13 +447,15 @@ def retrieveRelevantShopData(payload: ChatbotReplyRequest) -> dict:
         "vouchers": [voucher.model_dump() for voucher in vouchers_for_product(payload.vouchers, product)],
         "policy": payload.policy.model_dump() if payload.policy else None,
         "vector_context": vector_context,
+        "livestream_id": payload.livestream_id,
+        "shop_id": payload.shop_id,
     }
 
 
 def retrieveVectorContext(payload: ChatbotReplyRequest) -> list[dict]:
     """RAG hook for pgvector-backed retrieval.
 
-    In the local demo we do not call an embedding model. Instead, this returns
+    In the local runtime we do not call an embedding model. Instead, this returns
     the same shape expected from a pgvector similarity query so the AI pipeline
     and logs clearly show where vector context is attached.
     """
@@ -426,9 +493,17 @@ def generateAIReply(payload: ChatbotReplyRequest) -> ChatbotReplyResponse:
 
 def saveAIResponseLog(response: ChatbotReplyResponse) -> dict:
     return {
+        "log_id": response.log_id,
+        "customer_message": None,
         "confidence_score": response.confidence,
         "status": "NEED_SELLER_SUPPORT" if response.should_escalate else "ANSWERED",
         "intent": response.intent,
+        "question_type": response.intent,
+        "retrieved_context": response.retrieved_context,
+        "prompt": response.prompt,
+        "raw_model_response": response.raw_model_response,
+        "final_reply": response.reply,
+        "error_message": response.error_message,
         "used_product_id": response.used_product_id,
         "used_voucher_code": response.used_voucher_code,
     }

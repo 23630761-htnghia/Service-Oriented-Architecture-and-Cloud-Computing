@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -23,13 +24,23 @@ class ChatMessage(BaseModel):
 
 def publish_event(topic: str, payload: dict) -> dict:
     event = {"topic": topic, "payload": payload, "broker": KAFKA_BOOTSTRAP_SERVERS}
-    published_events.append(event)
+    for attempt in range(1, 4):
+        try:
+            published_events.append(event)
+            return {**event, "attempt": attempt}
+        except RuntimeError:
+            if attempt == 3:
+                raise
+            time.sleep(0.2 * attempt)
     return event
 
 
 async def broadcast(livestream_id: str, event: str, payload: dict) -> None:
     for socket in list(rooms.get(livestream_id, [])):
-        await socket.send_json({"event": event, "payload": payload})
+        try:
+            await socket.send_json({"event": event, "payload": payload})
+        except RuntimeError:
+            rooms.get(livestream_id, []).remove(socket)
 
 
 @app.get("/health")
@@ -40,6 +51,11 @@ def health():
 @app.get("/ready")
 def ready():
     return {"status": "ready", "service": "chat-service", "kafka": KAFKA_BOOTSTRAP_SERVERS}
+
+
+@app.get("/events")
+def list_published_events():
+    return {"events": published_events[-100:]}
 
 
 @app.post("/chat/messages")
@@ -61,9 +77,16 @@ async def create_message(payload: ChatMessage):
 
 @app.post("/events/ai-reply-generated")
 async def on_ai_reply_generated(payload: dict):
-    publish_event("chat.ai_reply.persisted", payload)
-    await broadcast(payload["livestream_id"], "ai_reply", payload)
+    publish_event("ai.reply.generated", payload)
+    await broadcast(payload["livestream_id"], "ai_reply", {**payload, "sender_label": "AI trợ lý của shop"})
     return {"delivered": True}
+
+
+@app.post("/events/ai-reply-failed")
+async def on_ai_reply_failed(payload: dict):
+    publish_event("ai.reply.failed", payload)
+    await broadcast(payload["livestream_id"], "need_seller_support", payload)
+    return {"delivered": True, "fallback": True}
 
 
 @app.websocket("/ws/livestreams/{livestream_id}")

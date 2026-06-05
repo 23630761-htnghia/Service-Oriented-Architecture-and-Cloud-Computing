@@ -6,6 +6,8 @@ metadata:
 data:
   OLLAMA_BASE_URL: http://ollama:11434
   OLLAMA_MODEL: llama3.1
+  OLLAMA_TIMEOUT_SECONDS: "3"
+  DATABASE_URL: postgresql://smartlive:smartlive@postgres:5432/smartlive
   AI_TEMPERATURE: "0.2"
   AI_MAX_TOKENS: "220"
   KAFKA_BOOTSTRAP_SERVERS: kafka:9092

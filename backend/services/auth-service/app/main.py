@@ -40,7 +40,7 @@ def login(payload: LoginRequest):
     user = users.get(payload.email.lower())
     if not user or user["password"] != payload.password:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = f"jwt-demo-{uuid4().hex}"
+    token = f"jwt-local-{uuid4().hex}"
     sessions[token] = {"sub": user["id"], "email": payload.email.lower(), "role": user["role"], "iat": int(time.time())}
     return {"access_token": token, "token_type": "bearer", "user": sessions[token]}
 

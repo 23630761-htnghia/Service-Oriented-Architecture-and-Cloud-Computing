@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unicodedata
+import re
 
 
 POSITIVE_KEYWORDS = {
@@ -63,12 +64,19 @@ def normalize_text(text: str) -> str:
 
 
 def contains_any(text: str, keywords: set[str]) -> bool:
-    return any(keyword in text for keyword in keywords)
+    for keyword in keywords:
+        if " " in keyword or "/" in keyword or ":" in keyword:
+            if keyword in text:
+                return True
+            continue
+        if re.search(rf"(^|\s){re.escape(keyword)}($|\s)", text):
+            return True
+    return False
 
 
 def detect_sentiment(text: str) -> str:
-    positive_hits = sum(1 for keyword in POSITIVE_KEYWORDS if keyword in text)
-    negative_hits = sum(1 for keyword in NEGATIVE_KEYWORDS if keyword in text)
+    positive_hits = sum(1 for keyword in POSITIVE_KEYWORDS if contains_any(text, {keyword}))
+    negative_hits = sum(1 for keyword in NEGATIVE_KEYWORDS if contains_any(text, {keyword}))
 
     if negative_hits > positive_hits:
         return "negative"
@@ -90,12 +98,12 @@ def detect_intent(text: str) -> str:
         return "ask_voucher"
     if contains_any(text, SHIPPING_KEYWORDS):
         return "ask_shipping"
+    if contains_any(text, PRICE_KEYWORDS):
+        return "ask_price"
     if contains_any(text, STOCK_KEYWORDS):
         return "ask_stock"
     if contains_any(text, POLICY_KEYWORDS):
         return "ask_policy"
-    if contains_any(text, PRICE_KEYWORDS):
-        return "ask_price"
     if contains_any(text, CONSULT_KEYWORDS):
         return "consult_request"
     return "other"

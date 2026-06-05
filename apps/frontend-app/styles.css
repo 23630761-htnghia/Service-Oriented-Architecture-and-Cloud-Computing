@@ -27,18 +27,23 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
 
-button {
-  border: 0;
+button,
+a {
   cursor: pointer;
 }
 
-textarea {
-  min-height: 74px;
-  resize: vertical;
+button {
+  border: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 h1,
@@ -49,139 +54,131 @@ p {
 }
 
 h1 {
-  max-width: 720px;
-  font-size: clamp(2rem, 3.4vw, 4rem);
-  line-height: 1;
+  line-height: 1.05;
   letter-spacing: 0;
-}
-
-h2 {
-  font-size: 1.15rem;
-}
-
-h3 {
-  font-size: 1rem;
-}
-
-.smart-shell {
-  min-height: 100vh;
-  display: grid;
-}
-
-.hero-bar {
-  padding: 22px;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-.login-card {
-  min-width: min(520px, 100%);
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 8px;
-}
-
-select {
-  width: 100%;
-  min-height: 42px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
-}
-
-.role-nav {
-  padding: 10px 22px;
-  border-bottom: 1px solid var(--line);
-  background: var(--panel);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.role-tab {
-  min-height: 38px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--ink);
-  font-weight: 800;
-}
-
-.role-tab.active {
-  border-color: var(--green);
-  background: var(--green-soft);
-  color: var(--green);
-}
-
-#auth-status {
-  margin-left: auto;
-  color: var(--muted);
-  font-weight: 800;
-}
-
-.view-grid {
-  min-height: calc(100vh - 152px);
-  display: grid;
-  grid-template-columns: minmax(520px, 1.25fr) minmax(380px, 0.75fr);
 }
 
 .hidden {
   display: none !important;
 }
 
-.app-shell {
+.app-root {
   min-height: 100vh;
+}
+
+.login-screen {
+  min-height: 100vh;
+  padding: 32px;
   display: grid;
-  grid-template-columns: minmax(520px, 1.25fr) minmax(360px, 0.75fr) minmax(380px, 0.85fr);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+  align-items: center;
+  gap: 28px;
 }
 
-.workspace,
-.chat-panel,
-.admin-panel {
-  min-width: 0;
-  padding: 22px;
-}
-
-.workspace {
-  display: grid;
-  grid-template-rows: auto minmax(360px, 1fr) auto;
-  gap: 18px;
-}
-
-.chat-panel,
-.admin-panel {
-  border-left: 1px solid var(--line);
-  background: var(--panel);
+.login-copy {
+  max-width: 760px;
   display: grid;
   gap: 14px;
 }
 
-.chat-panel {
-  grid-template-rows: auto auto auto 1fr auto;
+.login-copy h1 {
+  font-size: clamp(2.2rem, 4.5vw, 4.8rem);
 }
 
-.admin-panel {
+.login-copy p:not(.eyebrow) {
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.login-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 12px;
+}
+
+.login-card label,
+.chat-form label {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  display: grid;
+  gap: 6px;
+}
+
+.protected-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+.sidebar {
+  min-width: 0;
+  padding: 20px;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  display: grid;
   align-content: start;
-  max-height: 100vh;
-  overflow: auto;
+  gap: 18px;
 }
 
-.topbar,
+.brand-block {
+  display: grid;
+  gap: 8px;
+}
+
+.role-menu {
+  display: grid;
+  gap: 8px;
+}
+
+.role-menu a {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+}
+
+.role-menu a.active {
+  border-color: var(--green);
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.content-shell {
+  min-width: 0;
+  padding: 24px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.page {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.page-head,
 .panel-head,
 .section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
+}
+
+.page-head h1 {
+  font-size: clamp(1.7rem, 2.2vw, 2.6rem);
 }
 
 .eyebrow {
@@ -191,6 +188,120 @@ select {
   font-weight: 850;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+.status-pill,
+.feedback,
+.loading-bar {
+  width: fit-content;
+  max-width: 100%;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.feedback.success {
+  border-color: rgba(19, 111, 99, 0.35);
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.feedback.error {
+  border-color: rgba(217, 76, 58, 0.35);
+  background: #fff1ef;
+  color: var(--red);
+}
+
+.loading-bar {
+  color: var(--blue);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  outline: 0;
+}
+
+textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(19, 111, 99, 0.13);
+}
+
+.ghost-btn,
+.primary-btn,
+.primary-link,
+.quick-action {
+  min-height: 42px;
+  padding: 0 13px;
+  border-radius: 8px;
+  font-weight: 850;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ghost-btn,
+.quick-action {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+}
+
+.primary-btn,
+.primary-link {
+  background: var(--green);
+  color: #fff;
+}
+
+.delete-link {
+  width: fit-content;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: #fff1ef;
+  color: var(--red);
+  font-weight: 800;
+}
+
+.small-btn {
+  min-height: 34px;
+  width: fit-content;
+}
+
+.customer-live-grid {
+  display: grid;
+  grid-template-columns: minmax(520px, 1.25fr) minmax(380px, 0.75fr);
+  gap: 16px;
+}
+
+.workspace,
+.chat-panel {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.chat-panel {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
 }
 
 .live-status {
@@ -238,6 +349,20 @@ select {
   display: block;
 }
 
+.live-video {
+  width: 100%;
+  min-height: 420px;
+  height: 100%;
+  border-radius: 8px;
+  background: #101312;
+  object-fit: cover;
+  display: block;
+}
+
+.live-stage .live-video:not(.hidden) + img {
+  display: none;
+}
+
 .stage-overlay {
   position: absolute;
   left: 22px;
@@ -245,7 +370,7 @@ select {
   max-width: min(560px, calc(100% - 44px));
   padding: 16px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.93);
+  background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.7);
   display: grid;
   gap: 6px;
@@ -271,9 +396,39 @@ select {
   font-weight: 850;
 }
 
-.product-strip {
+.studio-grid {
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+}
+
+.studio-preview {
+  position: relative;
+  min-height: 520px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #101312;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.studio-preview .live-video {
+  min-height: 520px;
+}
+
+.studio-overlay {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  display: grid;
+  gap: 4px;
+}
+
+.studio-controls {
+  align-content: start;
 }
 
 .product-list {
@@ -294,6 +449,11 @@ select {
   gap: 8px;
 }
 
+.product-card.active {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(19, 111, 99, 0.13);
+}
+
 .product-select {
   padding: 0;
   background: transparent;
@@ -303,25 +463,13 @@ select {
   gap: 8px;
 }
 
-.product-card.active {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(19, 111, 99, 0.13);
-}
-
-.product-card p {
+.product-card p,
+.history-item small,
+.metric span,
+.compact-item small {
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   line-height: 1.35;
-}
-
-.delete-link {
-  width: fit-content;
-  min-height: 32px;
-  padding: 0 10px;
-  border-radius: 7px;
-  background: #fff1ef;
-  color: var(--red);
-  font-weight: 800;
 }
 
 .product-meta {
@@ -345,53 +493,15 @@ select {
   color: var(--green);
 }
 
-.context-bar {
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--green-soft);
-  display: grid;
-  gap: 3px;
-}
-
-.context-bar span {
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.ghost-btn,
-.primary-btn,
 .quick-action {
-  min-height: 42px;
-  padding: 0 13px;
-  border-radius: 8px;
-  font-weight: 800;
-}
-
-.ghost-btn,
-.quick-action {
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--ink);
-}
-
-.quick-action {
+  justify-content: flex-start;
   text-align: left;
-}
-
-.primary-btn {
-  background: var(--green);
-  color: #fff;
-}
-
-.small-btn {
-  min-height: 34px;
-  width: fit-content;
 }
 
 .message-list {
@@ -447,33 +557,10 @@ select {
   gap: 10px;
 }
 
-.chat-form label {
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
 .chat-input-row {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
-}
-
-input,
-textarea {
-  width: 100%;
-  min-width: 0;
-  padding: 11px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
-  outline: 0;
-}
-
-input:focus,
-textarea:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(19, 111, 99, 0.13);
 }
 
 .admin-section {
@@ -507,10 +594,14 @@ textarea:focus {
   padding: 0;
 }
 
-.history-list {
+.history-list,
+.compact-list {
   display: grid;
   gap: 8px;
-  max-height: 300px;
+}
+
+.history-list {
+  max-height: 70vh;
   overflow: auto;
 }
 
@@ -525,44 +616,29 @@ textarea:focus {
   line-height: 1.35;
 }
 
-.history-item small {
-  color: var(--muted);
-}
-
-.compact-list {
-  display: grid;
-  gap: 8px;
-}
-
 .compact-item {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
 }
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .metric {
-  padding: 12px;
+  padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fafbf8;
+  background: #fff;
   display: grid;
   gap: 4px;
 }
 
 .metric strong {
   color: var(--green);
-  font-size: 1.3rem;
-}
-
-.metric span,
-.compact-item small {
-  color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 1.45rem;
 }
 
 .history-item.escalated {
@@ -570,70 +646,63 @@ textarea:focus {
   background: #fff8f6;
 }
 
-@media (max-width: 1280px) {
-  .app-shell,
-  .view-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+@media (max-width: 1180px) {
+  .protected-shell,
+  .customer-live-grid {
+    grid-template-columns: 1fr;
   }
 
-  .admin-panel {
-    grid-column: 1 / -1;
-    max-height: none;
-    border-left: 0;
-    border-top: 1px solid var(--line);
+  .sidebar {
+    position: static;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .role-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metric-grid,
+  .product-list,
+  .studio-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 900px) {
-  .app-shell,
-  .view-grid {
+@media (max-width: 760px) {
+  .login-screen {
     grid-template-columns: 1fr;
+    padding: 18px;
   }
 
-  .hero-bar,
-  .login-card {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .hero-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .chat-panel,
-  .admin-panel {
-    border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .product-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 620px) {
-  .workspace,
-  .chat-panel,
-  .admin-panel {
+  .content-shell,
+  .sidebar {
     padding: 16px;
   }
 
-  .topbar,
+  .page-head,
   .panel-head,
   .section-head {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .live-stage,
-  .live-stage img {
-    min-height: 310px;
-  }
-
+  .role-menu,
+  .metric-grid,
+  .product-list,
+  .studio-grid,
   .quick-actions,
   .chat-input-row,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .compact-item {
+    grid-template-columns: 1fr;
+  }
+
+  .live-stage,
+  .live-stage img {
+    min-height: 310px;
   }
 }

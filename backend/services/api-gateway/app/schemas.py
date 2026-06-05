@@ -90,7 +90,7 @@ class LivestreamInput(BaseModel):
 
 class Product(BaseModel):
     product_id: str = Field(..., min_length=1, max_length=100)
-    shop_id: str = Field(default="shop-01", min_length=1, max_length=100)
+    shop_id: str = Field(default="00000000-0000-0000-0000-000000001001", min_length=1, max_length=100)
     name: str = Field(..., min_length=1, max_length=300)
     description: str = Field(default="", max_length=1000)
     category: str | None = Field(default=None, max_length=100)
@@ -107,7 +107,7 @@ class Product(BaseModel):
 
 class Voucher(BaseModel):
     voucher_id: str = Field(..., min_length=1, max_length=100)
-    shop_id: str = Field(default="shop-01", min_length=1, max_length=100)
+    shop_id: str = Field(default="00000000-0000-0000-0000-000000001001", min_length=1, max_length=100)
     code: str = Field(..., min_length=1, max_length=100)
     discount_type: str = Field(default="AMOUNT", max_length=30)
     discount_value: str = Field(..., min_length=1, max_length=200)
@@ -121,7 +121,7 @@ class Voucher(BaseModel):
 
 
 class SalesPolicy(BaseModel):
-    shop_id: str = "shop-01"
+    shop_id: str = "00000000-0000-0000-0000-000000001001"
     shipping_fee_note: str = Field(default="", max_length=1000)
     delivery_time_note: str = Field(default="", max_length=1000)
     return_policy: str = Field(default="", max_length=1000)
@@ -144,7 +144,7 @@ class ChatHistoryItem(BaseModel):
     confidence_score: float | None = None
     ai_status: AIResponseStatus | None = None
     should_escalate: bool = False
-    source_platform: str = "demo"
+    source_platform: str = "web"
     created_at: str
 
 
@@ -153,7 +153,7 @@ class LivestreamMessageRequest(BaseModel):
     customer_name: str | None = Field(default=None, max_length=100)
     message: str = Field(..., min_length=1, max_length=2000)
     product_id: str | None = Field(default=None, max_length=100)
-    source_platform: str = Field(default="demo", max_length=50)
+    source_platform: str = Field(default="web", max_length=50)
 
 
 class AutoReplySettings(BaseModel):
@@ -182,6 +182,10 @@ class CartItemRequest(BaseModel):
 class CartItem(BaseModel):
     product_id: str
     quantity: int
+
+
+class VoucherApplyRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=100)
 
 
 class OrderItem(BaseModel):

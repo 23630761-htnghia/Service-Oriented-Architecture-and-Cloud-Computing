@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartLive Role Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main id="app" class="app-root">
+    <section id="login-page" class="login-screen hidden" data-public-page="login">
+      <div class="login-copy">
+        <p class="eyebrow">SmartLive AI</p>
+        <h1>Đăng nhập theo đúng vai trò để vào khu vực làm việc riêng</h1>
+        <p>Frontend tách route CUSTOMER, SELLER, ADMIN và đồng bộ với RBAC của API Gateway.</p>
+      </div>
+      <form id="login-form" class="login-card">
+        <label>
+          Tài khoản
+          <select id="account-select">
+            <option value="customer@smartlive.test">CUSTOMER - customer@smartlive.test</option>
+            <option value="seller@smartlive.test">SELLER - seller@smartlive.test</option>
+            <option value="admin@smartlive.test">ADMIN - admin@smartlive.test</option>
+          </select>
+        </label>
+        <label>
+          Mật khẩu
+          <input id="password" type="password" value="123456" autocomplete="current-password" />
+        </label>
+        <button class="primary-btn" type="submit">Đăng nhập</button>
+        <p id="login-status" class="status-text"></p>
+      </form>
+    </section>
+
+    <section id="forbidden-page" class="login-screen hidden">
+      <div class="login-copy">
+        <p class="eyebrow">403</p>
+        <h1>Bạn không có quyền truy cập trang này</h1>
+        <p id="forbidden-message">Hệ thống sẽ đưa bạn về dashboard đúng với vai trò đăng nhập.</p>
+      </div>
+      <button id="go-home-btn" class="primary-btn" type="button">Về trang của tôi</button>
+    </section>
+
+    <section id="protected-shell" class="protected-shell hidden">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <p class="eyebrow">SmartLive</p>
+          <h2 id="sidebar-title">Dashboard</h2>
+          <span id="auth-status" class="status-pill">Chưa đăng nhập</span>
+        </div>
+
+        <nav id="customer-menu" class="role-menu hidden" aria-label="Customer menu">
+          <a href="/customer/home" data-route="/customer/home">Trang chủ</a>
+          <a href="/customer/livestreams/00000000-0000-0000-0000-000000004001" data-route="/customer/livestreams/00000000-0000-0000-0000-000000004001">Livestream</a>
+          <a href="/customer/cart" data-route="/customer/cart">Giỏ hàng</a>
+          <a href="/customer/orders" data-route="/customer/orders">Đơn hàng</a>
+        </nav>
+
+        <nav id="seller-menu" class="role-menu hidden" aria-label="Seller menu">
+          <a href="/seller/dashboard" data-route="/seller/dashboard">Dashboard</a>
+          <a href="/seller/products" data-route="/seller/products">Sản phẩm</a>
+          <a href="/seller/vouchers" data-route="/seller/vouchers">Voucher</a>
+          <a href="/seller/livestreams" data-route="/seller/livestreams">Livestream</a>
+          <a href="/seller/livestreams/00000000-0000-0000-0000-000000004001/studio" data-route="/seller/livestreams/00000000-0000-0000-0000-000000004001/studio">Studio</a>
+          <a href="/seller/ai-settings" data-route="/seller/ai-settings">AI settings</a>
+          <a href="/seller/ai-logs" data-route="/seller/ai-logs">AI logs</a>
+          <a href="/seller/fallbacks" data-route="/seller/fallbacks">Fallbacks</a>
+        </nav>
+
+        <nav id="admin-menu" class="role-menu hidden" aria-label="Admin menu">
+          <a href="/admin/dashboard" data-route="/admin/dashboard">Dashboard</a>
+          <a href="/admin/users" data-route="/admin/users">Users</a>
+          <a href="/admin/shops" data-route="/admin/shops">Shops</a>
+          <a href="/admin/orders" data-route="/admin/orders">Orders</a>
+          <a href="/admin/ai-logs" data-route="/admin/ai-logs">AI logs</a>
+        </nav>
+
+        <button id="logout-btn" class="ghost-btn" type="button">Đăng xuất</button>
+      </aside>
+
+      <section class="content-shell">
+        <div id="global-feedback" class="feedback hidden"></div>
+        <div id="loading-bar" class="loading-bar hidden">Đang tải dữ liệu...</div>
+
+        <section id="customer-home-page" class="page hidden" data-page="/customer/home">
+          <header class="page-head">
+            <div>
+              <p class="eyebrow">CUSTOMER</p>
+              <h1>Trang khách hàng</h1>
+            </div>
+            <a class="primary-link" href="/customer/livestreams/00000000-0000-0000-0000-000000004001" data-route="/customer/livestreams/00000000-0000-0000-0000-000000004001">Vào livestream</a>
+          </header>
+          <div class="metric-grid" id="customer-summary"></div>
+        </section>
+
+        <section id="customer-livestreams-page" class="page hidden" data-page="/customer/livestreams">
+          <header class="page-head">
+            <div>
+              <p class="eyebrow">Livestream</p>
+              <h1 id="live-title">Livestream đang bán</h1>
+            </div>
+            <div class="live-status"><span class="live-dot"></span><strong id="customer-live-status">Livestream chưa bắt đầu</strong><span id="viewer-count">0 người xem</span></div>
+          </header>
+          <div class="customer-live-grid">
+            <section class="workspace">
+              <section class="live-stage">
+                <video id="customer-live-video" class="live-video hidden" autoplay playsinline controls></video>
+                <img id="featured-image" src="" alt="Sản phẩm trong livestream" />
+                <div class="stage-overlay">
+                  <span>AI đang trực chat</span>
+                  <strong id="featured-product-name">Đang tải sản phẩm...</strong>
+                  <p id="featured-product-price"></p>
+                </div>
+              </section>
+              <section class="admin-section">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Sản phẩm</p>
+                    <h2>Chọn sản phẩm, thêm giỏ hoặc hỏi AI</h2>
+                  </div>
+                </div>
+                <div id="product-list" class="product-list"></div>
+              </section>
+            </section>
+            <aside class="chat-panel">
+              <header class="panel-head">
+                <div>
+                  <p class="eyebrow">Realtime chat</p>
+                  <h2>Khung chat livestream</h2>
+                </div>
+              </header>
+              <div id="quick-actions" class="quick-actions"></div>
+              <section id="message-list" class="message-list" aria-live="polite"></section>
+              <form id="chat-form" class="chat-form">
+                <label for="chat-input">Câu hỏi của khách</label>
+                <div class="chat-input-row">
+                  <input id="chat-input" type="text" autocomplete="off" placeholder="Ví dụ: sản phẩm này còn hàng không?" />
+                  <button type="submit" class="primary-btn">Gửi</button>
+                </div>
+              </form>
+            </aside>
+          </div>
+        </section>
+
+        <section id="customer-cart-page" class="page hidden" data-page="/customer/cart">
+          <header class="page-head">
+            <div>
+              <p class="eyebrow">CUSTOMER</p>
+              <h1>Giỏ hàng</h1>
+            </div>
+          </header>
+          <section class="admin-section">
+            <div id="cart-list" class="compact-list"></div>
+            <form id="voucher-apply-form" class="chat-form">
+              <label for="voucher-code">Mã giảm giá</label>
+              <div class="chat-input-row">
+                <input id="voucher-code" type="text" placeholder="Ví dụ: LIVE20" />
+                <button class="primary-btn" type="submit">Áp dụng</button>
+              </div>
+            </form>
+            <button id="checkout-btn" class="primary-btn" type="button">Đặt hàng</button>
+          </section>
+        </section>
+
+        <section id="customer-orders-page" class="page hidden" data-page="/customer/orders">
+          <header class="page-head"><div><p class="eyebrow">CUSTOMER</p><h1>Lịch sử đơn hàng</h1></div></header>
+          <div id="order-list" class="history-list"></div>
+        </section>
+
+        <section id="seller-dashboard-page" class="page hidden" data-page="/seller/dashboard">
+          <header class="page-head"><div><p class="eyebrow">SELLER</p><h1>Dashboard người bán</h1></div></header>
+          <div id="analytics" class="metric-grid"></div>
+        </section>
+
+        <section id="seller-products-page" class="page hidden" data-page="/seller/products">
+          <header class="page-head"><div><p class="eyebrow">SELLER</p><h1>Quản lý sản phẩm</h1></div></header>
+          <section class="admin-section">
+            <form id="product-form" class="admin-form">
+              <input name="product_id" placeholder="Mã sản phẩm" required />
+              <input name="name" placeholder="Tên sản phẩm" required />
+              <textarea name="description" placeholder="Mô tả ngắn"></textarea>
+              <div class="form-grid">
+                <input name="retail_price" type="number" min="0" placeholder="Giá gốc" required />
+                <input name="live_price" type="number" min="0" placeholder="Giá sale" />
+                <input name="stock_quantity" type="number" min="0" placeholder="Tồn kho" required />
+                <input name="variants" placeholder="Size/màu, cách nhau bởi dấu phẩy" />
+              </div>
+              <input name="image_url" placeholder="Link hình ảnh" />
+              <button class="primary-btn" type="submit">Lưu sản phẩm</button>
+            </form>
+          </section>
+          <div id="seller-product-list" class="compact-list"></div>
+        </section>
+
+        <section id="seller-vouchers-page" class="page hidden" data-page="/seller/vouchers">
+          <header class="page-head"><div><p class="eyebrow">SELLER</p><h1>Quản lý voucher</h1></div></header>
+          <section class="admin-section">
+            <form id="voucher-form" class="admin-form">
+              <div class="form-grid">
+                <input name="voucher_id" placeholder="ID voucher" required />
+                <input name="code" placeholder="Mã voucher" required />
+                <input name="discount_value" placeholder="Giá trị giảm" required />
+                <input name="remaining_quantity" type="number" min="0" placeholder="Số lượng" required />
+              </div>
+              <textarea name="conditions" placeholder="Điều kiện áp dụng"></textarea>
+              <input name="valid_until" placeholder="Hạn dùng, ví dụ 2026-06-30" />
+              <button class="primary-btn" type="submit">Lưu voucher</button>
+            </form>
+          </section>
+          <div id="voucher-list" class="compact-list"></div>
+        </section>
+
+        <section id="seller-livestreams-page" class="page hidden" data-page="/seller/livestreams">
+          <header class="page-head"><div><p class="eyebrow">SELLER</p><h1>Quản lý livestream</h1></div></header>
+          <section class="admin-section">
+            <form id="livestream-form" class="admin-form">
+              <input name="title" placeholder="Tiêu đề livestream" required />
+              <textarea name="description" placeholder="Mô tả livestream"></textarea>
+              <button class="primary-btn" type="submit">Tạo livestream</button>
+            </form>
+          </section>
+          <div id="seller-livestream-list" class="compact-list"></div>
+        </section>
+
+        <section id="seller-studio-page" class="page hidden" data-page="/seller/livestreams/:id/studio">
+          <header class="page-head">
+            <div>
+              <p class="eyebrow">SELLER STUDIO</p>
+              <h1>Phòng phát livestream</h1>
+            </div>
+            <span id="studio-live-status" class="status-pill">Livestream offline</span>
+          </header>
+          <div class="studio-grid">
+            <section class="studio-preview">
+              <video id="seller-local-video" class="live-video" autoplay playsinline muted></video>
+              <div class="studio-overlay">
+                <strong id="studio-camera-status">Camera tắt</strong>
+                <span id="studio-mic-status">Micro tắt</span>
+              </div>
+            </section>
+            <aside class="admin-section studio-controls">
+              <h2>Điều khiển livestream</h2>
+              <button id="enable-media-btn" class="primary-btn" type="button">Bật camera/mic</button>
+              <button id="toggle-camera-btn" class="ghost-btn" type="button">Tắt camera</button>
+              <button id="toggle-mic-btn" class="ghost-btn" type="button">Tắt mic</button>
+              <button id="start-live-btn" class="primary-btn" type="button">Bắt đầu livestream</button>
+              <button id="stop-live-btn" class="delete-link" type="button">Dừng livestream</button>
+              <p id="studio-error" class="status-text"></p>
+            </aside>
+          </div>
+        </section>
+
+        <section id="seller-ai-settings-page" class="page hidden" data-page="/seller/ai-settings">
+          <header class="page-head">
+            <div><p class="eyebrow">SELLER</p><h1>Cấu hình AI auto-reply</h1></div>
+            <label class="switch"><input id="ai-toggle" type="checkbox" /><span>AI tự động</span></label>
+          </header>
+          <section class="admin-section">
+            <form id="ai-settings-form" class="admin-form">
+              <div class="form-grid">
+                <input name="model_name" placeholder="Ollama model, ví dụ llama3.1" value="llama3.1" />
+                <input name="temperature" type="number" step="0.1" min="0" max="2" value="0.2" />
+                <input name="max_tokens" type="number" min="32" max="4096" value="220" />
+                <input name="reply_style" placeholder="Phong cách trả lời" value="ngắn gọn, thân thiện, chốt đơn" />
+              </div>
+              <textarea name="tone" placeholder="Giọng điệu AI">Thân thiện, ngắn gọn, có tính chốt đơn.</textarea>
+              <button class="primary-btn" type="submit">Lưu AI settings</button>
+            </form>
+          </section>
+        </section>
+
+        <section id="seller-ai-logs-page" class="page hidden" data-page="/seller/ai-logs">
+          <header class="page-head"><div><p class="eyebrow">SELLER</p><h1>AI logs livestream</h1></div></header>
+          <div id="seller-ai-log-list" class="history-list"></div>
+        </section>
+
+        <section id="seller-fallbacks-page" class="page hidden" data-page="/seller/fallbacks">
+          <header class="page-head"><div><p class="eyebrow">SELLER</p><h1>Câu hỏi fallback</h1></div></header>
+          <div id="fallback-list" class="history-list"></div>
+          <form id="manual-reply-form" class="chat-form admin-section">
+            <label for="manual-reply">Trả lời thủ công</label>
+            <textarea id="manual-reply" placeholder="Nhập phản hồi của người bán..."></textarea>
+            <button class="primary-btn" type="submit">Gửi seller_reply</button>
+          </form>
+        </section>
+
+        <section id="admin-dashboard-page" class="page hidden" data-page="/admin/dashboard">
+          <header class="page-head"><div><p class="eyebrow">ADMIN</p><h1>Dashboard quản trị</h1></div></header>
+          <div id="admin-summary" class="metric-grid"></div>
+        </section>
+
+        <section id="admin-users-page" class="page hidden" data-page="/admin/users">
+          <header class="page-head"><div><p class="eyebrow">ADMIN</p><h1>Quản lý user</h1></div></header>
+          <div id="user-list" class="history-list"></div>
+        </section>
+
+        <section id="admin-shops-page" class="page hidden" data-page="/admin/shops">
+          <header class="page-head"><div><p class="eyebrow">ADMIN</p><h1>Quản lý shop</h1></div></header>
+          <div id="admin-shop-list" class="history-list"></div>
+        </section>
+
+        <section id="admin-orders-page" class="page hidden" data-page="/admin/orders">
+          <header class="page-head"><div><p class="eyebrow">ADMIN</p><h1>Đơn hàng toàn hệ thống</h1></div></header>
+          <div id="admin-order-list" class="history-list"></div>
+        </section>
+
+        <section id="admin-ai-logs-page" class="page hidden" data-page="/admin/ai-logs">
+          <header class="page-head"><div><p class="eyebrow">ADMIN</p><h1>AI logs toàn hệ thống</h1></div></header>
+          <div id="ai-log-list" class="history-list"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

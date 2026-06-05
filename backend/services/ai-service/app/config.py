@@ -9,6 +9,7 @@ class Settings:
     ollama_timeout_seconds: float = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "12"))
     ai_temperature: float = float(os.getenv("AI_TEMPERATURE", os.getenv("OLLAMA_TEMPERATURE", "0.2")))
     ai_max_tokens: int = int(os.getenv("AI_MAX_TOKENS", os.getenv("OLLAMA_MAX_TOKENS", "220")))
+    database_url: str | None = os.getenv("DATABASE_URL")
 
 
 settings = Settings()

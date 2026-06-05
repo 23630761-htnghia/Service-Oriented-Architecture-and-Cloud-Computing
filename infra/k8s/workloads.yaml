@@ -152,7 +152,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: smartlive/demo-app:latest
+          image: smartlive/frontend-app:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3010
