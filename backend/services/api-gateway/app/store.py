@@ -85,10 +85,10 @@ class RuntimeStore:
             shop_id=SHOP_ID,
             title="Flash sale tối nay",
             description="AI tư vấn tự động trong khung chat livestream.",
-            status="LIVE",
+            status="DRAFT",
             ai_enabled=True,
             started_at=now_iso(),
-            viewer_count=1284,
+            viewer_count=0,
         )
         self.products = {
             PRODUCT_SERUM_ID: Product(

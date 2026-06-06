@@ -854,7 +854,6 @@ async def seller_analytics(user=Depends(require_roles("SELLER"))):
     livestream_ids = [live.id for live in store.livestreams.values() if live.shop_id == shop.id]
     orders = [order for order in store.orders if order.shop_id == shop.id]
     return {
-        "viewer_count": sum(store.livestreams[live_id].viewer_count for live_id in livestream_ids),
         "question_count": sum(1 for chat in store.chat_history if chat.livestream_id in livestream_ids and chat.sender_type == "CUSTOMER"),
         "fallback_count": sum(1 for chat in store.chat_history if chat.livestream_id in livestream_ids and chat.should_escalate),
         "order_count": len(orders),

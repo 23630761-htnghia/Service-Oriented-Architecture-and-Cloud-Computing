@@ -17,7 +17,6 @@ def ready():
 def livestream_analytics(livestream_id: str):
     return {
         "livestream_id": livestream_id,
-        "viewer_count": 1284,
         "question_count": 0,
         "ai_answered_count": 0,
         "order_count": 0,

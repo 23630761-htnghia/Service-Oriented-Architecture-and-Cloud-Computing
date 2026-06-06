@@ -3,24 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartLive Role Dashboard</title>
+  <title>SmartLive AI Commerce</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <main id="app" class="app-root">
     <section id="login-page" class="login-screen hidden" data-public-page="login">
       <div class="login-copy">
-        <p class="eyebrow">SmartLive AI</p>
-        <h1>Đăng nhập theo đúng vai trò để vào khu vực làm việc riêng</h1>
-        <p>Frontend tách route CUSTOMER, SELLER, ADMIN và đồng bộ với RBAC của API Gateway.</p>
+        <p class="eyebrow">SMARTLIVE AI COMMERCE</p>
+        <h1>Nền tảng livestream bán hàng thông minh</h1>
+        <p>Quản lý sản phẩm, phát livestream, trò chuyện realtime và để AI hỗ trợ trả lời khách hàng ngay trong phiên bán hàng.</p>
+        <div class="login-highlights">
+          <span>Livestream thật</span>
+          <span>AI tư vấn bán hàng</span>
+          <span>Quản lý đơn tập trung</span>
+        </div>
       </div>
       <form id="login-form" class="login-card">
+        <div class="form-head">
+          <p class="eyebrow">Đăng nhập</p>
+          <h2>Vào hệ thống</h2>
+        </div>
         <label>
-          Tài khoản
+          Chọn tài khoản
           <select id="account-select">
-            <option value="customer@smartlive.test">CUSTOMER - customer@smartlive.test</option>
-            <option value="seller@smartlive.test">SELLER - seller@smartlive.test</option>
-            <option value="admin@smartlive.test">ADMIN - admin@smartlive.test</option>
+            <option value="customer@smartlive.test">Khách hàng - customer@smartlive.test</option>
+            <option value="seller@smartlive.test">Người bán - seller@smartlive.test</option>
+            <option value="admin@smartlive.test">Quản trị viên - admin@smartlive.test</option>
           </select>
         </label>
         <label>
@@ -99,7 +108,7 @@
               <p class="eyebrow">Livestream</p>
               <h1 id="live-title">Livestream đang bán</h1>
             </div>
-            <div class="live-status"><span class="live-dot"></span><strong id="customer-live-status">Livestream chưa bắt đầu</strong><span id="viewer-count">0 người xem</span></div>
+            <div id="customer-live-badge" class="live-status offline"><span class="live-dot"></span><strong id="customer-live-status">Livestream chưa bắt đầu</strong></div>
           </header>
           <div class="customer-live-grid">
             <section class="workspace">

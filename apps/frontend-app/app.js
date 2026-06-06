@@ -72,8 +72,8 @@ const els = {
   },
   pages: document.querySelectorAll("[data-page]"),
   liveTitle: $("live-title"),
-  viewerCount: $("viewer-count"),
   featuredImage: $("featured-image"),
+  customerLiveBadge: $("customer-live-badge"),
   customerLiveVideo: $("customer-live-video"),
   customerLiveStatus: $("customer-live-status"),
   featuredProductName: $("featured-product-name"),
@@ -421,7 +421,6 @@ async function loadCustomerBase(livestreamId = LIVE_ID) {
   const lives = await api("/livestreams");
   const live = lives.find((item) => item.id === livestreamId) || lives[0];
   els.liveTitle.textContent = live?.title || "Livestream";
-  els.viewerCount.textContent = `${Number(live?.viewer_count || 0).toLocaleString("vi-VN")} người xem`;
   state.products = await api(`/livestreams/${livestreamId}/products`);
   state.vouchers = await api(`/livestreams/${livestreamId}/vouchers`);
   if (!state.selectedProductId && state.products.length) state.selectedProductId = state.products[0].product_id;
@@ -662,6 +661,10 @@ function updateStudioStatus() {
 
 function setCustomerLiveStatus(message, isLive = false) {
   if (els.customerLiveStatus) els.customerLiveStatus.textContent = message;
+  if (els.customerLiveBadge) {
+    els.customerLiveBadge.classList.toggle("online", isLive);
+    els.customerLiveBadge.classList.toggle("offline", !isLive);
+  }
   if (els.customerLiveVideo) els.customerLiveVideo.classList.toggle("hidden", !isLive);
   if (els.featuredImage) els.featuredImage.classList.toggle("hidden", isLive);
 }
